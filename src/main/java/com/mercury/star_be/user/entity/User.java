@@ -1,7 +1,9 @@
-package com.mercury.star_be.studygroup.entity;
+package com.mercury.star_be.user.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.mercury.star_be.studygroup.entity.GroupMember;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,25 +17,21 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@Entity
-public class StudyGroup {
+@Entity(name = "users")
+public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(length = 50)
-	private String name;
-	@Column(length = 255)
-	private String description;
+	private String email;
+	@Column(length = 20)
+	private String nickname;
+	@Column(length = 10)
+	private String provider;
 	private String image;
-	private int maxCapacity;
-	private int memberCount;
-	private boolean isPublic;
-	private boolean hasPassword;
-	@Column(length = 50)
-	private String password;
+	private boolean isActive;
 	private LocalDateTime createdAt;
 
-	@OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<GroupMember> members;
+	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<GroupMember> groupMembers;
 }
