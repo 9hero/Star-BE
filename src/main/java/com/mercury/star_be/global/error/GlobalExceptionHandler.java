@@ -1,11 +1,9 @@
 package com.mercury.star_be.global.error;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,7 +19,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(BusinessException.class)
 	protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
 		ErrorCode errorCode = ex.getErrorCode();
-		log.error("BusinessException: ", ex);
+		log.error("BusinessException: {}", ex.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
@@ -31,18 +29,21 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DataAccessException.class)
 	protected ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException ex) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR_DB;
-		log.error("DataAccessException: ", ex);
+		log.error("DataAccessException: {}", ex.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
 
 	// 400 BAD REQUEST
 	// @Valid 검증 실패
-	@ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class,
-		MissingServletRequestParameterException.class, BindException.class})
-	protected ResponseEntity<ErrorResponse> handleValidateException(Exception ex) {
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	protected ResponseEntity<ErrorResponse> handleValidateException(MethodArgumentNotValidException ex) {
 		ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
-		log.error("ValidException: ", ex);
+		ex.getBindingResult().getAllErrors().forEach(error -> {
+			String fieldName = ((FieldError) error).getField();
+			String errorMessage = error.getDefaultMessage();
+			log.error("ValidException: {} : {}", fieldName, errorMessage);
+		});
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
@@ -51,7 +52,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	protected ResponseEntity<ErrorResponse> handleException(Exception ex) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
-		log.error("Exception: ", ex);
+		log.error("Exception: {}", ex.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}

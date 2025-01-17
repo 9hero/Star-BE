@@ -11,6 +11,7 @@ import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
 import com.mercury.star_be.studygroup.service.StudyGroupService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,7 +26,7 @@ public class StudyGroupController {
     }
 
     @PostMapping("/api/groups")
-    public ApiResponse<StudyGroupCreateResponse> createStudyGroup(@RequestBody StudyGroupCreateRequest studyGroupCreateRequest) {
+    public ApiResponse<StudyGroupCreateResponse> createStudyGroup(@RequestBody @Valid StudyGroupCreateRequest studyGroupCreateRequest) {
         StudyGroupCreateResponse studyGroupCreateResponse = studyGroupService.createStudyGroup(studyGroupCreateRequest);
         return ApiResponse.success(studyGroupCreateResponse);
     }
