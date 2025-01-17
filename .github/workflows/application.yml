@@ -80,7 +80,7 @@ jobs:
           port: ${{ secrets.GCP_SSH_PORT }}
           script: |
             sudo su
-            sudo docker stop $(sudo docker ps -a | grep tourservice | awk '{print $1}') || true
-            sudo docker rm $(sudo docker ps -a | grep tourservice | awk '{print $1}') || true
-            sudo docker pull jinu0125/tourservice
+            sudo docker stop $(sudo docker ps -a | grep star-be | awk '{print $1}') || true
+            sudo docker rm $(sudo docker ps -a | grep star-be | awk '{print $1}') || true
+            sudo docker pull mafatofu/star-be
             sudo docker run -d -p 8080:8080 --name star-be mafatofu/star-be
