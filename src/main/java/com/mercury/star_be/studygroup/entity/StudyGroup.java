@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,4 +37,18 @@ public class StudyGroup {
 
 	@OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> members;
+
+	@Builder
+	public StudyGroup(String name, String description, String image, int maxCapacity, int memberCount, boolean isPublic,
+		boolean hasPassword, String password, LocalDateTime createdAt) {
+		this.name = name;
+		this.description = description;
+		this.image = image;
+		this.maxCapacity = maxCapacity;
+		this.memberCount = memberCount;
+		this.isPublic = isPublic;
+		this.hasPassword = hasPassword;
+		this.password = password;
+		this.createdAt = createdAt;
+	}
 }

@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	// 비즈니스 커스텀 에러
+	// 비즈니스 로직 에러
 	@ExceptionHandler(BusinessException.class)
 	protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
 		ErrorCode errorCode = ex.getErrorCode();
