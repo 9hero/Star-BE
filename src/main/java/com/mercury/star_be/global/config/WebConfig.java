@@ -1,4 +1,4 @@
-package com.mercury.star_be.config;
+package com.mercury.star_be.global.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
