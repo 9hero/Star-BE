@@ -18,7 +18,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-	  # chmod 권한 관련 부분 추가  
+      # chmod 권한 관련 부분 추가  
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
