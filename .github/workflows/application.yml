@@ -70,8 +70,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Push Docker image to Docker Hub
-        run: docker push jinu0125/tourservice
-
+        run: docker push mafatofu/star-be
       - name: Deploy to GCP
         uses: appleboy/ssh-action@v0.1.9
         with:
