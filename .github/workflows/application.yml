@@ -28,12 +28,14 @@ jobs:
           mkdir -p src/main/resources
           echo "$APPLICATION_YML" > src/main/resources/application.yml
           echo "$JSON_CONFIG" > src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
-
       - name: Verify file creation
         run: |
           ls -l src/main/resources
           cat src/main/resources/application.yml
           cat src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
 
       - name: Clean build directory
         run: ./gradlew clean
