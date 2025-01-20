@@ -56,6 +56,12 @@ jobs:
 
       - name: Build Spring Boot application
         run: ./gradlew build --warning-mode all
+        # 테스트 보고서 저장
+      - name: Save test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: build/reports/tests/test/index.html
 
       - name: Build Docker image
         run: docker build -t mafatofu/star-be .
