@@ -1,0 +1,39 @@
+package com.mercury.star_be.studygroup;
+
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+
+import com.mercury.star_be.common.RestDocsTestSupport;
+import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
+
+class StudyGroupIntegrationTest extends RestDocsTestSupport {
+
+	@Test
+	@DisplayName("스터디 그룹을 생성한다.")
+	void createStudyGroup() throws Exception {
+	    // given
+		StudyGroupCreateRequest studyGroupCreateRequest = StudyGroupCreateRequest.builder()
+			.name("테스트 그룹")
+			.description("테스트 그룹 설명")
+			.image("이미지")
+			.maxCapacity(10)
+			.isPublic(true)
+			.hasPassword(true)
+			.password("1234")
+			.build();
+		String content = objectMapper.writeValueAsString(studyGroupCreateRequest);
+
+		// when & then
+		mockMvc.perform(post("/api/groups")
+				.content(content)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.id").value(1))
+			.andDo(restDocs.document());
+	}
+}
