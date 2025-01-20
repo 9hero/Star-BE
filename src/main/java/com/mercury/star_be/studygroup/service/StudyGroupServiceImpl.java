@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mercury.star_be.global.error.BusinessException;
+import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
@@ -37,5 +39,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		// TODO: GroupMember에 사용자 추가 필요
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
 		return new StudyGroupCreateResponse(savedGroup.getId());
+	}
+
+	public StudyGroup findById(Long id) {
+		return studyGroupRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 	}
 }
