@@ -31,6 +31,7 @@ jobs:
           mkdir -p src/main/resources
           echo "$APPLICATION_YML" > src/main/resources/application.yml
           echo "$JSON_CONFIG" > src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+    
       # test 환경의 인증 설정 추가
       - name: Create required files from secrets for testing
         env:
@@ -38,9 +39,8 @@ jobs:
           TEST_JSON_CONFIG: ${{ secrets.JSON_CONFIG }}
         run: |
           mkdir -p src/test/resources
-          echo "$TEST_APPLICATION_YML" > src/main/resources/application-test.yml
           echo "$TEST_APPLICATION_YML" > src/test/resources/application.yml
-        
+          echo "$TEST_JSON_CONFIG" > src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
       # 환경 변수 설정: GitHub Actions 워크플로우에 테스트 실행 전에 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 설정하는 단계를 추가
       - name: Set environment variable for Google Cloud credentials in tests
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json" >> $GITHUB_ENV
@@ -49,15 +49,15 @@ jobs:
         run: |
           ls -l src/main/resources
           cat src/main/resources/application.yml
-          cat src/main/resources/application-test.yml
-          cat src/test/resources/application.yml
           cat src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
-          
+          ls -l src/test/resources
+          cat src/test/resources/application.yml
+          cat src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
       - name: Clean build directory
         run: ./gradlew clean
 
       - name: Build Spring Boot application
-        run: ./gradlew build --warning-mode all
+        run: ./gradlew build
 
       - name: Build Docker image
         run: docker build -t mafatofu/star-be .
