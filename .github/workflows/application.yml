@@ -34,7 +34,7 @@ jobs:
       # test 환경의 인증 설정 추가
       - name: Create required files from secrets for testing
         env:
-          TEST_APPLICATION_YML: ${{ secrets.APPLICATION_YML }}
+          TEST_APPLICATION_YML: ${{ secrets.APPLICATION_TEST_YML }}
           TEST_JSON_CONFIG: ${{ secrets.JSON_CONFIG }}
         run: |
           mkdir -p src/test/resources
