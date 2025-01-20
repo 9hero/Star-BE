@@ -58,7 +58,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build Spring Boot application
-        run: ./gradlew build --warning-mode
+        run: ./gradlew build --warning-mode all
 
       - name: Build Docker image
         run: docker build -t mafatofu/star-be .
