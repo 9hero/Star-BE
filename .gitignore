@@ -1,5 +1,5 @@
 *.yml
-
+*.json
 HELP.md
 .gradle
 build/
