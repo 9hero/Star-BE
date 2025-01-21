@@ -13,27 +13,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Clean cached data and update package list
-        run: |
-          sudo apt-get clean
-          sudo apt-get update
-
-      - name: Remove existing Docker containers and images
-        run: |
-          sudo docker rm -f $(sudo docker ps -a -q) || true
-          sudo docker rmi $(sudo docker images -f dangling=true -q) || true
-
-      - name: Uninstall conflicting containerd package
-        run: |
-          sudo apt-get remove -y containerd
-          
-      - name: Set up Docker
-        run: |
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh get-docker.sh
-          sudo usermod -aG docker $USER
-          docker --version
-
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -83,7 +62,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build Spring Boot application
-        run: ./gradlew build
+        run: ./gradlew build --exclude-task test
       
       - name: Run tests
         run: ./gradlew test
