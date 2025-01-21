@@ -13,22 +13,13 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Clean cached data and update package list
-        run: |
-          sudo apt-get clean
-          sudo apt-get update
-
-      - name: Remove existing Docker containers and images
-        run: |
-          sudo docker rm -f $(sudo docker ps -a -q) || true
-          sudo docker rmi $(sudo docker images -f dangling=true -q) || true
       # test를 위한 docker 설치
       - name: Set up Docker
         run: |
+          sudo apt-get update
           sudo apt-get install -y docker.io
           sudo systemctl start docker
           sudo systemctl enable docker
-          docker --version
 
       - name: Set up JDK
         uses: actions/setup-java@v3
