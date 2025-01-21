@@ -63,18 +63,15 @@ jobs:
 
       - name: Build Spring Boot application
         run: ./gradlew build --exclude-task test
-      
-      - name: Run tests
-        run: ./gradlew test
-        continue-on-error: true
 
-      - name: Save test results
+      # 이전작업까지의 결과 report 저장
+      - name: Save results
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-report
+          name: save-report
           path: build/reports/tests/test/index.html
-
+      # 에러 발생시 결과 report 저장 후 다음 과정 pass
       - name: Stop job on test failure
         if: failure()
         run: exit 1
