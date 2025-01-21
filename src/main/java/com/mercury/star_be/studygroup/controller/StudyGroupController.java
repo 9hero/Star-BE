@@ -25,11 +25,6 @@ public class StudyGroupController {
 
     private final StudyGroupService studyGroupService;
 
-    @GetMapping("/api/testData")
-    public ResponseEntity<String> testData() {
-        return ResponseEntity.ok("Hello front!! im backend Data~");
-    }
-
     @PostMapping("/api/groups")
     public ApiResponse<StudyGroupCreateResponse> createStudyGroup(@RequestBody @Valid StudyGroupCreateRequest studyGroupCreateRequest) {
         StudyGroupCreateResponse studyGroupCreateResponse = studyGroupService.createStudyGroup(studyGroupCreateRequest);
