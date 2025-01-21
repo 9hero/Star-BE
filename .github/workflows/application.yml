@@ -62,7 +62,7 @@ jobs:
         run: ./gradlew clean
 
       - name: Build Spring Boot application
-        run: ./gradlew build --exclude-task test
+        run: ./gradlew build -x test
 
       # 이전작업까지의 결과 report 저장
       - name: Save results
