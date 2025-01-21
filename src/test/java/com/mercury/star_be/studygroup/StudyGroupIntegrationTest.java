@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 
 import com.mercury.star_be.common.RestDocsTestSupport;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
+import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 
 class StudyGroupIntegrationTest extends RestDocsTestSupport {
 
@@ -34,6 +35,35 @@ class StudyGroupIntegrationTest extends RestDocsTestSupport {
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.id").value(1))
+			.andDo(restDocs.document());
+	}
+
+	@Test
+	@DisplayName("스터디 그룹 정보를 수정한다.")
+	void updateStudyGroup() throws Exception {
+	    // given
+		createStudyGroup();
+		StudyGroupUpdateRequest request = StudyGroupUpdateRequest.builder()
+			.name("수정한 그룹명")
+			.description("수정한 그룹 설명")
+			.image("수정한 이미지")
+			.maxCapacity(15)
+			.isPublic(false)
+			.hasPassword(false)
+			.password("")
+			.build();
+		String content = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(put("/api/groups/{groupId}", 1L)
+			.content(content)
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.name").value("수정한 그룹명"))
+			.andExpect(jsonPath("$.data.description").value("수정한 그룹 설명"))
+			.andExpect(jsonPath("$.data.image").value("수정한 이미지"))
+			.andExpect(jsonPath("$.data.isPublic").value(false))
 			.andDo(restDocs.document());
 	}
 }

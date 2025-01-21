@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
+import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 
@@ -39,6 +41,31 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		// TODO: GroupMember에 사용자 추가 필요
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
 		return new StudyGroupCreateResponse(savedGroup.getId());
+	}
+
+	@Override
+	@Transactional
+	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId) {
+		StudyGroup studyGroup = findById(groupId);
+		studyGroup.updateStudyGroup(studyGroupUpdateRequest.getName(),
+			studyGroupUpdateRequest.getDescription(),
+			studyGroupUpdateRequest.getImage(),
+			studyGroupUpdateRequest.getMaxCapacity(),
+			studyGroupUpdateRequest.isPublic(),
+			studyGroupUpdateRequest.hasPassword(),
+			studyGroupUpdateRequest.getPassword());
+
+		return StudyGroupUpdateResponse.builder()
+			.id(studyGroup.getId())
+			.name(studyGroup.getName())
+			.description(studyGroup.getDescription())
+			.image(studyGroup.getImage())
+			.maxCapacity(studyGroup.getMaxCapacity())
+			.memberCount(studyGroup.getMemberCount())
+			.isPublic(studyGroup.isPublic())
+			.hasPassword(studyGroup.hasPassword())
+			.password(studyGroup.getPassword())
+			.build();
 	}
 
 	public StudyGroup findById(Long id) {
