@@ -9,22 +9,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0.36
-        ports:
-          - 3306:3306
-        options: > 
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        env:
-          MYSQL_ROOT_PASSWORD: root
-    
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Set up Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          docker --version
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -80,14 +75,14 @@ jobs:
       - name: Run tests
         run: ./gradlew test
         continue-on-error: true
-      # 테스트결과 저장
+
       - name: Save test results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-report
           path: build/reports/tests/test/index.html
-      # 앞에서 error 발생 시 이후 작업은 stop 
+
       - name: Stop job on test failure
         if: failure()
         run: exit 1
