@@ -12,6 +12,7 @@ import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.service.StudyGroupService;
 
@@ -41,5 +42,11 @@ public class StudyGroupController {
         StudyGroupUpdateResponse studyGroupUpdateResponse = studyGroupService.updateStudyGroup(studyGroupUpdateRequest,
             groupId);
         return ApiResponse.success(studyGroupUpdateResponse);
+    }
+
+    @GetMapping("/api/groups/{groupId}")
+    public ApiResponse<StudyGroupDetailResponse> getStudyGroup(@PathVariable(value = "groupId") Long groupId) {
+        StudyGroupDetailResponse studyGroupDetailResponse = studyGroupService.getStudyGroup(groupId);
+        return ApiResponse.success(studyGroupDetailResponse);
     }
 }

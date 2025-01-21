@@ -66,4 +66,28 @@ class StudyGroupIntegrationTest extends RestDocsTestSupport {
 			.andExpect(jsonPath("$.data.isPublic").value(false))
 			.andDo(restDocs.document());
 	}
+
+	@Test
+	@DisplayName("그룹ID로 스터디 그룹 정보를 조회한다.")
+	void getStudyGroup() throws Exception {
+	    // given
+		createStudyGroup();
+		Long groupId = 1L;
+
+	    // when & then
+	    mockMvc.perform(get("/api/groups/{groupId}", groupId)
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.id").value(1))
+			.andExpect(jsonPath("$.data.name").value("테스트 그룹"))
+			.andExpect(jsonPath("$.data.description").value("테스트 그룹 설명"))
+			.andExpect(jsonPath("$.data.image").value("이미지"))
+			.andExpect(jsonPath("$.data.maxCapacity").value(10))
+			.andExpect(jsonPath("$.data.memberCount").value(1))
+			.andExpect(jsonPath("$.data.isPublic").value(true))
+			.andExpect(jsonPath("$.data.hasPassword").value(true))
+			.andExpect(jsonPath("$.data.password").value("1234"))
+			.andDo(restDocs.document());
+	}
 }

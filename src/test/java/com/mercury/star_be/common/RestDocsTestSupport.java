@@ -39,6 +39,8 @@ public class RestDocsTestSupport {
 	public MockMvc mockMvc;
 	@Autowired
 	public ObjectMapper objectMapper;
+	@Autowired
+	private DatabaseCleanup databaseCleanup;
 
 	@BeforeEach
 	void setup(final WebApplicationContext context, final RestDocumentationContextProvider provider) {
@@ -47,5 +49,7 @@ public class RestDocsTestSupport {
 			.alwaysDo(MockMvcResultHandlers.print())
 			.alwaysDo(restDocs)
 			.build();
+
+		databaseCleanup.execute();
 	}
 }

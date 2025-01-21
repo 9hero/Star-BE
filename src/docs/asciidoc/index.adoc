@@ -11,3 +11,9 @@
 
 === 그룹 생성
 operation::study-group-integration-test/create-study-group[snippets='http-request,http-response']
+
+=== 그룹 정보 조회
+operation::study-group-integration-test/get-study-group[snippets='http-request,http-response']
+
+=== 그룹 정보 수정
+operation::study-group-integration-test/update-study-group[snippets='http-request,http-response']

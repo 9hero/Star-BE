@@ -10,6 +10,7 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
@@ -34,7 +35,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.memberCount(1)
 			.hasPassword(studyGroupCreateRequest.hasPassword())
 			.password(studyGroupCreateRequest.getPassword())
-			.isPublic(studyGroupCreateRequest.isPublic())
+			.isPublic(studyGroupCreateRequest.getIsPublic())
 			.createdAt(LocalDateTime.now())
 			.build();
 
@@ -56,6 +57,22 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			studyGroupUpdateRequest.getPassword());
 
 		return StudyGroupUpdateResponse.builder()
+			.id(studyGroup.getId())
+			.name(studyGroup.getName())
+			.description(studyGroup.getDescription())
+			.image(studyGroup.getImage())
+			.maxCapacity(studyGroup.getMaxCapacity())
+			.memberCount(studyGroup.getMemberCount())
+			.isPublic(studyGroup.isPublic())
+			.hasPassword(studyGroup.hasPassword())
+			.password(studyGroup.getPassword())
+			.build();
+	}
+
+	@Override
+	public StudyGroupDetailResponse getStudyGroup(Long groupId) {
+		StudyGroup studyGroup = findById(groupId);
+		return StudyGroupDetailResponse.builder()
 			.id(studyGroup.getId())
 			.name(studyGroup.getName())
 			.description(studyGroup.getDescription())
