@@ -1,0 +1,19 @@
+= STAR Application API Document
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+[[StudyGroup]]
+== 스터디 그룹
+
+=== 그룹 생성
+operation::study-group-integration-test/create-study-group[snippets='http-request,http-response']
+
+=== 그룹 정보 조회
+operation::study-group-integration-test/get-study-group[snippets='http-request,http-response']
+
+=== 그룹 정보 수정
+operation::study-group-integration-test/update-study-group[snippets='http-request,http-response']

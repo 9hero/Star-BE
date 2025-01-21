@@ -14,7 +14,9 @@ public class SecurityConfig{
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(
                                 "/api/**" // front단에서의 요청
-                        ).permitAll().requestMatchers("/**").permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
+                            , "/docs/index.html"
+                                ,"/timer/**" // timer 웹소켓
+                        ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요
                 );
         return http.build();

@@ -51,4 +51,19 @@ public class StudyGroup {
 		this.password = password;
 		this.createdAt = createdAt;
 	}
+
+	public void updateStudyGroup(String name, String description, String image, int maxCapacity, boolean isPublic,
+		boolean hasPassword, String password) {
+		this.name = name;
+		this.description = description;
+		this.image = image;
+		this.maxCapacity = maxCapacity;
+		this.isPublic = isPublic;
+		this.hasPassword = hasPassword;
+		this.password = password;
+	}
+
+	public boolean hasPassword() {
+		return hasPassword;
+	}
 }

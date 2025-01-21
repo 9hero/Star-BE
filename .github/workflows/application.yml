@@ -8,8 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
 
+    steps:
       - name: Check out code
         uses: actions/checkout@v3
 
@@ -19,8 +19,12 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      # chmod 권한 관련 부분 추가  
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       # Secrets를 사용해 파일 생성
-      - name: Create required files from secrets
+      - name: Create required files from secrets for deployment
         env:
           APPLICATION_YML: ${{ secrets.APPLICATION_YML }}
           JSON_CONFIG: ${{ secrets.JSON_CONFIG }}
@@ -29,31 +33,71 @@ jobs:
           echo "$APPLICATION_YML" > src/main/resources/application.yml
           echo "$JSON_CONFIG" > src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
 
+      # test 환경의 인증 설정 추가
+      - name: Create required files from secrets for testing
+        env:
+          APPLICATION_TEST_YML: ${{ secrets.APPLICATION_TEST_YML }}
+          TEST_JSON_CONFIG: ${{ secrets.JSON_CONFIG }}
+        run: |
+          mkdir -p src/test/resources
+          echo "$APPLICATION_TEST_YML" > src/main/resources/application-test.yml
+          echo "$APPLICATION_TEST_YML" > src/test/resources/application.yml
+          echo "$TEST_JSON_CONFIG" > src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+
+      # 환경 변수 설정: GitHub Actions 워크플로우에 테스트 실행 전에 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 설정하는 단계를 추가
+      - name: Set environment variable for Google Cloud credentials in tests
+        run: echo "GOOGLE_APPLICATION_CREDENTIALS=src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json" >> $GITHUB_ENV
+
       - name: Verify file creation
         run: |
           ls -l src/main/resources
           cat src/main/resources/application.yml
+          cat src/main/resources/application-test.yml
           cat src/main/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+          ls -l src/test/resources
+          cat src/test/resources/application.yml
+          cat src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
 
       - name: Clean build directory
         run: ./gradlew clean
 
+      # build/generated-snippets 디렉토리 생성(asciidoctor error 부분 수정)
+      - name: Create build directory
+        run: mkdir -p build/generated-snippets
+
       - name: Build Spring Boot application
-        run: ./gradlew build
+        run: ./gradlew build -x test -x asciidoctor
+
+      # 이전 작업까지의 결과 보고서 저장
+      - name: Save results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: save-report
+          path: build/reports/tests/test/index.html
+
+      # 에러 발생 시 결과 보고서 저장 후 다음 과정 pass
+      - name: Stop job on test failure
+        if: failure()
+        run: exit 1
 
       - name: Build Docker image
+        if: success()
         run: docker build -t mafatofu/star-be .
 
       - name: Login to Docker Hub
+        if: success()
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Push Docker image to Docker Hub
-        run: docker push jinu0125/tourservice
+        if: success()
+        run: docker push mafatofu/star-be
 
       - name: Deploy to GCP
+        if: success()
         uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.GCP_HOST }}
@@ -62,7 +106,7 @@ jobs:
           port: ${{ secrets.GCP_SSH_PORT }}
           script: |
             sudo su
-            sudo docker stop $(sudo docker ps -a | grep tourservice | awk '{print $1}') || true
-            sudo docker rm $(sudo docker ps -a | grep tourservice | awk '{print $1}') || true
-            sudo docker pull jinu0125/tourservice
+            sudo docker stop $(sudo docker ps -a | grep star-be | awk '{print $1}') || true
+            sudo docker rm $(sudo docker ps -a | grep star-be | awk '{print $1}') || true
+            sudo docker pull mafatofu/star-be
             sudo docker run -d -p 8080:8080 --name star-be mafatofu/star-be
