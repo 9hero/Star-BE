@@ -8,8 +8,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
 
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
+
+    steps:
       - name: Check out code
         uses: actions/checkout@v3
 
@@ -18,6 +23,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
+          
       # chmod 권한 관련 부분 추가  
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -42,6 +48,7 @@ jobs:
           echo "$APPLICATION_TEST_YML" > src/main/resources/application-test.yml
           echo "$APPLICATION_TEST_YML" > src/test/resources/application.yml
           echo "$TEST_JSON_CONFIG" > src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+
       # 환경 변수 설정: GitHub Actions 워크플로우에 테스트 실행 전에 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 설정하는 단계를 추가
       - name: Set environment variable for Google Cloud credentials in tests
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json" >> $GITHUB_ENV
@@ -55,6 +62,7 @@ jobs:
           ls -l src/test/resources
           cat src/test/resources/application.yml
           cat src/test/resources/inspired-shell-448000-f5-cfd1d74f35fa.json
+
       - name: Clean build directory
         run: ./gradlew clean
 
@@ -72,6 +80,7 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push mafatofu/star-be
+
       - name: Deploy to GCP
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -85,6 +94,7 @@ jobs:
             sudo docker rm $(sudo docker ps -a | grep star-be | awk '{print $1}') || true
             sudo docker pull mafatofu/star-be
             sudo docker run -d -p 8080:8080 --name star-be mafatofu/star-be
+            
       # github actions 결과 확인      
       - name: Save test results
         uses: actions/upload-artifact@v3
