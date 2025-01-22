@@ -10,7 +10,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class StudyGroupCreateRequest {
+public class  StudyGroupCreateRequest {
 
 	@NotBlank
 	@Size(min = 2, max = 50, message = "그룹명은 2자 이상 50자 이하 이어야 합니다.")
