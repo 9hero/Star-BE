@@ -45,7 +45,8 @@ public class ChatServiceImpl implements ChatService {
                 () -> new BusinessException(ChatErrorCode.CHAT_ROOM_NOT_FOUND)
         );
     }
-
+    
+    /**채팅룸 정보를 조회하여 ChatRoomResponse로 return*/
     @Override
     public ChatRoomResponse getChatRoom(Long chatRoomId) {
         ChatRoom chatRoom = findByChatRoomId(chatRoomId);
@@ -62,6 +63,10 @@ public class ChatServiceImpl implements ChatService {
         return chatRoomResponse;
     }
 
+    /**
+     * 채팅방 id를 받아
+     * List<ChatRoomMessageDto>로 return
+     * */
     public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
         List<ChatMessage> chatMessages = findChatRoomMessages(chatRoomId);
         List<ChatRoomMessageDto> chatRoomMessageDtos = new ArrayList<>();
@@ -78,7 +83,10 @@ public class ChatServiceImpl implements ChatService {
         }
         return chatRoomMessageDtos;
     }
-
+    /**
+     * List<ChatMessageFile> chatMessageFiles를 받아
+     * List<ChatMessageFileDto>로 return
+     * */
     public List<ChatMessageFileDto> getChatMessageFileDtos(List<ChatMessageFile> chatMessageFiles) {
         List<ChatMessageFileDto> chatMessageFileDtos = new ArrayList<>();
         for (ChatMessageFile chatMessageFile : chatMessageFiles) {
@@ -195,6 +203,7 @@ public class ChatServiceImpl implements ChatService {
                 .build();
     }
 
+    /**채팅방 id를 받아 List<ChatRoomMemberDto>로 return*/
     public List<ChatRoomMemberDto> getChatRoomMembers(Long chatRoomId) {
         ChatRoom chatRoom = findByChatRoomId(chatRoomId);
         List<ChatRoomMemberDto> chatRoomMembers = new ArrayList<>();
