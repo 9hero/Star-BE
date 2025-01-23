@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.mercury.star_be.chat.entity.ChatMessage;
-import com.mercury.star_be.chat.entity.ChatRoomList;
+import com.mercury.star_be.chat.entity.UserChatRoom;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 
 import jakarta.persistence.CascadeType;
@@ -38,7 +38,7 @@ public class User {
 	private List<GroupMember> groupMembers;
 
 	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ChatRoomList> chatRoomLists;
+	private List<UserChatRoom> chatRoomLists;
 
 	@OneToMany(mappedBy = "chatSender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ChatMessage> sentMessages;

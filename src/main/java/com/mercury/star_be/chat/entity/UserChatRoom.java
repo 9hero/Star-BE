@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @Table(name = "user_chat_room")
-public class ChatRoomList {
+public class UserChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,7 +31,7 @@ public class ChatRoomList {
     private User chatUser;
 
     @Builder
-    public ChatRoomList(
+    public UserChatRoom(
             LocalDateTime joinedAt,
             Boolean isBlock,
             ChatRoom chatRoom,

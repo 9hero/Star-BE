@@ -26,21 +26,20 @@ public class ChatRoom {
     private StudyGroup studyGroup;
 
     @OneToMany(mappedBy = "chatRoom")
-    private List<ChatRoomList> chatRoomLists;
+    private List<UserChatRoom> userChatRoom;
 
     @Builder
     public ChatRoom(
             ChatRoomType chatRoomType,
             LocalDateTime createdAt,
             StudyGroup studyGroup,
-            List<ChatRoomList> chatRoomLists
+            List<UserChatRoom> userChatRoom
     ) {
         this.chatRoomType = chatRoomType;
         this.createdAt = createdAt;
         this.studyGroup = studyGroup;
-        this.chatRoomLists = chatRoomLists != null ? chatRoomLists : List.of();
+        this.userChatRoom = userChatRoom != null ? userChatRoom : List.of();
 
     }
-
 
 }
