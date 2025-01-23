@@ -31,4 +31,8 @@ public class ChatMessageRequest {
     //일반 메시지 채팅은 파일이 null
     List<ChatMessageFileDto> messageFiles;
 
+    public void fileUploadContentString(){
+        this.messageContent = "fileUpload";
+    }
+
 }

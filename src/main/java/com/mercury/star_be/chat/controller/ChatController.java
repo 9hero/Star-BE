@@ -7,6 +7,9 @@ import com.mercury.star_be.chat.dto.response.ChatRoomResponse;
 import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,17 +28,20 @@ public class ChatController {
     }
 
     /**채팅 메시지 전송 컨트롤러(일반 텍스트)*/
-    @PostMapping("/api/chats?userId&recipient")
+    //@PostMapping("/api/chats?userId&recipient")
+    @MessageMapping("/chat/sendTextMessage/{chatRoomId}")
+    @SendTo("/sub/chat/{chatRoomId}")
     public ApiResponse<ChatMessageResponse> sendChatMessage(
-            @RequestBody
-            ChatMessageRequest chatMessageRequest
+            @Payload ChatMessageRequest chatMessageRequest
     ){
         ChatMessageResponse chatMessageResponse = chatService.sendMessage(chatMessageRequest);
         return ApiResponse.success(chatMessageResponse);
     }
 
     /**채팅 메시지 전송 컨트롤러(사진 파일)*/
-    @PostMapping("/api/chats/{chatId}/file-upload")
+    //@PostMapping("/api/chats/{chatId}/file-upload")
+    @MessageMapping("/chat/sendFile/{chatRoomId}")
+    @SendTo("/sub/chat/{chatRoomId}")
     public ApiResponse<ChatMessageResponse> uploadChatFile(
             @RequestBody
             ChatMessageRequest chatMessageRequest
@@ -50,7 +56,7 @@ public class ChatController {
             @PathVariable
             Long userId
     ){
-        ChatRoomListResponse chatRoomListResponse = chatService.getChatRoomList(userId);
+        ChatRoomListResponse chatRoomListResponse = chatService.getUserChatRooms(userId);
         return ApiResponse.success(chatRoomListResponse);
     }
 
