@@ -2,9 +2,12 @@ package com.mercury.star_be.studygroup.service;
 
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
+import com.mercury.star_be.studygroup.dto.response.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
 
 public interface StudyGroupService {
 
@@ -13,4 +16,6 @@ public interface StudyGroupService {
 	StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId);
 
 	StudyGroupDetailResponse getStudyGroup(Long groupId);
+
+	PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction, int page);
 }
