@@ -17,3 +17,12 @@ operation::study-group-integration-test/get-study-group[snippets='http-request,h
 
 === 그룹 정보 수정
 operation::study-group-integration-test/update-study-group[snippets='http-request,http-response']
+
+=== 스터디 그룹 리스트를 조회한다 - 키워드 없는 경우
+operation::study-group-integration-test/get-study-group-list[snippets='http-request,http-response']
+
+=== 스터디 그룹 리스트를 조회한다 - 키워드가 '토익'이고 인원 많은 순
+operation::study-group-integration-test/get-study-group-list_keyword-and-sort-by-member-count[snippets='http-request,http-response']
+
+=== 스터디 그룹 리스트를 조회한다 - 키워드가 '그룹'이고 생성일 기준 최신순
+operation::study-group-integration-test/get-study-group-list_keyword-and-sort-by-created-at[snippets='http-request,http-response']
