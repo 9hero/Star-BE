@@ -23,6 +23,7 @@ public class GroupMember {
 	private Long id;
 	@Column(length = 20)
 	private String nickname;
+	private String image;
 	private boolean isHost;
 
 	@ManyToOne(fetch = FetchType.LAZY)
