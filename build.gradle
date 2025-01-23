@@ -52,12 +52,6 @@ dependencies {
 	//gcp error로 추가
 	implementation 'com.google.code.gson:gson:2.11.0'
 
-	// Test Container
-	testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:mysql'
-	testImplementation 'org.testcontainers:jdbc'
-
 	// Rest Docs
 	asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
