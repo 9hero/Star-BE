@@ -42,7 +42,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	//spring messaging(stomp지원)
 	implementation 'org.springframework:spring-messaging'
-	//stomp와 rabbitmq 연결을 위한 gradle
+	//RabbitMQ에서 브로커 연결 및 통신 설정을 위해 기본으로 사용됨
 	implementation 'io.projectreactor.netty:reactor-netty:1.1.13'
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 	testImplementation 'org.testcontainers:rabbitmq'
