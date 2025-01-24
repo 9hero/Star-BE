@@ -3,6 +3,8 @@ package com.mercury.star_be.user.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.mercury.star_be.chat.entity.ChatMessage;
+import com.mercury.star_be.chat.entity.UserChatRoom;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 
 import jakarta.persistence.CascadeType;
@@ -44,5 +46,15 @@ public class User {
 		this.image = image;
 		this.isActive = true;
 		this.createdAt = LocalDateTime.now();
-	}
+
+	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<UserChatRoom> chatRoomLists;
+
+	@OneToMany(mappedBy = "chatSender", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ChatMessage> sentMessages;
+
+	@OneToMany(mappedBy = "chatReceiver", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ChatMessage> receivedMessages;
+
+
 }
