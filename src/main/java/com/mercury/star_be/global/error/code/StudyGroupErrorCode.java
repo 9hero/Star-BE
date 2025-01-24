@@ -10,8 +10,9 @@ import lombok.RequiredArgsConstructor;
 public enum StudyGroupErrorCode implements ErrorCode {
 
 	// 스터디 그룹 관련 에러
-	STUDY_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 스터디 그룹입니다.");
-
+	STUDY_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 스터디 그룹입니다."),
+	STUDY_GROUP_IS_FULL(HttpStatus.CONFLICT, "스터디 그룹이 가득 찬 상태입니다."),
+	USER_ALREADY_EXIST_IN_GROUP(HttpStatus.CONFLICT, "이미 유저가 가입한 그룹입니다.");
 	private final HttpStatus httpStatus;
 	private final String message;
 }

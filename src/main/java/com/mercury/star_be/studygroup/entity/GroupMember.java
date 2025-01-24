@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -32,4 +33,14 @@ public class GroupMember {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id")
 	private User member;
+
+	@Builder
+	public GroupMember( String nickname,  String image,  boolean isHost, StudyGroup group ,User member) {
+		this.nickname = nickname;
+		this.image = image;
+		this.isHost = isHost;
+		this.group = group;
+		this.member = member;
+
+	}
 }
