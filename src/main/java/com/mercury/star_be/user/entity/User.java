@@ -14,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,6 +37,15 @@ public class User {
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> groupMembers;
+
+	@Builder
+	public User(String email, String nickname, String provider, String image) {
+		this.email = email;
+		this.nickname = nickname;
+		this.provider = provider;
+		this.image = image;
+		this.isActive = true;
+		this.createdAt = LocalDateTime.now();
 
 	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserChatRoom> chatRoomLists;

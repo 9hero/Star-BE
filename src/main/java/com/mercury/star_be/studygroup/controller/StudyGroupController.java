@@ -56,4 +56,14 @@ public class StudyGroupController {
 
         return ApiResponse.success(response);
     }
+
+    //testcode 미작성 추후에 token 받아서 처리해야함
+    @PostMapping("/api/groups/{groupId}/join/{userId}")
+    public ApiResponse joinStudyGroup(
+            @PathVariable(value = "groupId") Long groupId,
+            @PathVariable(value = "userId") Long userId
+            ) {
+        studyGroupService.joinStudyGroup(groupId, userId);
+        return ApiResponse.success();
+    }
 }
