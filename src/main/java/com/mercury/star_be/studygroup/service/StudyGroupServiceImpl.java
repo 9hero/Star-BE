@@ -60,6 +60,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Transactional
 	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId) {
 		StudyGroup studyGroup = findById(groupId);
+		int updatedMaxCapacity = studyGroupUpdateRequest.getMaxCapacity();
+		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
+			throw new BusinessException(StudyGroupErrorCode.INVALID_MAX_CAPACITY);
+		}
+
 		studyGroup.updateStudyGroup(studyGroupUpdateRequest.getName(),
 			studyGroupUpdateRequest.getDescription(),
 			studyGroupUpdateRequest.getImage(),
