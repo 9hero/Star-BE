@@ -46,6 +46,7 @@ public class User {
 		this.image = image;
 		this.isActive = true;
 		this.createdAt = LocalDateTime.now();
+	}
 
 	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserChatRoom> chatRoomLists;

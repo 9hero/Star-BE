@@ -1,6 +1,8 @@
 package com.mercury.star_be.studygroup.controller;
 
 import com.mercury.star_be.studygroup.dto.response.*;
+import com.mercury.star_be.studygroup.entity.GroupMember;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,13 +59,34 @@ public class StudyGroupController {
         return ApiResponse.success(response);
     }
 
-    //testcode 미작성 추후에 token 받아서 처리해야함
+    //TODO: testcode 미작성 추후에 token 받아서 처리해야함
     @PostMapping("/api/groups/{groupId}/join/{userId}")
     public ApiResponse joinStudyGroup(
             @PathVariable(value = "groupId") Long groupId,
             @PathVariable(value = "userId") Long userId
             ) {
         studyGroupService.joinStudyGroup(groupId, userId);
+        return ApiResponse.success();
+    }
+
+    //TODO: testcode 미작성 추후에 token 받아서 처리해야함
+    @DeleteMapping("/api/groups/{groupId}/exit/{userId}")
+    public ApiResponse exitStudyGroup(
+            @PathVariable(value = "groupId") Long groupId,
+            @PathVariable(value = "userId") Long userId
+    ) {
+        studyGroupService.exitStudyGroup(groupId, userId);
+        return ApiResponse.success();
+    }
+
+    //TODO: testcode 미작성 추후에 token 받아서 처리해야함
+    @PutMapping("/api/groups/{groupId}/hostChange/{oldHostId}/{newHostId}")
+    public ApiResponse changeGroupHost(
+            @PathVariable(value = "groupId") Long groupId,
+            @PathVariable(value = "oldHostId") Long loggedInUserId, // replace by token later
+            @PathVariable(value = "newHostId") Long newHostId
+    ) {
+        studyGroupService.changeHost(groupId, loggedInUserId, newHostId);
         return ApiResponse.success();
     }
 }

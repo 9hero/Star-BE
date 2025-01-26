@@ -15,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Getter
 @NoArgsConstructor
@@ -68,8 +69,14 @@ public class StudyGroup {
 	public boolean hasPassword() {
 		return hasPassword;
 	}
+
+	@Transactional
 	public void addMember (GroupMember member){
 		members.add(member);
 		this.memberCount++;
+	}
+
+	public void decrementMemberCount() {
+		this.memberCount = Math.max(this.memberCount - 1, 0);
 	}
 }
