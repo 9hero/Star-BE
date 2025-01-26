@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.studygroup.dto.response.*;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
@@ -127,16 +128,19 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Override
 	@Transactional
 	public void joinStudyGroup(Long groupId, Long userId) throws BusinessException {
-		//가입 전 전처리
-		// 가입하려는 그룹이 다 찼을떄
-		// 가입하려는 그룹이 존재하지 않을때
-		// 가입하려는 그룹에 이미 유저가 가입한 상태일때
+
 		User user = userRepository.findById(userId).orElseThrow();
+
+		// 가입하려는 그룹이 존재하지 않을때
 		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
 				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
+
+		// 가입하려는 그룹이 다 찼을떄
 		if (studyGroup.getMemberCount() >= studyGroup.getMaxCapacity()) {
 			throw new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_FULL);
 		}
+
+		// 가입하려는 그룹에 이미 유저가 가입한 상태일때
 		boolean isAlreadyJoined = groupMemberRepository.existsByGroupIdAndMemberId(studyGroup.getId(), user.getId());
 		if (isAlreadyJoined) {
 			throw new BusinessException(StudyGroupErrorCode.USER_ALREADY_EXIST_IN_GROUP);
@@ -149,9 +153,100 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 				.isHost(false)
 				.image(user.getImage())
 				.nickname(user.getNickname())
+				.joinedAt(LocalDateTime.now())
 				.build();
 
 		studyGroup.addMember(groupMember);
+	}
+
+	@Override
+	@Transactional
+	public void exitStudyGroup(Long groupId, Long userId) throws BusinessException {
+		User user = userRepository.findById(userId)
+				.orElseThrow();
+		// 그룹이 존재하는지
+		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
+		// 탈퇴하려는 사람이 그룹에 존재하는지
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+
+		// 그룹의 멤버가 1명만 남아 있는 경우 (호스트 == 마지막 유저)
+		if (studyGroup.getMemberCount() == 1) {
+			// 그룹 삭제
+			groupMemberRepository.deleteByGroupIdAndMemberId(groupId, userId);
+			studyGroupRepository.delete(studyGroup);
+			return; // 여기서 종료
+		}
+
+		// 유저가 호스트인 경우 새 호스트 지정
+		if(groupMember.isHost()) {
+			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc(studyGroup.getId(), groupMember.getId())
+					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDYGROUP_IS_EMPTY));
+			System.out.println(newHost.getId());
+			newHost.updateGroupMember(
+					newHost.getId(),
+					newHost.getNickname(),
+					newHost.getImage(),
+					true, // 새 호스트 설정
+					newHost.getGroup(),
+					newHost.getMember(),
+					newHost.getJoinedAt()
+			);
+
+			// TODO: @Transactional 과 관련된 질문
+			// 변경된 엔티티를 저장
+
+			groupMemberRepository.save(newHost);
+		}
+
+		// 그룹 멤버 관계 삭제
+		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), user.getId());
+
+		// 그룹의 멤버 카운트 감소
+		studyGroup.decrementMemberCount();
+
+		// 그룹이 비어 있는 경우
+		if (studyGroup.getMemberCount() == 0) {
+			studyGroupRepository.delete(studyGroup); // 그룹 삭제
+		}
+
+		// 변경 사항 저장 Transactional?
+		studyGroupRepository.save(studyGroup);
+
+	}
+
+	//TODO: token 받아서 처리하기, transactional?
+	@Override
+	@Transactional
+	public void changeHost(Long groupId, Long userId, Long newHostId) {
+
+		GroupMember currentHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		GroupMember newHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, newHostId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+
+		currentHost.updateGroupMember(
+				currentHost.getId(),
+				currentHost.getNickname(),
+				currentHost.getImage(),
+				false, // 호트트 권한 박탈
+				currentHost.getGroup(),
+				currentHost.getMember(),
+				currentHost.getJoinedAt()
+		);
+		newHost.updateGroupMember(
+				newHost.getId(),
+				newHost.getNickname(),
+				newHost.getImage(),
+				true, // 새 호스트 설정
+				newHost.getGroup(),
+				newHost.getMember(),
+				newHost.getJoinedAt()
+		);
+		// 변경된 엔티티 저장
+//		groupMemberRepository.save(currentHost);
+//		groupMemberRepository.save(newHost);
 	}
 
 	public StudyGroup findById(Long id) {
