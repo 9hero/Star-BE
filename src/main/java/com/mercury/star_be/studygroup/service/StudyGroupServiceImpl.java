@@ -2,14 +2,7 @@ package com.mercury.star_be.studygroup.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.mercury.star_be.global.error.code.UserErrorCode;
-import com.mercury.star_be.studygroup.dto.response.*;
-import com.mercury.star_be.studygroup.entity.GroupMember;
-import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
-import com.mercury.star_be.user.entity.User;
-import com.mercury.star_be.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,8 +13,17 @@ import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
+import com.mercury.star_be.studygroup.dto.response.PaginationResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupListResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
+import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
+import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
+import com.mercury.star_be.user.entity.User;
+import com.mercury.star_be.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,6 +60,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Transactional
 	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId) {
 		StudyGroup studyGroup = findById(groupId);
+		int updatedMaxCapacity = studyGroupUpdateRequest.getMaxCapacity();
+		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
+			throw new BusinessException(StudyGroupErrorCode.INVALID_MAX_CAPACITY);
+		}
+
 		studyGroup.updateStudyGroup(studyGroupUpdateRequest.getName(),
 			studyGroupUpdateRequest.getDescription(),
 			studyGroupUpdateRequest.getImage(),
@@ -91,7 +98,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.memberCount(studyGroup.getMemberCount())
 			.isPublic(studyGroup.isPublic())
 			.hasPassword(studyGroup.hasPassword())
-			.password(studyGroup.getPassword())
+			.createdAt(studyGroup.getCreatedAt().toLocalDate())
 			.build();
 	}
 
@@ -112,7 +119,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 						.memberCount(studyGroup.getMemberCount())
 						.isPublic(studyGroup.isPublic())
 						.hasPassword(studyGroup.hasPassword())
-						.password(studyGroup.getPassword())
 						.createdAt(studyGroup.getCreatedAt())
 						.build()
 				)
