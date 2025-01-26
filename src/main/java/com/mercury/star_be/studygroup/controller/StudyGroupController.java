@@ -1,8 +1,6 @@
 package com.mercury.star_be.studygroup.controller;
 
 import com.mercury.star_be.studygroup.dto.response.*;
-import com.mercury.star_be.studygroup.entity.GroupMember;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

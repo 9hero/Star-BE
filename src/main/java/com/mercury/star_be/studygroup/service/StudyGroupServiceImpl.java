@@ -170,7 +170,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		// 탈퇴하려는 사람이 그룹에 존재하는지
 		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
 				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
-
 		// 그룹의 멤버가 1명만 남아 있는 경우 (호스트 == 마지막 유저)
 		if (studyGroup.getMemberCount() == 1) {
 			// 그룹 삭제
@@ -178,12 +177,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			studyGroupRepository.delete(studyGroup);
 			return; // 여기서 종료
 		}
-
 		// 유저가 호스트인 경우 새 호스트 지정
 		if(groupMember.isHost()) {
 			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc(studyGroup.getId(), groupMember.getId())
-					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDYGROUP_IS_EMPTY));
-			System.out.println(newHost.getId());
+					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
 			newHost.updateGroupMember(
 					newHost.getId(),
 					newHost.getNickname(),
@@ -193,26 +190,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 					newHost.getMember(),
 					newHost.getJoinedAt()
 			);
-
 			// TODO: @Transactional 과 관련된 질문
-			// 변경된 엔티티를 저장
-
 			groupMemberRepository.save(newHost);
 		}
-
 		// 그룹 멤버 관계 삭제
 		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), user.getId());
-
 		// 그룹의 멤버 카운트 감소
 		studyGroup.decrementMemberCount();
-
-		// 그룹이 비어 있는 경우
-		if (studyGroup.getMemberCount() == 0) {
-			studyGroupRepository.delete(studyGroup); // 그룹 삭제
-		}
-
-		// 변경 사항 저장 Transactional?
-		studyGroupRepository.save(studyGroup);
 
 	}
 
