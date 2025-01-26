@@ -216,6 +216,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		GroupMember newHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, newHostId)
 				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
 
+		if (!currentHost.isHost()) {
+			throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
+		}
 		currentHost.updateGroupMember(
 				currentHost.getId(),
 				currentHost.getNickname(),
