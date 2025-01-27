@@ -3,8 +3,6 @@ package com.mercury.star_be.studygroup.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.mercury.star_be.studygroup.entity.StudyGroup;
-import com.mercury.star_be.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.mercury.star_be.studygroup.entity.GroupMember;

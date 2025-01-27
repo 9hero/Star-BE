@@ -1,6 +1,8 @@
 package com.mercury.star_be.studygroup.controller;
 
+import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.response.*;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,8 +17,6 @@ import com.mercury.star_be.studygroup.service.StudyGroupService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -86,5 +86,15 @@ public class StudyGroupController {
     ) {
         studyGroupService.changeHost(groupId, loggedInUserId, newHostId);
         return ApiResponse.success();
+    }
+
+    @PatchMapping("/api/users/{userId}/groups/{groupId}/change-nickname")
+    public ApiResponse<ChangeGroupNicknameResponse> changeGroupNickname(
+        @RequestBody ChangeGroupNicknameRequest changeGroupNicknameRequest,
+        @PathVariable(value = "userId") Long userId,
+        @PathVariable(value = "groupId") Long groupId) {
+        ChangeGroupNicknameResponse changeGroupNicknameResponse = studyGroupService.changeGroupNickname(userId, groupId,
+            changeGroupNicknameRequest);
+        return ApiResponse.success(changeGroupNicknameResponse);
     }
 }
