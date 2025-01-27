@@ -16,7 +16,6 @@ public class NoticeUpdateResponse {
     private String title;
     private String content;
     private LocalDateTime createAt;
-    private User writer;
-    private StudyGroup studyGroup;
+
 
 }

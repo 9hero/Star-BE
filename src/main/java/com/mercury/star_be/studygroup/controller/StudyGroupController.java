@@ -78,7 +78,7 @@ public class StudyGroupController {
     }
 
     //TODO: testcode 미작성 추후에 token 받아서 처리해야함
-    @PutMapping("/api/groups/{groupId}/hostChange/{oldHostId}/{newHostId}")
+    @PutMapping("/api/groups/{groupId}/change-admin/{oldHostId}/{newHostId}")
     public ApiResponse changeGroupHost(
             @PathVariable(value = "groupId") Long groupId,
             @PathVariable(value = "oldHostId") Long loggedInUserId, // replace by token later
