@@ -1,6 +1,7 @@
 package com.mercury.star_be.studygroup.service;
 
 import com.mercury.star_be.global.error.BusinessException;
+import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.*;
@@ -21,4 +22,6 @@ public interface StudyGroupService {
 	void exitStudyGroup(Long groupId, Long userId) throws BusinessException;
 
 	void changeHost (Long groupId, Long userId, Long newHostId);
+
+	ChangeGroupNicknameResponse changeGroupNickname(Long userId, Long groupId, ChangeGroupNicknameRequest changeGroupNicknameRequest);
 }
