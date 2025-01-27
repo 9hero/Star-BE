@@ -39,7 +39,7 @@ public class WebSocketBrokerConfiguration implements WebSocketMessageBrokerConfi
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 구독 요청을 처리할 prefix 설정
         //enableStompBrokerRelay : 외부 메시지 브로커와 통합하기 위해 사용되는 옵션
-        registry.enableStompBrokerRelay("/sub")
+        registry.enableStompBrokerRelay("/topic")
                 .setRelayHost(rabbitmqHost)
                 .setRelayPort(rabbitmqPort)
                 .setClientLogin(rabbitmqUsername)
