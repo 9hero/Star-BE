@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
+import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
+import com.mercury.star_be.studygroup.dto.response.ChangeGroupNicknameResponse;
 import com.mercury.star_be.studygroup.dto.response.PaginationResponse;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
 import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
@@ -240,6 +242,18 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		// 변경된 엔티티 저장
 //		groupMemberRepository.save(currentHost);
 //		groupMemberRepository.save(newHost);
+	}
+
+	@Override
+	@Transactional
+	public ChangeGroupNicknameResponse changeGroupNickname(Long userId, Long groupId,
+		ChangeGroupNicknameRequest changeGroupNicknameRequest) {
+		findById(groupId);
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		String changeNickname = groupMember.changeNickname(changeGroupNicknameRequest.getNickname());
+
+		return new ChangeGroupNicknameResponse(changeNickname);
 	}
 
 	public StudyGroup findById(Long id) {

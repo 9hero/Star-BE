@@ -61,4 +61,9 @@ public class GroupMember {
 		this.joinedAt = joinedAt;
 
 	}
+
+	public String changeNickname(String nickname) {
+		this.nickname = nickname;
+		return this.nickname;
+	}
 }
