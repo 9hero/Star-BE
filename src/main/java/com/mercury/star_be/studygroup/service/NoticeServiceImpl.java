@@ -6,6 +6,7 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.NoticeCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.NoticeUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.NoticeCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.NoticeResponse;
 import com.mercury.star_be.studygroup.dto.response.NoticeUpdateResponse;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.Notice;
@@ -21,8 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-
-
+import java.util.List;
 
 @Transactional
 @Service
@@ -104,6 +104,11 @@ public class NoticeServiceImpl implements NoticeService {
         noticeRepository.delete(notice);
 
         log.info("공지사항 삭제됨: noticeId={}, groupId={}, deletedBy={}", noticeId, groupId, writerId);
+    }
+
+	@Override
+	public List<NoticeResponse> getNoticeList(Long groupId) {
+        return noticeRepository.findAllByGroupId(groupId);
     }
 
 }
