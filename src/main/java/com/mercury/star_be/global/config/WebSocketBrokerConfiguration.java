@@ -22,6 +22,8 @@ public class WebSocketBrokerConfiguration implements WebSocketMessageBrokerConfi
     @Value("${spring.rabbitmq.port}")
     int rabbitmqPort;
 
+
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 웹소켓 연결 요청 엔드포인트
