@@ -1,11 +1,10 @@
 package com.mercury.star_be.studygroup.dto.response;
 
-import jakarta.persistence.Column;
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -19,7 +18,6 @@ public class StudyGroupListResponse {
     private int memberCount;
     private Boolean isPublic;
     private Boolean hasPassword;
-    private String password;
     private LocalDateTime createdAt;
 
 }
