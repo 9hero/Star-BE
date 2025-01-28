@@ -1,10 +1,13 @@
 package com.mercury.star_be.studygroup.controller;
 
 
+import java.util.List;
+
 import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.studygroup.dto.request.NoticeCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.NoticeUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.NoticeCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.NoticeResponse;
 import com.mercury.star_be.studygroup.dto.response.NoticeUpdateResponse;
 import com.mercury.star_be.studygroup.service.NoticeService;
 import jakarta.validation.Valid;
@@ -46,5 +49,19 @@ public class NoticeController {
 
         noticeService.deleteNotice(groupId, userId, noticeId);
         return ApiResponse.success();
+    }
+
+    @GetMapping("/api/groups/{groupId}/notices")
+    public ApiResponse<List<NoticeResponse>> getNoticeList(@PathVariable(value = "groupId") Long groupId) {
+        List<NoticeResponse> noticeList = noticeService.getNoticeList(groupId);
+        return ApiResponse.success(noticeList);
+    }
+
+    @GetMapping("/api/groups/{groupId}/notices/{noticeId}")
+    public ApiResponse<NoticeResponse> getNotice(
+        @PathVariable(value = "groupId") Long groupId,
+        @PathVariable(value = "noticeId") Long noticeId) {
+        NoticeResponse noticeResponse = noticeService.getNotice(groupId, noticeId);
+        return ApiResponse.success(noticeResponse);
     }
 }
