@@ -68,8 +68,7 @@ public class NoticeServiceImpl implements NoticeService {
         if (!hostMember.isHost()) {
             throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
         }
-        Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()->new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+        Notice notice = findById(noticeId);
 
         if (!notice.getStudyGroup().getId().equals(groupId)) {
             throw new BusinessException(NoticeErrorCode.NOTICE_NOT_IN_GROUP);
@@ -96,8 +95,7 @@ public class NoticeServiceImpl implements NoticeService {
             throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
         }
 
-        Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()->new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+        Notice notice = findById(noticeId);
         if (!notice.getStudyGroup().getId().equals(groupId)) {
             throw new BusinessException(NoticeErrorCode.NOTICE_NOT_IN_GROUP);
         }
@@ -109,6 +107,16 @@ public class NoticeServiceImpl implements NoticeService {
 	@Override
 	public List<NoticeResponse> getNoticeList(Long groupId) {
         return noticeRepository.findAllByGroupId(groupId);
+    }
+
+    @Override
+    public NoticeResponse getNotice(Long groupId, Long noticeId) {
+        return noticeRepository.findByGroupIdAndNoticeId(groupId, noticeId);
+    }
+
+    private Notice findById(Long noticeId) {
+        return noticeRepository.findById(noticeId)
+            .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
 }

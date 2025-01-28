@@ -36,4 +36,22 @@ public class NoticeCustomRepositoryImpl implements NoticeCustomRepository {
 			.where(notice.studyGroup.id.eq(groupId))
 			.fetch();
 	}
+
+	@Override
+	public NoticeResponse findByGroupIdAndNoticeId(Long groupId, Long noticeId) {
+		return jpaQueryFactory.select(
+				Projections.constructor(NoticeResponse.class,
+					notice.id,
+					notice.title,
+					notice.content,
+					groupMember.nickname.as("writer"),
+					notice.createdAt
+				)
+			)
+			.from(notice)
+			.leftJoin(groupMember).on(notice.writer.id.eq(groupMember.member.id)
+				.and(groupMember.group.id.eq(groupId)))
+			.where(notice.id.eq(noticeId))
+			.fetchOne();
+	}
 }

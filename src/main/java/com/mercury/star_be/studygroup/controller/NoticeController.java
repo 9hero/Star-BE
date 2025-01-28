@@ -56,4 +56,12 @@ public class NoticeController {
         List<NoticeResponse> noticeList = noticeService.getNoticeList(groupId);
         return ApiResponse.success(noticeList);
     }
+
+    @GetMapping("/api/groups/{groupId}/notices/{noticeId}")
+    public ApiResponse<NoticeResponse> getNotice(
+        @PathVariable(value = "groupId") Long groupId,
+        @PathVariable(value = "noticeId") Long noticeId) {
+        NoticeResponse noticeResponse = noticeService.getNotice(groupId, noticeId);
+        return ApiResponse.success(noticeResponse);
+    }
 }
