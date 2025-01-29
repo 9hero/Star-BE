@@ -53,8 +53,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-  
-    //gcp
+
+	//gcp
 	implementation 'com.google.cloud:spring-cloud-gcp-starter'
 	implementation 'com.google.cloud:spring-cloud-gcp-starter-storage'
 	//gcp error로 추가
@@ -73,33 +73,45 @@ dependencies {
 	// Redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+
+	// JWT
+	implementation "io.jsonwebtoken:jjwt:0.12.3"
+
+	// oauth
+	implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+
+	/* Apache commons-io */
+	implementation 'commons-io:commons-io:2.11.0'
+	/* Apache Commons Fil */
+	implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.4'
+
 }
 
 ext {
-	snippetsDir = file('build/generated-snippets')
+snippetsDir = file('build/generated-snippets')
 }
 
 test {
-	outputs.dir snippetsDir
+outputs.dir snippetsDir
 }
 
 asciidoctor {
-	inputs.dir snippetsDir
-	configurations 'asciidoctorExt'
-	dependsOn test
+inputs.dir snippetsDir
+configurations 'asciidoctorExt'
+dependsOn test
 }
 
 bootJar {
-	dependsOn asciidoctor
-	copy {
-		from asciidoctor.outputDir
-		into 'src/main/resources/static/docs'
-	}
+dependsOn asciidoctor
+copy {
+    from asciidoctor.outputDir
+    into 'src/main/resources/static/docs'
+}
 }
 clean {
-	delete file('src/main/generated')
+delete file('src/main/generated')
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+useJUnitPlatform()
 }
