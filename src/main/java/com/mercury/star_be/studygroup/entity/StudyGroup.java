@@ -1,8 +1,10 @@
 package com.mercury.star_be.studygroup.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.mercury.star_be.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Getter
 @NoArgsConstructor
@@ -36,7 +39,7 @@ public class StudyGroup {
 	private LocalDateTime createdAt;
 
 	@OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<GroupMember> members;
+	private List<GroupMember> members = new ArrayList<>();
 
 	@Builder
 	public StudyGroup(String name, String description, String image, int maxCapacity, int memberCount, boolean isPublic,
@@ -65,5 +68,15 @@ public class StudyGroup {
 
 	public boolean hasPassword() {
 		return hasPassword;
+	}
+
+	@Transactional
+	public void addMember (GroupMember member){
+		members.add(member);
+		this.memberCount++;
+	}
+
+	public void decrementMemberCount() {
+		this.memberCount = Math.max(this.memberCount - 1, 0);
 	}
 }

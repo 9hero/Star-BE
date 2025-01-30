@@ -1,24 +1,22 @@
 package com.mercury.star_be.studygroup;
 
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.mercury.star_be.fixture.StudyGroupFixture;
-import com.mercury.star_be.studygroup.entity.StudyGroup;
-import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
-import org.junit.jupiter.api.BeforeEach;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import com.mercury.star_be.common.RestDocsTestSupport;
+import com.mercury.star_be.fixture.StudyGroupFixture;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 
 class StudyGroupIntegrationTest extends RestDocsTestSupport {
 
@@ -99,7 +97,6 @@ class StudyGroupIntegrationTest extends RestDocsTestSupport {
 			.andExpect(jsonPath("$.data.memberCount").value(1))
 			.andExpect(jsonPath("$.data.isPublic").value(true))
 			.andExpect(jsonPath("$.data.hasPassword").value(true))
-			.andExpect(jsonPath("$.data.password").value("1234"))
 			.andDo(restDocs.document());
 	}
 

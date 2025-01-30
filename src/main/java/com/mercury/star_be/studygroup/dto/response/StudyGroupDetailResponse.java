@@ -1,5 +1,7 @@
 package com.mercury.star_be.studygroup.dto.response;
 
+import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,5 +19,5 @@ public class StudyGroupDetailResponse {
 	private int memberCount;
 	private Boolean isPublic;
 	private Boolean hasPassword;
-	private String password;
+	private LocalDate createdAt;
 }
