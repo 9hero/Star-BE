@@ -6,10 +6,15 @@ import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.common.ApiResponse;
+import com.mercury.star_be.user.dto.response.UserResponse;
+import com.mercury.star_be.user.entity.User;
+import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,12 +22,14 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
 
     private final ChatService chatService;
-
+    private final JwtUtil jwtUtil;
     /**채팅방 조회 컨트롤러*/
     @GetMapping("/api/chats/{chatRoomId}")
     public ApiResponse<ChatRoomResponse> getChatRoom(
             @PathVariable(value = "chatRoomId") Long chatRoomId
     ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserResponse userResponse = jwtUtil.getAuthenticatedUser(authentication);
         ChatRoomResponse chatRoomResponse = chatService.getChatRoom(chatRoomId);
         return ApiResponse.success(chatRoomResponse);
     }
