@@ -32,8 +32,8 @@ public class ChatController {
      * /pub/chat/sendTextMessage/{chatRoomId} 경로로 보낸 메시지를 받음
      * 이 컨트롤러에서 처리된 메시지를 /sub/chat/{chatRoomId} 경로로 구독하고 있는 클라이언트에게 전송
      * */
-    @MessageMapping("/pub/chat/sendTextMessage/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/chat/sendTextMessage/{chatRoomId}")
+    @SendTo("/topic/chat.{chatRoomId}")
     public ApiResponse<ChatMessageResponse> sendChatMessage(
             @Payload ChatMessageRequest chatMessageRequest
     ){
@@ -42,8 +42,8 @@ public class ChatController {
     }
 
     /**채팅 메시지 전송 컨트롤러(사진 파일)*/
-    @MessageMapping("/pub/chat/sendFile/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/chat/sendFile/{chatRoomId}")
+    @SendTo("/topic/chat.{chatRoomId}")
     public ApiResponse<ChatMessageResponse> uploadChatFile(
             @RequestBody
             ChatMessageRequest chatMessageRequest
