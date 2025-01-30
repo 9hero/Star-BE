@@ -11,11 +11,13 @@ import com.mercury.star_be.chat.dto.response.ChatMessageResponse;
 import com.mercury.star_be.chat.dto.response.ChatRoomListResponse;
 import com.mercury.star_be.chat.dto.response.ChatRoomResponse;
 import com.mercury.star_be.chat.entity.*;
+import com.mercury.star_be.chat.repository.ChatMessageFileRepository;
 import com.mercury.star_be.chat.repository.ChatMessageRepository;
 import com.mercury.star_be.chat.repository.UserChatRoomRepository;
 import com.mercury.star_be.chat.repository.ChatRoomRepository;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
+import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
@@ -39,6 +41,7 @@ public class ChatServiceImpl implements ChatService {
     private final UserRepository userRepository;
     private final RabbitMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
+    private final ChatMessageFileRepository chatMessageFileRepository;
 
     /**
      * 채팅방 조회
@@ -112,11 +115,6 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * 1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인 서비스
-     */
-
-
-    /**
      * 채팅 전송 서비스
      * 일반 채팅 메시지 / 파일 업로드
      */
@@ -127,10 +125,10 @@ public class ChatServiceImpl implements ChatService {
         // STOMP 메시지를 받아 RabbitMQ로 메시지 전달
         ChatRoom chatRoom = findByChatRoomId(chatMessageRequest.getChatRoomId());
 
-        //구독자에게 메시지 전달
+        // 구독자에게 메시지 전달
         try {
             String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
-            messagingTemplate.convertAndSend("/topic/chat/" + chatMessageRequest.getChatRoomId(), messageJson);
+            messagingTemplate.convertAndSend("/topic/chat." + chatMessageRequest.getChatRoomId(), messageJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
@@ -139,30 +137,56 @@ public class ChatServiceImpl implements ChatService {
             throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
         }
 
+        // 송신자 및 수신자 조회
+        User chatSender = userRepository.findById(chatMessageRequest.getSenderId())
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+        User chatReceiver = userRepository.findById(chatMessageRequest.getReceiverId())
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
-        // 메시지가 파일 업로드라면
-        if (chatMessageRequest.getMessageFiles() != null && !chatMessageRequest.getMessageFiles().isEmpty()) {
-            // 파일 업로드인 경우, "fileUpload" 라는 String이 messageContent로 입력됨
-            chatMessageRequest.fileUploadContentString();
-        }
-
-        //읽지 않은 메시지 수
-        //DM : 1
-        //GROUP : 그룹멤버수
+        // 읽지 않은 메시지 수
         int unreadCount = 1;
         if (chatRoom.getChatRoomType() == ChatRoomType.GROUP) {
             unreadCount = chatRoom.getStudyGroup().getMemberCount();
         }
+
+        // 메시지 객체 생성
+        ChatMessage chatMessage = ChatMessage.builder()
+                .content(chatMessageRequest.getMessageContent())
+                .unreadCount(unreadCount)
+                .createdAt(LocalDateTime.now())
+                .chatSender(chatSender)
+                .chatReceiver(chatReceiver)
+                .chatRoom(chatRoom)
+                .build();
+
+        // 메시지 파일 객체 생성 및 저장
+        List<ChatMessageFile> chatMessageFiles = new ArrayList<>();
+        if (chatMessageRequest.getMessageFiles() != null && !chatMessageRequest.getMessageFiles().isEmpty()) {
+            chatMessageRequest.fileUploadContentString();
+            for (ChatMessageFileDto dto : chatMessageRequest.getMessageFiles()) {
+                ChatMessageFile chatMessageFile = ChatMessageFile.builder()
+                        .fileUrl(dto.getFileUrl())
+                        .fileType(dto.getFileType())
+                        .chatMessage(chatMessage)
+                        .build();
+                chatMessageFiles.add(chatMessageFile);
+                chatMessageFileRepository.save(chatMessageFile);
+            }
+        }
+        // 파일 업데이트
+        chatMessage.updateFiles(chatMessageFiles);
+
         // ChatMessageResponse 생성
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .createdAt(LocalDateTime.now())
-                .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방인원)
+                .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방 인원)
                 .messageContent(chatMessageRequest.getMessageContent())
                 .messageFiles(chatMessageRequest.getMessageFiles()) // 파일 정보 추가
                 .build();
 
         return response;
     }
+
 
     /**
      * 채팅방 생성 서비스
