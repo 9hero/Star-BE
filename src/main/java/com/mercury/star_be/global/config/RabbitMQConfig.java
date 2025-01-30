@@ -33,7 +33,7 @@ public class RabbitMQConfig {
 
     private static final String CHAT_QUEUE_NAME = "chat.queue";
     private static final String CHAT_EXCHANGE_NAME = "chat.exchange";
-    private static final String ROUTING_KEY = "room.*";
+    private static final String ROUTING_KEY = "chat.*";
 
     //Queue 등록
     @Bean
