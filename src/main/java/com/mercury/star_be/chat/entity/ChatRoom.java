@@ -25,8 +25,8 @@ public class ChatRoom {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
-    @OneToMany(mappedBy = "chatRoom")
-    private List<UserChatRoom> userChatRooms;
+//    @OneToMany(mappedBy = "chatRoom")
+//    private List<UserChatRoom> userChatRooms;
 
     @Builder
     public ChatRoom(
@@ -38,7 +38,7 @@ public class ChatRoom {
         this.chatRoomType = chatRoomType;
         this.createdAt = createdAt;
         this.studyGroup = studyGroup;
-        this.userChatRooms = userChatRooms != null ? userChatRooms : List.of();
+        //this.userChatRooms = userChatRooms != null ? userChatRooms : List.of();
 
     }
 
