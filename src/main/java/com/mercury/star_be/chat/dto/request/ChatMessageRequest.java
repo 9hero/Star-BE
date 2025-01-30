@@ -24,6 +24,7 @@ public class ChatMessageRequest {
     private Long senderId;
     //그룹은 수신자가 null
     private Long receiverId;
+    private String nickName;
     //파일업로드의 경우에는 자동으로 특정 string 넣기(ex : "fileUpload")
     @NotBlank
     @Size(min = 1, max = 500, message = "최소 1자 이상의 채팅을 입력해야합니다.")
