@@ -5,11 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercury.star_be.chat.dto.common.*;
 import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
 import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
+import com.mercury.star_be.chat.dto.request.ChatRoomJoinRequest;
 import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
-import com.mercury.star_be.chat.dto.response.ChatMessageCountCkResponse;
-import com.mercury.star_be.chat.dto.response.ChatMessageResponse;
-import com.mercury.star_be.chat.dto.response.ChatRoomListResponse;
-import com.mercury.star_be.chat.dto.response.ChatRoomResponse;
+import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.ChatMessageFileRepository;
 import com.mercury.star_be.chat.repository.ChatMessageRepository;
@@ -192,7 +190,8 @@ public class ChatServiceImpl implements ChatService {
 
     /**
      * 채팅방 생성 서비스
-     * 1:1 채팅일 때 사용
+     * 1:1 채팅방 생성 : sender, receiver 둘 다 저장
+     * 그룹채팅방 개설 : sender만 저장
      */
     @Override
     public void createChatRoom(CreateChatRoomRequest createChatRoomRequest) {
@@ -200,10 +199,14 @@ public class ChatServiceImpl implements ChatService {
                 userRepository.findById(createChatRoomRequest.getSenderId()).orElseThrow(
                         () -> new RuntimeException("송신자를 찾지 못합니다.")
                 );
-        User receiver =
-                userRepository.findById(createChatRoomRequest.getReceiverId()).orElseThrow(
-                        () -> new RuntimeException("수신자를 찾지 못합니다.")
-                );
+        //1:1 채팅일 경우 수신자 정보 가져오기
+        User receiver = null;
+        if (createChatRoomRequest.getChatRoomType() == ChatRoomType.DM) {
+            receiver =
+                    userRepository.findById(createChatRoomRequest.getReceiverId()).orElseThrow(
+                            () -> new RuntimeException("수신자를 찾지 못합니다.")
+                    );
+        }
 
         // 채팅방 새로 생성
         ChatRoom chatRoom = ChatRoom.builder()
@@ -223,19 +226,26 @@ public class ChatServiceImpl implements ChatService {
                 .chatRoom(chatRoom)
                 .chatUser(sender)
                 .build();
-        UserChatRoom receiverUserChatRoom = UserChatRoom.builder()
-                .joinedAt(LocalDateTime.now())
-                .isBlock(false)
-                .chatRoom(chatRoom)
-                .chatUser(receiver)
-                .build();
         
+        //1:1 채팅일 경우 수신자 정보 저장
+        if (createChatRoomRequest.getChatRoomType() == ChatRoomType.DM) {
+            UserChatRoom receiverUserChatRoom = UserChatRoom.builder()
+                    .joinedAt(LocalDateTime.now())
+                    .isBlock(false)
+                    .chatRoom(chatRoom)
+                    .chatUser(receiver)
+                    .build();
+
+            userChatRoomRepository.save(receiverUserChatRoom);
+        }
+
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
-        userChatRoomRepository.save(receiverUserChatRoom);
 
 
     }
+
+
 
     /**
      * 사용자의 채팅방 목록 불러오기 서비스
@@ -324,6 +334,28 @@ public class ChatServiceImpl implements ChatService {
                 )
                 .build();
         return response;
+    }
+    /**그룹채팅 가입 서비스*/
+    @Override
+    public ChatRoomJoinResponse joinChatRoom(ChatRoomJoinRequest chatRoomJoinRequest) {
+
+        User joinUser =
+                userRepository.findById(chatRoomJoinRequest.getUserId()).orElseThrow(
+                        () -> new RuntimeException(String.valueOf(UserErrorCode.USER_NOT_EXIST))
+                );
+        ChatRoom chatRoom = findByChatRoomId(chatRoomJoinRequest.getRoomId());
+        UserChatRoom userChatRoom = UserChatRoom.builder()
+                .joinedAt(LocalDateTime.now())
+                .isBlock(false)
+                .chatRoom(chatRoom)
+                .chatUser(joinUser)
+                .build();
+        userChatRoomRepository.save(userChatRoom);
+
+        ChatRoomJoinResponse chatRoomJoinResponse = ChatRoomJoinResponse.builder()
+                .result(true)
+                .build();
+        return chatRoomJoinResponse;
     }
 
     /**

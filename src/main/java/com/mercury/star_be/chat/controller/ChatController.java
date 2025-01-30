@@ -2,6 +2,7 @@ package com.mercury.star_be.chat.controller;
 
 import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
 import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
+import com.mercury.star_be.chat.dto.request.ChatRoomJoinRequest;
 import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.service.ChatService;
@@ -92,6 +93,15 @@ public class ChatController {
                 .result("채팅방이 생성되었습니다.")
                 .build();
         return ApiResponse.success(createChatRoomResponse);
+    }
+
+    /**그룹채팅 가입 컨트롤러*/
+    @PostMapping("/api/chat/joinChatRoom")
+    public ApiResponse<ChatRoomJoinResponse> joinChatRoom(
+            @RequestBody ChatRoomJoinRequest chatRoomJoinRequest
+    ){
+        ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(chatRoomJoinRequest);
+        return ApiResponse.success(chatRoomJoinResponse);
     }
     //사용자 차단
     //사용자 차단 해제

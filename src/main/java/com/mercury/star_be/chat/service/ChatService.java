@@ -4,11 +4,9 @@ import com.mercury.star_be.chat.dto.common.ChatRecentMessageDto;
 import com.mercury.star_be.chat.dto.common.ChatRoomDto;
 import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
 import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
+import com.mercury.star_be.chat.dto.request.ChatRoomJoinRequest;
 import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
-import com.mercury.star_be.chat.dto.response.ChatMessageCountCkResponse;
-import com.mercury.star_be.chat.dto.response.ChatMessageResponse;
-import com.mercury.star_be.chat.dto.response.ChatRoomListResponse;
-import com.mercury.star_be.chat.dto.response.ChatRoomResponse;
+import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.ChatMessage;
 import com.mercury.star_be.chat.entity.ChatRoom;
 
@@ -33,4 +31,6 @@ public interface ChatService {
     ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom);
     //1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인
     ChatMessageCountCkResponse findChatMessageRecord(ChatMessageCountCkRequest chatMessageCountCkRequest);
+    //그룹채팅 가입
+    ChatRoomJoinResponse joinChatRoom(ChatRoomJoinRequest chatRoomJoinRequest);
 }
