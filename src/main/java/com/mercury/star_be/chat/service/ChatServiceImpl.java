@@ -173,9 +173,10 @@ public class ChatServiceImpl implements ChatService {
                 chatMessageFileRepository.save(chatMessageFile);
             }
         }
-        // 파일 업데이트
+        // 파일 업데이트 및 저장
         chatMessage.updateFiles(chatMessageFiles);
-
+        chatMessageRepository.save(chatMessage);
+        
         // ChatMessageResponse 생성
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .createdAt(LocalDateTime.now())
