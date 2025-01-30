@@ -35,6 +35,8 @@ public class SecurityConfig{
                         .requestMatchers(
                                 "/api/**" // front단에서의 요청
                                 , "/docs/index.html" // rest docs 요청
+                                ,"/timer/**", // timer 웹소켓
+                                "/chat/**" // chat 웹소켓
                                 ,"/timer/**", "favion,ico" // timer 웹소켓
                                 ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback",
                                 "/fileupload/**"

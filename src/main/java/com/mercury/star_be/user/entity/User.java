@@ -49,7 +49,7 @@ public class User {
 	}
 
 	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserChatRoom> chatRoomLists;
+	private List<UserChatRoom> userChatRooms;
 
 	@OneToMany(mappedBy = "chatSender", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ChatMessage> sentMessages;
