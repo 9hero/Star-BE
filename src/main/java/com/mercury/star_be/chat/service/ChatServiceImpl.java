@@ -179,6 +179,7 @@ public class ChatServiceImpl implements ChatService {
         
         // ChatMessageResponse 생성
         ChatMessageResponse response = ChatMessageResponse.builder()
+                .nickName(chatMessageRequest.getNickName())
                 .createdAt(LocalDateTime.now())
                 .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방 인원)
                 .messageContent(chatMessageRequest.getMessageContent())
@@ -209,7 +210,7 @@ public class ChatServiceImpl implements ChatService {
                 .chatRoomType(ChatRoomType.DM)
                 .createdAt(LocalDateTime.now())
                 .studyGroup(null)
-                .userChatRooms(sender.getUserChatRooms())
+                //.userChatRooms(sender.getUserChatRooms())
                 .build();
         
         //채팅방 저장
