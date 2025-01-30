@@ -88,6 +88,7 @@ public class ChatServiceImpl implements ChatService {
                     .createdAt(chatMessage.getCreatedAt())
                     .messageFiles(getChatMessageFileDtos(chatMessage.getChatMessageFiles()))
                     .build();
+            chatRoomMessageDtos.add(chatRoomMessageDto);
         }
         return chatRoomMessageDtos;
     }
