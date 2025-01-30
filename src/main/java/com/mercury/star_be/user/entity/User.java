@@ -1,21 +1,16 @@
 package com.mercury.star_be.user.entity;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.mercury.star_be.chat.entity.ChatMessage;
 import com.mercury.star_be.chat.entity.UserChatRoom;
 import com.mercury.star_be.studygroup.entity.GroupMember;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -26,16 +21,32 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String email;
-	@Column(length = 20)
+	@Column(length = 10)
+	@Setter
 	private String nickname;
 	@Column(length = 10)
 	private String provider;
+	@Column(length = 50)
+	private String oauthId;
+	@Setter
 	private String image;
+	@Setter
 	private boolean isActive;
 	private LocalDateTime createdAt;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> groupMembers;
+
+	@Builder
+	public User(String email, String nickname, String provider, String image, String oauthId) {
+		this.email = email;
+		this.nickname = nickname;
+		this.provider = provider;
+		this.image = image;
+		this.isActive = true;
+		this.createdAt = LocalDateTime.now();
+		this.oauthId = oauthId;
+	}
 
 	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<UserChatRoom> userChatRooms;
