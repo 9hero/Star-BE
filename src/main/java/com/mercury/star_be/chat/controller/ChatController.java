@@ -32,7 +32,7 @@ public class ChatController {
      * /pub/chat/sendTextMessage/{chatRoomId} 경로로 보낸 메시지를 받음
      * 이 컨트롤러에서 처리된 메시지를 /sub/chat/{chatRoomId} 경로로 구독하고 있는 클라이언트에게 전송
      * */
-    @MessageMapping("/chat/sendTextMessage/{chatRoomId}")
+    @MessageMapping("/pub/chat/sendTextMessage/{chatRoomId}")
     @SendTo("/topic/chat/{chatRoomId}")
     public ApiResponse<ChatMessageResponse> sendChatMessage(
             @Payload ChatMessageRequest chatMessageRequest
@@ -42,7 +42,7 @@ public class ChatController {
     }
 
     /**채팅 메시지 전송 컨트롤러(사진 파일)*/
-    @MessageMapping("/chat/sendFile/{chatRoomId}")
+    @MessageMapping("/pub/chat/sendFile/{chatRoomId}")
     @SendTo("/topic/chat/{chatRoomId}")
     public ApiResponse<ChatMessageResponse> uploadChatFile(
             @RequestBody
@@ -72,7 +72,6 @@ public class ChatController {
     ){
         ChatMessageCountCkResponse chatMessageCountCkResponse
                 = chatService.findChatMessageRecord(chatMessageCountCkRequest);
-
         return ApiResponse.success(chatMessageCountCkResponse);
     }
 
@@ -85,7 +84,7 @@ public class ChatController {
         CreateChatRoomResponse createChatRoomResponse = CreateChatRoomResponse.builder()
                 .result("채팅방이 생성되었습니다.")
                 .build();
-        return ApiResponse.success();
+        return ApiResponse.success(createChatRoomResponse);
     }
     //사용자 차단
     //사용자 차단 해제

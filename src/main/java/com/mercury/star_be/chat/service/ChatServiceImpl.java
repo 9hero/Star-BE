@@ -1,5 +1,7 @@
 package com.mercury.star_be.chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercury.star_be.chat.dto.common.*;
 import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
 import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
@@ -19,6 +21,7 @@ import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
+import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,6 +38,7 @@ public class ChatServiceImpl implements ChatService {
     private final UserChatRoomRepository userChatRoomRepository;
     private final UserRepository userRepository;
     private final RabbitMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * 채팅방 조회
@@ -52,13 +56,18 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatRoomResponse getChatRoom(Long chatRoomId) {
         ChatRoom chatRoom = findByChatRoomId(chatRoomId);
+        Long studyGroupId = null;
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
+            studyGroupId = chatRoom.getStudyGroup().getId();
+        }
+
         ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
-                //채팅방 멤버 (DM은 발신자 수신자 / 그룹은 그룹멤버들)
-                .chatMembers(getChatRoomMembers(chatRoomId))
-                .messages(getChatRoomMessageDtos(chatRoomId))
-                .chatRoomType(chatRoom.getChatRoomType())
-                .studyGroupId(chatRoom.getStudyGroup().getId())
-                .build();
+        //채팅방 멤버 (DM은 발신자 수신자 / 그룹은 그룹멤버들)
+        .chatMembers(getChatRoomMembers(chatRoomId))
+        .messages(getChatRoomMessageDtos(chatRoomId))
+        .chatRoomType(chatRoom.getChatRoomType())
+        .studyGroupId(studyGroupId)
+        .build();
         return chatRoomResponse;
     }
 
@@ -117,20 +126,18 @@ public class ChatServiceImpl implements ChatService {
         // STOMP 메시지를 받아 RabbitMQ로 메시지 전달
         ChatRoom chatRoom = findByChatRoomId(chatMessageRequest.getChatRoomId());
 
-        //1:1채팅이라면
-        //두 사용자의 이전 채팅 기록을 확인
-        //만약 송신자가 나, 수신자가 상대방인 채팅 메시지 기록
-//        if (chatRoom.getChatRoomType().equals(ChatRoomType.DM)) {
-//            // 채팅 기록 count 확인
-//            int count = chatMessageRepository
-//                    .countByChatSenderIdAndChatReceiverId(chatMessageRequest.getSenderId(), chatMessageRequest.getReceiverId());
-//            //채팅기록이 없다면, 채팅방 / 사용자 채팅방 생성
-//            if (count == 0) {
-//                createChatRoom(chatMessageRequest.getSenderId(), chatMessageRequest.getReceiverId(), chatRoom);
-//            }
-//        }
         //구독자에게 메시지 전달
-        messagingTemplate.convertAndSend("/topic/chat/" + chatMessageRequest.getChatRoomId(), chatMessageRequest);
+        try {
+            String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
+            messagingTemplate.convertAndSend("/topic/chat/" + chatMessageRequest.getChatRoomId(), messageJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+        }
+
 
         // 메시지가 파일 업로드라면
         if (chatMessageRequest.getMessageFiles() != null && !chatMessageRequest.getMessageFiles().isEmpty()) {
@@ -296,16 +303,38 @@ public class ChatServiceImpl implements ChatService {
      * 채팅방 id를 받아 List<ChatRoomMemberDto>로 return 서비스
      */
     public List<ChatRoomMemberDto> getChatRoomMembers(Long chatRoomId) {
+
         ChatRoom chatRoom = findByChatRoomId(chatRoomId);
         List<ChatRoomMemberDto> chatRoomMembers = new ArrayList<>();
-        for (GroupMember groupMember : chatRoom.getStudyGroup().getMembers()) {
-            ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
-                    .id(groupMember.getId())
-                    .nickName(groupMember.getNickname())
-                    .profileImg(groupMember.getImage())
-                    .build();
-            chatRoomMembers.add(chatRoomMemberDto);
+
+        //1:1 채팅의 경우 사용자 채팅방에서 가져오기
+        //jwt 관련 코드 update 시 변경필요
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.DM)) {
+            List<UserChatRoom> userChatRooms =
+                    userChatRoomRepository.findByChatRoomId(chatRoomId)
+                            .orElseThrow(
+                                    ()->new BusinessException(ChatErrorCode.USER_CHAT_ROOM_NOT_FOUND)
+                    );
+            for (UserChatRoom userChatRoom : userChatRooms) {
+                ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
+                        .id(userChatRoom.getChatUser().getId())
+                        .nickName(userChatRoom.getChatUser().getNickname())
+                        .profileImg(userChatRoom.getChatUser().getImage())
+                        .build();
+                chatRoomMembers.add(chatRoomMemberDto);
+            }
+        } else {
+
+            for (GroupMember groupMember : chatRoom.getStudyGroup().getMembers()) {
+                ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
+                        .id(groupMember.getId())
+                        .nickName(groupMember.getNickname())
+                        .profileImg(groupMember.getImage())
+                        .build();
+                chatRoomMembers.add(chatRoomMemberDto);
+            }
         }
+
         return chatRoomMembers;
     }
 }
