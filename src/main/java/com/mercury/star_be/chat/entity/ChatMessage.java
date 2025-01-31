@@ -58,4 +58,8 @@ public class ChatMessage {
     public void updateFiles(List<ChatMessageFile> chatMessageFiles) {
         this.chatMessageFiles = chatMessageFiles;
     }
+
+    public void updateReceiver(User chatReceiver) {
+        this.chatReceiver = chatReceiver;
+    }
 }
