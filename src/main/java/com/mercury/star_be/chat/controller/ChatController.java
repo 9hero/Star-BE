@@ -26,12 +26,10 @@ public class ChatController {
     private final JwtUtil jwtUtil;
     /**
      * 채팅방 조회 컨트롤러
-     *
      * */
     @GetMapping("/api/chats/{chatRoomId}")
     public ApiResponse<ChatRoomResponse> getChatRoom(
             @PathVariable(value = "chatRoomId") Long chatRoomId
-
     ) {
         //채팅방에 소속된 인원인지 확인.
         UserResponse userResponse =
@@ -91,18 +89,30 @@ public class ChatController {
     }
 
     /**1:1 채팅방 개설 컨트롤러*/
-    @PostMapping("/api/chat/createChatRoom")
-    public ApiResponse<CreateChatRoomResponse> createChatRoom(
+    @PostMapping("/api/chat/createDMChatRoom")
+    public ApiResponse<CreateChatRoomResponse> createDMChatRoom(
             @RequestBody CreateChatRoomRequest createChatRoomRequest
     ){
-        chatService.createChatRoom(createChatRoomRequest);
+        chatService.createDMChatRoom(createChatRoomRequest);
         CreateChatRoomResponse createChatRoomResponse = CreateChatRoomResponse.builder()
-                .result("채팅방이 생성되었습니다.")
+                .result("1:1 채팅방이 생성되었습니다.")
                 .build();
         return ApiResponse.success(createChatRoomResponse);
     }
 
-    /**그룹채팅 가입 컨트롤러*/
+    /**그룹 채팅방 개설 컨트롤러*/
+    @PostMapping("/api/chat/createGroupChatRoom")
+    public ApiResponse<CreateChatRoomResponse> createGroupChatRoom(
+            @RequestBody CreateChatRoomRequest createChatRoomRequest
+    ){
+        chatService.createGroupChatRoom(createChatRoomRequest);
+        CreateChatRoomResponse createChatRoomResponse = CreateChatRoomResponse.builder()
+                .result("그룹 채팅방이 생성되었습니다.")
+                .build();
+        return ApiResponse.success(createChatRoomResponse);
+    }
+
+    /**채팅방 가입 컨트롤러*/
     @PostMapping("/api/chat/joinChatRoom")
     public ApiResponse<ChatRoomJoinResponse> joinChatRoom(
             @RequestBody ChatRoomJoinRequest chatRoomJoinRequest
