@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,23 +77,60 @@ public class ChatServiceImpl implements ChatService {
      * 채팅방 id를 받아
      * List<ChatRoomMessageDto>로 return
      */
+//    public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
+//        List<ChatMessage> chatMessages = findChatRoomMessages(chatRoomId);
+//        List<ChatRoomMessageDto> chatRoomMessageDtos = new ArrayList<>();
+//        for (ChatMessage chatMessage : chatMessages) {
+//            ChatRoomMessageDto.ChatRoomMessageDtoBuilder dtoBuilder = ChatRoomMessageDto.builder()
+//                    .id(chatMessage.getId())
+//                    .senderId(chatMessage.getChatSender().getId())
+//                    .nickName(chatMessage.getChatSender().getNickname())
+//                    .content(chatMessage.getContent())
+//                    .unreadCount(chatMessage.getUnreadCount())
+//                    .createdAt(chatMessage.getCreatedAt());
+//            //파일이 있을 경우에만 찾기
+//            if (!chatMessage.getChatMessageFiles().isEmpty()) {
+//                dtoBuilder.messageFiles(getChatMessageFileDtos(chatMessage.getChatMessageFiles()));
+//            } else {
+//                dtoBuilder.messageFiles(null);
+//            }
+//
+//            chatRoomMessageDtos.add(dtoBuilder.build());
+//        }
+//        return chatRoomMessageDtos;
+//    }
     public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
-        List<ChatMessage> chatMessages = findChatRoomMessages(chatRoomId);
-        List<ChatRoomMessageDto> chatRoomMessageDtos = new ArrayList<>();
-        for (ChatMessage chatMessage : chatMessages) {
-            ChatRoomMessageDto chatRoomMessageDto = ChatRoomMessageDto.builder()
-                    .id(chatMessage.getId())
-                    .senderId(chatMessage.getChatSender().getId())
-                    .nickName(chatMessage.getChatSender().getNickname())
-                    .content(chatMessage.getContent())
-                    .unreadCount(chatMessage.getUnreadCount())
-                    .createdAt(chatMessage.getCreatedAt())
-                    .messageFiles(getChatMessageFileDtos(chatMessage.getChatMessageFiles()))
-                    .build();
-            chatRoomMessageDtos.add(chatRoomMessageDto);
-        }
-        return chatRoomMessageDtos;
+        List<ChatMessage> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId).orElse(List.of());
+
+        return chatMessages.stream()
+                .map(chatMessage -> ChatRoomMessageDto.builder()
+                        .id(chatMessage.getId())
+                        .senderId(chatMessage.getChatSender().getId())
+                        .nickName(chatMessage.getChatSender().getNickname())
+                        .content(chatMessage.getContent())
+                        .unreadCount(chatMessage.getUnreadCount())
+                        .createdAt(chatMessage.getCreatedAt())
+                        .messageFiles(chatMessage.getContent() == null ?
+                                (!chatMessage.getChatMessageFiles().isEmpty() ?
+                                        chatMessage.getChatMessageFiles().stream()
+                                                .map(this::convertToFileDto)
+                                                .collect(Collectors.toList())
+                                        : null)
+                                : null)
+                        .build())
+                .collect(Collectors.toList());
     }
+
+    private ChatMessageFileDto convertToFileDto(ChatMessageFile chatMessageFile) {
+        return ChatMessageFileDto.builder()
+                .id(chatMessageFile.getId())
+                .fileUrl(chatMessageFile.getFileUrl())
+                .fileType(chatMessageFile.getFileType())
+                .chatMessageId(chatMessageFile.getChatMessage().getId())
+                .build();
+    }
+
+
 
     /**
      * List<ChatMessageFile> chatMessageFiles를 받아
