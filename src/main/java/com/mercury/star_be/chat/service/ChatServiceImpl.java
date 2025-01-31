@@ -15,8 +15,13 @@ import com.mercury.star_be.chat.repository.UserChatRoomRepository;
 import com.mercury.star_be.chat.repository.ChatRoomRepository;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
+import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.studygroup.entity.GroupMember;
+import com.mercury.star_be.studygroup.entity.StudyGroup;
+import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
+import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
+import com.mercury.star_be.studygroup.service.StudyGroupService;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +46,7 @@ public class ChatServiceImpl implements ChatService {
     private final RabbitMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
     private final ChatMessageFileRepository chatMessageFileRepository;
-
+    private final StudyGroupRepository studyGroupRepository;
     /**
      * 채팅방 조회
      */
@@ -65,11 +70,11 @@ public class ChatServiceImpl implements ChatService {
 
         ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
         //채팅방 멤버 (DM은 발신자 수신자 / 그룹은 그룹멤버들)
-        .chatMembers(getChatRoomMembers(chatRoomId))
-        .messages(getChatRoomMessageDtos(chatRoomId))
-        .chatRoomType(chatRoom.getChatRoomType())
-        .studyGroupId(studyGroupId)
-        .build();
+            .chatMembers(getChatRoomMembers(chatRoom))
+            .messages(getChatRoomMessageDtos(chatRoomId))
+            .chatRoomType(chatRoom.getChatRoomType())
+            .studyGroupId(studyGroupId)
+            .build();
         return chatRoomResponse;
     }
 
@@ -77,28 +82,6 @@ public class ChatServiceImpl implements ChatService {
      * 채팅방 id를 받아
      * List<ChatRoomMessageDto>로 return
      */
-//    public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
-//        List<ChatMessage> chatMessages = findChatRoomMessages(chatRoomId);
-//        List<ChatRoomMessageDto> chatRoomMessageDtos = new ArrayList<>();
-//        for (ChatMessage chatMessage : chatMessages) {
-//            ChatRoomMessageDto.ChatRoomMessageDtoBuilder dtoBuilder = ChatRoomMessageDto.builder()
-//                    .id(chatMessage.getId())
-//                    .senderId(chatMessage.getChatSender().getId())
-//                    .nickName(chatMessage.getChatSender().getNickname())
-//                    .content(chatMessage.getContent())
-//                    .unreadCount(chatMessage.getUnreadCount())
-//                    .createdAt(chatMessage.getCreatedAt());
-//            //파일이 있을 경우에만 찾기
-//            if (!chatMessage.getChatMessageFiles().isEmpty()) {
-//                dtoBuilder.messageFiles(getChatMessageFileDtos(chatMessage.getChatMessageFiles()));
-//            } else {
-//                dtoBuilder.messageFiles(null);
-//            }
-//
-//            chatRoomMessageDtos.add(dtoBuilder.build());
-//        }
-//        return chatRoomMessageDtos;
-//    }
     public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
         List<ChatMessage> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId).orElse(List.of());
 
@@ -173,10 +156,8 @@ public class ChatServiceImpl implements ChatService {
             throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
         }
 
-        // 송신자 및 수신자 조회
+        // 송신자 조회
         User chatSender = userRepository.findById(chatMessageRequest.getSenderId())
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
-        User chatReceiver = userRepository.findById(chatMessageRequest.getReceiverId())
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
         // 읽지 않은 메시지 수
@@ -191,10 +172,16 @@ public class ChatServiceImpl implements ChatService {
                 .unreadCount(unreadCount)
                 .createdAt(LocalDateTime.now())
                 .chatSender(chatSender)
-                .chatReceiver(chatReceiver)
+                .chatReceiver(null)
                 .chatRoom(chatRoom)
                 .build();
 
+        // DM일 경우 수신자 추가
+        if (chatMessageRequest.getChatRoomType().equals(ChatRoomType.DM)){
+            User chatReceiver = userRepository.findById(chatMessageRequest.getReceiverId())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+            chatMessage.updateReceiver(chatReceiver);
+        }
         // 메시지 파일 객체 생성 및 저장
         List<ChatMessageFile> chatMessageFiles = new ArrayList<>();
         if (chatMessageRequest.getMessageFiles() != null && !chatMessageRequest.getMessageFiles().isEmpty()) {
@@ -232,28 +219,26 @@ public class ChatServiceImpl implements ChatService {
      * 그룹채팅방 개설 : sender만 저장
      */
     @Override
-    public void createChatRoom(CreateChatRoomRequest createChatRoomRequest) {
+    public void createDMChatRoom(CreateChatRoomRequest createChatRoomRequest) {
+        //송신자
         User sender =
                 userRepository.findById(createChatRoomRequest.getSenderId()).orElseThrow(
                         () -> new RuntimeException("송신자를 찾지 못합니다.")
                 );
-        //1:1 채팅일 경우 수신자 정보 가져오기
-        User receiver = null;
-        if (createChatRoomRequest.getChatRoomType() == ChatRoomType.DM) {
-            receiver =
-                    userRepository.findById(createChatRoomRequest.getReceiverId()).orElseThrow(
-                            () -> new RuntimeException("수신자를 찾지 못합니다.")
-                    );
-        }
+
+        //수신자 정보 가져오기
+        User receiver =
+                userRepository.findById(createChatRoomRequest.getReceiverId()).orElseThrow(
+                        () -> new RuntimeException("수신자를 찾지 못합니다.")
+                );
 
         // 채팅방 새로 생성
         ChatRoom chatRoom = ChatRoom.builder()
                 .chatRoomType(ChatRoomType.DM)
                 .createdAt(LocalDateTime.now())
                 .studyGroup(null)
-                //.userChatRooms(sender.getUserChatRooms())
                 .build();
-        
+
         //채팅방 저장
         chatRoomRepository.save(chatRoom);
 
@@ -265,24 +250,56 @@ public class ChatServiceImpl implements ChatService {
                 .chatUser(sender)
                 .build();
         
-        //1:1 채팅일 경우 수신자 정보 저장
-        if (createChatRoomRequest.getChatRoomType() == ChatRoomType.DM) {
-            UserChatRoom receiverUserChatRoom = UserChatRoom.builder()
-                    .joinedAt(LocalDateTime.now())
-                    .isBlock(false)
-                    .chatRoom(chatRoom)
-                    .chatUser(receiver)
-                    .build();
+        UserChatRoom receiverUserChatRoom = UserChatRoom.builder()
+                .joinedAt(LocalDateTime.now())
+                .isBlock(false)
+                .chatRoom(chatRoom)
+                .chatUser(receiver)
+                .build();
 
-            userChatRoomRepository.save(receiverUserChatRoom);
-        }
+        //1:1 채팅일 경우 수신자 정보 저장
+        userChatRoomRepository.save(receiverUserChatRoom);
 
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
 
+    }
+    @Override
+    public void createGroupChatRoom(CreateChatRoomRequest createChatRoomRequest) {
+        //송신자
+        User sender =
+                userRepository.findById(createChatRoomRequest.getSenderId()).orElseThrow(
+                        () -> new RuntimeException("송신자를 찾지 못합니다.")
+                );
+
+        //스터디그룹 가져오기
+        StudyGroup studyGroup =
+                studyGroupRepository.findById(createChatRoomRequest.getGroupId()).orElseThrow(
+                () -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND)
+        );
+
+        // 채팅방 새로 생성
+        ChatRoom chatRoom = ChatRoom.builder()
+                .chatRoomType(ChatRoomType.GROUP)
+                .createdAt(LocalDateTime.now())
+                .studyGroup(studyGroup)
+                .build();
+
+        //채팅방 저장
+        chatRoomRepository.save(chatRoom);
+
+        // 사용자 채팅방 생성(송신자)
+        UserChatRoom senderUserChatRoom = UserChatRoom.builder()
+                .joinedAt(LocalDateTime.now())
+                .isBlock(false)
+                .chatRoom(chatRoom)
+                .chatUser(sender)
+                .build();
+
+        //사용자 채팅목록 저장
+        userChatRoomRepository.save(senderUserChatRoom);
 
     }
-
 
 
     /**
@@ -381,7 +398,7 @@ public class ChatServiceImpl implements ChatService {
                 userRepository.findById(chatRoomJoinRequest.getUserId()).orElseThrow(
                         () -> new RuntimeException(String.valueOf(UserErrorCode.USER_NOT_EXIST))
                 );
-        ChatRoom chatRoom = findByChatRoomId(chatRoomJoinRequest.getRoomId());
+        ChatRoom chatRoom = findByChatRoomId(chatRoomJoinRequest.getChatRoomId());
         UserChatRoom userChatRoom = UserChatRoom.builder()
                 .joinedAt(LocalDateTime.now())
                 .isBlock(false)
@@ -410,16 +427,16 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 채팅방 id를 받아 List<ChatRoomMemberDto>로 return 서비스
      */
-    public List<ChatRoomMemberDto> getChatRoomMembers(Long chatRoomId) {
+    @Override
+    public List<ChatRoomMemberDto> getChatRoomMembers(ChatRoom chatRoom) {
 
-        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
         List<ChatRoomMemberDto> chatRoomMembers = new ArrayList<>();
 
-        //1:1 채팅의 경우 사용자 채팅방에서 가져오기
-        //jwt 관련 코드 update 시 변경필요
+        //해당 채팅방에 참여하고 있다는걸 알려주는 user_chat_room가져오기
         if (chatRoom.getChatRoomType().equals(ChatRoomType.DM)) {
+
             List<UserChatRoom> userChatRooms =
-                    userChatRoomRepository.findByChatRoomId(chatRoomId)
+                    userChatRoomRepository.findByChatRoomId(chatRoom.getId())
                             .orElseThrow(
                                     ()->new BusinessException(ChatErrorCode.USER_CHAT_ROOM_NOT_FOUND)
                     );
