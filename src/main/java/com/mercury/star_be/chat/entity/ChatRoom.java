@@ -25,9 +25,6 @@ public class ChatRoom {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
-//    @OneToMany(mappedBy = "chatRoom")
-//    private List<UserChatRoom> userChatRooms;
-
     @Builder
     public ChatRoom(
             ChatRoomType chatRoomType,
