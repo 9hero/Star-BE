@@ -1,6 +1,9 @@
 package com.mercury.star_be.chat.dto.request;
 
 import com.mercury.star_be.chat.dto.common.ChatMessageFileDto;
+import com.mercury.star_be.chat.entity.ChatRoomType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -31,6 +34,8 @@ public class ChatMessageRequest {
     private String messageContent;
     //일반 메시지 채팅은 파일이 null
     List<ChatMessageFileDto> messageFiles;
+    @Enumerated(EnumType.STRING)
+    private ChatRoomType chatRoomType;
 
     public void fileUploadContentString(){
         this.messageContent = "fileUpload";
