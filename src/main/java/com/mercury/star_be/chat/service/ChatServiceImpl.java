@@ -357,6 +357,17 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         return chatRoomJoinResponse;
     }
+    /**
+     * 사용자가 해당 채팅방을 구독중인지 확인하는 서비스
+     * */
+    @Override
+    public boolean isJoinedChatRoom(Long chatUserId, Long chatRoomId) {
+        boolean isJoined = userChatRoomRepository.existsByChatUserIdAndChatRoomId(chatUserId, chatRoomId);
+        if (!isJoined) {
+            throw new BusinessException(ChatErrorCode.USER_CHAT_ROOM_NOT_FOUND);
+        }
+        return true;
+    }
 
     /**
      * 채팅방 id를 받아 List<ChatRoomMemberDto>로 return 서비스

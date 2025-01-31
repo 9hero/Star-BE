@@ -24,13 +24,20 @@ public class ChatController {
 
     private final ChatService chatService;
     private final JwtUtil jwtUtil;
-    /**채팅방 조회 컨트롤러*/
+    /**
+     * 채팅방 조회 컨트롤러
+     *
+     * */
     @GetMapping("/api/chats/{chatRoomId}")
     public ApiResponse<ChatRoomResponse> getChatRoom(
             @PathVariable(value = "chatRoomId") Long chatRoomId
+
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserResponse userResponse = jwtUtil.getAuthenticatedUser(authentication);
+        //채팅방에 소속된 인원인지 확인.
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        chatService.isJoinedChatRoom(userResponse.getId(),chatRoomId);
+        //채팅방 조회
         ChatRoomResponse chatRoomResponse = chatService.getChatRoom(chatRoomId);
         return ApiResponse.success(chatRoomResponse);
     }
