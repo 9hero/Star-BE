@@ -163,7 +163,8 @@ public class ChatServiceImpl implements ChatService {
         // 읽지 않은 메시지 수
         int unreadCount = 1;
         if (chatRoom.getChatRoomType() == ChatRoomType.GROUP) {
-            unreadCount = chatRoom.getStudyGroup().getMemberCount();
+            //메시지 송신자 제외
+            unreadCount = chatRoom.getStudyGroup().getMemberCount() - 1;
         }
 
         // 메시지 객체 생성
