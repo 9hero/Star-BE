@@ -6,6 +6,7 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.NoticeCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.NoticeUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.NoticeCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.NoticeResponse;
 import com.mercury.star_be.studygroup.dto.response.NoticeUpdateResponse;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.Notice;
@@ -21,8 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-
-
+import java.util.List;
 
 @Transactional
 @Service
@@ -68,8 +68,7 @@ public class NoticeServiceImpl implements NoticeService {
         if (!hostMember.isHost()) {
             throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
         }
-        Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()->new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+        Notice notice = findById(noticeId);
 
         if (!notice.getStudyGroup().getId().equals(groupId)) {
             throw new BusinessException(NoticeErrorCode.NOTICE_NOT_IN_GROUP);
@@ -96,14 +95,28 @@ public class NoticeServiceImpl implements NoticeService {
             throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
         }
 
-        Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()->new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
+        Notice notice = findById(noticeId);
         if (!notice.getStudyGroup().getId().equals(groupId)) {
             throw new BusinessException(NoticeErrorCode.NOTICE_NOT_IN_GROUP);
         }
         noticeRepository.delete(notice);
 
         log.info("공지사항 삭제됨: noticeId={}, groupId={}, deletedBy={}", noticeId, groupId, writerId);
+    }
+
+	@Override
+	public List<NoticeResponse> getNoticeList(Long groupId) {
+        return noticeRepository.findAllByGroupId(groupId);
+    }
+
+    @Override
+    public NoticeResponse getNotice(Long groupId, Long noticeId) {
+        return noticeRepository.findByGroupIdAndNoticeId(groupId, noticeId);
+    }
+
+    private Notice findById(Long noticeId) {
+        return noticeRepository.findById(noticeId)
+            .orElseThrow(() -> new BusinessException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
 }

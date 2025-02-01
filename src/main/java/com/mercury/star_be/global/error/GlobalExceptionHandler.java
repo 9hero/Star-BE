@@ -1,7 +1,10 @@
 package com.mercury.star_be.global.error;
 
+import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,6 +51,21 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
+
+
+	// 401 Unauthorized - 인증 실패
+	@ExceptionHandler(AuthenticationException.class)
+	protected ResponseEntity<ErrorResponse> handleAuthenticationAuthException(AuthenticationException ex) {
+		ErrorCode errorCode = AuthenticationErrorCode.UNAUTHORIZED;
+		log.error("Authentication failed: {}", ex.getMessage());
+
+		ErrorResponse errorResponse = new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage());
+		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
+	}
+
+
+
+
 
 	// 나머지 에러
 	@ExceptionHandler(Exception.class)

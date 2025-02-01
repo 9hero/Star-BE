@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,9 +74,9 @@ public class WebSocketEventListener {
             timerService.stopTimerByGroupIdAndUserId(groupId, userId);
 
             // Redis에서 삭제
-            redisTemplate.delete(event.getSessionId()); // 세션id 제거
+            Boolean delete = redisTemplate.delete(event.getSessionId());// 세션id 제거
             Long removeCUser = redisTemplate.opsForSet().remove("focus:" + groupId, userId + ":" + nickname);
-            System.out.println("현재 유저 제거 완료 : " + removeCUser);
+            System.out.println("Remove session(T/F) and user : " +delete+" and " +removeCUser);
 
             // Disconnection 브로드캐스트
             TimerDto disconnectEvent = new TimerDto();
@@ -123,11 +122,15 @@ public class WebSocketEventListener {
             System.out.println("User " + userId + " joined group " + groupId);
 
             // Entry 이벤트 브로드캐스트 객체
-            TimerDto entryEvent = new TimerDto();
-            entryEvent.setEvent(TimerEvent.ENTRY);
-            entryEvent.setUserId(Long.parseLong(userId));
-            entryEvent.setNickname(nickname);
-            entryEvent.setStatus("rest");
+            // timer 객체 불러오기
+            TimerDto entryEvent = timerService.startMyTimer(Long.parseLong(groupId), Long.parseLong(userId));
+            if (entryEvent == null) {
+                entryEvent = new TimerDto();
+                entryEvent.setEvent(TimerEvent.ENTRY);
+                entryEvent.setUserId(Long.parseLong(userId));
+                entryEvent.setNickname(nickname);
+                entryEvent.setStatus("rest");
+            }
 
             // Entry 이벤트 브로드캐스트
             messagingTemplate.convertAndSend("/sub/groups/"+groupId+"/timers", entryEvent);
