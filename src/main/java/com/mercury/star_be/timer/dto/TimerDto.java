@@ -9,14 +9,15 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode
 public class TimerDto{
 
     private TimerEvent event;
     private Long userId;
     private String nickname;
     private long timeSoFar;
-    private int ranking;
     private long todayTotalTime;
+    private int ranking;
     private String status;
 
     public TimerDto(Timer timer) {

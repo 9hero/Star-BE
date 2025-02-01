@@ -35,15 +35,13 @@ public class SecurityConfig{
                         .requestMatchers(
                                 "/api/**" // front단에서의 요청
                                 , "/docs/index.html" // rest docs 요청
-                                ,"/timer/**", "favion,ico" // timer 웹소켓
+                                ,"/timer/**", "favion.ico",
+                            "/api/groups/**" // timer 웹소켓
                                 ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback",
                                 "/fileupload/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요
                 );
-
-
-
 
 
         // CORS 설정
@@ -59,7 +57,6 @@ public class SecurityConfig{
                 configuration.setMaxAge(3600L);
                 configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
                 return configuration;
-
             }
         }));
 
@@ -69,7 +66,7 @@ public class SecurityConfig{
         http.httpBasic(auth -> auth.disable());
 
         // 필터 설정
-        http.addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class); // JWT 필터
+//        http.addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class); // JWT 필터
 
         // OAuth2 설정
         http.oauth2Login(oauth2 -> oauth2

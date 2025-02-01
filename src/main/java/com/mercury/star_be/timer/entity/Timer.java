@@ -1,9 +1,12 @@
 package com.mercury.star_be.timer.entity;
 
 import com.mercury.star_be.studygroup.entity.StudyGroup;
+import com.mercury.star_be.timer.dto.TimerDto;
+import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.enums.TimerStatus;
 import com.mercury.star_be.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.Id;
@@ -26,13 +29,15 @@ public class Timer {
 
     private LocalDateTime startTime;
 
-    private Long timeSoFar;
+    private long timeSoFar;
 
     private LocalDateTime endTime;
 
-    private Long totalTime;
+    private long totalTime;
 
     private LocalDate studyDate;
+
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "study_group_id")
@@ -42,12 +47,31 @@ public class Timer {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Builder
+    public Timer(Long id, TimerStatus status, LocalDateTime startTime, LocalDateTime endTime,
+        LocalDate studyDate, StudyGroup studyGroup, User user) {
+        this.id = id;
+        this.status = status;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.studyDate = studyDate;
+        this.studyGroup = studyGroup;
+        this.user = user;
+    }
+
     public void start() {
         this.status = TimerStatus.START;
         this.startTime = LocalDateTime.now();
+        this.endTime = null;
+//        this.studyDate = LocalDate.now(); Start 시, Date 비교하고 1일 1 Timer로 저장
     }
 
+    /**
+     * 타이머 중지
+     * 자정 계산은 service에서 처리
+     */
     public void stop() {
+        // 타이머가 시작되지 않은 경우 중지 불가 (End or Stop 상태인 경우 중지 불가)
         if (this.status != TimerStatus.START) {
             return;
         }
@@ -60,13 +84,32 @@ public class Timer {
         totalTime += timeSoFar;
     }
 
+    /**
+     * 타이머 종료
+     * 시작한 날 + 1일에 종료할 경우 : 시작 시간 기준으로 자정까지 공부한 시간만 계산
+     */
     public void end(){
-        this.status = TimerStatus.END;
+        // 오늘인지 확인
+        boolean isToday = studyDate.equals(LocalDate.now());
+
+        // 종료 요청된 시간.
         this.endTime = LocalDateTime.now();
-        // 시작 시점부터 현재까지 공부한 시간 계산
-        long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
-        this.totalTime += elapsedSeconds;
+
+        // 오늘인 경우
+        if (isToday) {
+            // 시작 시점부터 종료 시점까지 공부한 시간 계산
+            long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
+            this.totalTime += elapsedSeconds;
+        }
+        // 다음날로 넘어간 경우, 자정까지 공부한 시간만 계산
+        else {
+            LocalDateTime endOfDay = studyDate.atTime(23, 59, 59);
+            long lastTimeSoFar = Duration.between(startTime, endOfDay).getSeconds();
+            this.totalTime += lastTimeSoFar;
+        }
+
         // 종료 처리
+        this.status = TimerStatus.END;
         startTime = null;
         timeSoFar = 0L;
     }
@@ -74,4 +117,42 @@ public class Timer {
     public Long getUserId() {
         return user.getId();
     }
+
+    /**
+     * 자정 이후의 초과한 공부 시간을 새로운 타이머에 저장
+     */
+    public void setExceedTimeSoFarAfterMidnight() {
+        LocalDateTime endOfDay = studyDate.atTime(23, 59, 59);
+        // 자정 ~ 현재 시각까지의 차이 계산 (초 단위) - front에서 최대 24시간 이내로 처리. 그 이상 시간이라면, 하루(24시간) 씩 짤라서 timer 생성
+        long fromMidnightToRequestTime = Duration.between(endOfDay, LocalDateTime.now()).getSeconds();
+        this.timeSoFar = fromMidnightToRequestTime;
+        this.totalTime = fromMidnightToRequestTime;
+    }
+
+    public TimerDto toEventTimerDto(TimerEvent event) {
+        TimerDto timerEventDto = new TimerDto(this);
+        switch (event) {
+            case START:
+                timerEventDto.setEvent(TimerEvent.START);
+                timerEventDto.setStatus(TimerStatus.START.toString());
+                break;
+            case STOP:
+                timerEventDto.setEvent(TimerEvent.STOP);
+                timerEventDto.setStatus(TimerStatus.STOP.toString());
+                break;
+            case END:
+                timerEventDto.setEvent(TimerEvent.END);
+                timerEventDto.setStatus(TimerStatus.END.toString());
+                break;
+            case DISCONNECT:
+                timerEventDto.setEvent(TimerEvent.DISCONNECT);
+                break;
+            case ENTRY:
+                timerEventDto.setEvent(TimerEvent.ENTRY);
+                timerEventDto.setStatus(TimerStatus.REST.toString());
+                break;
+        }
+        return timerEventDto;
+    }
+
 }

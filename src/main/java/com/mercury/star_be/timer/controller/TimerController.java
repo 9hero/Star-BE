@@ -3,7 +3,7 @@ package com.mercury.star_be.timer.controller;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerServiceImpl;
-import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -25,7 +25,7 @@ public class TimerController {
 
     // 집중방 입장한 사용자들의 타이머 정보를 가져옴
     @GetMapping("/api/groups/{groupId}/timers")
-    public List<TimerDto> getTimerData(@PathVariable Long groupId) {
+    public Set<TimerDto> getTimerData(@PathVariable Long groupId) {
         System.out.println("groupId: " + groupId + " i got it from session! :");
         return timerServiceImpl.getFocusRoomTimerDataByGroupId(groupId);
     }
@@ -41,23 +41,20 @@ public class TimerController {
     // 집중방 클라이언트가 타이머 시작을 알림
     @MessageMapping("/groups/{groupId}/timers/start")
     @SendTo("/sub/groups/{groupId}/timers")
-    public String handleTimerStart(@DestinationVariable Long groupId, String message) {
-        System.out.println("Received message: " + message+" from group: " + groupId);
-        return "Started timer : " + message;
+    public TimerDto handleTimerStart(@DestinationVariable Long groupId,Long userId) {
+        return timerServiceImpl.startMyTimer(groupId,userId);
     }
     // 집중방 클라이언트가 타이머 일시 중지를 알림
     @MessageMapping("/groups/{groupId}/timers/stop")
     @SendTo("/sub/groups/{groupId}/timers")
-    public String handleTimerStop(@DestinationVariable Long groupId, String message) {
-        System.out.println("Received message: " + message+" from group: " + groupId);
-        return "Stopped timer : " + message;
+    public TimerDto handleTimerStop(@DestinationVariable Long groupId, Long userId) {
+        return timerServiceImpl.stopTimerByGroupIdAndUserId(groupId,userId);
     }
     // 집중방 클라이언트가 타이머 종료를 알림
     @MessageMapping("/groups/{groupId}/timers/end")
     @SendTo("/sub/groups/{groupId}/timers")
-    public String handleTimerEnd(@DestinationVariable Long groupId, String message) {
-        System.out.println("Received message: " + message+" from group: " + groupId);
-        return "Ended timer : " + message;
+    public TimerDto handleTimerEnd(@DestinationVariable Long groupId, Long userId) {
+        return timerServiceImpl.endTimerByGroupIdAndUserId(groupId,userId);
     }
 
     // 사용자가 직접 집중방을 나갈 때 처리
