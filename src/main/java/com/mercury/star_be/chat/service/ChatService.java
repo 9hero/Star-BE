@@ -3,10 +3,7 @@ package com.mercury.star_be.chat.service;
 import com.mercury.star_be.chat.dto.common.ChatRecentMessageDto;
 import com.mercury.star_be.chat.dto.common.ChatRoomDto;
 import com.mercury.star_be.chat.dto.common.ChatRoomMemberDto;
-import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
-import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
-import com.mercury.star_be.chat.dto.request.ChatRoomJoinRequest;
-import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
+import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.ChatMessage;
 import com.mercury.star_be.chat.entity.ChatRoom;
@@ -39,4 +36,6 @@ public interface ChatService {
     boolean isJoinedChatRoom(Long chatUserId, Long chatRoomId);
     //채팅방 id를 받아 List<ChatRoomMemberDto>로 return
     List<ChatRoomMemberDto> getChatRoomMembers(ChatRoom chatRoom);
+    //읽음 update
+    void updateReadCount(ChatReadRequest chatReadRequest, Long chatRoomId);
 }

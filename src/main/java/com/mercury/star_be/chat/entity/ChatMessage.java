@@ -62,4 +62,8 @@ public class ChatMessage {
     public void updateReceiver(User chatReceiver) {
         this.chatReceiver = chatReceiver;
     }
+
+    public void updateUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
+    }
 }

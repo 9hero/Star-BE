@@ -1,9 +1,6 @@
 package com.mercury.star_be.chat.controller;
 
-import com.mercury.star_be.chat.dto.request.ChatMessageCountCkRequest;
-import com.mercury.star_be.chat.dto.request.ChatMessageRequest;
-import com.mercury.star_be.chat.dto.request.ChatRoomJoinRequest;
-import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
+import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.common.ApiResponse;
@@ -11,6 +8,7 @@ import com.mercury.star_be.user.dto.response.UserResponse;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -63,6 +61,18 @@ public class ChatController {
     ){
         ChatMessageResponse chatMessageResponse = chatService.sendMessage(chatMessageRequest);
         return ApiResponse.success(chatMessageResponse);
+    }
+
+    /**채팅방 내 메시지 읽음 udpate 컨트롤러*/
+    @MessageMapping("/readCheck/{chatRoomId}")
+    @SendTo("/topic/readCheck.{chatRoomId}")
+    public void updateReadUsers(
+            @DestinationVariable
+            Long chatRoomId,
+            @Payload ChatReadRequest chatReadRequest
+    ){
+        chatService.updateReadCount(chatReadRequest, chatRoomId);
+
     }
 
     /**내 채팅방 목록 조회 컨트롤러*/
@@ -120,6 +130,7 @@ public class ChatController {
         ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(chatRoomJoinRequest);
         return ApiResponse.success(chatRoomJoinResponse);
     }
+
     //사용자 차단
     //사용자 차단 해제
     //차단 사용자 목록
