@@ -9,7 +9,7 @@ import com.mercury.star_be.studygroup.dto.response.*;
 
 public interface StudyGroupService {
 
-	StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest);
+	StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest, String token);
 
 	StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId);
 
@@ -17,7 +17,7 @@ public interface StudyGroupService {
 
 	PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction, int page);
 
-	void joinStudyGroup(Long groupId, Long userId) throws BusinessException;
+	void joinStudyGroup(Long groupId, String token, String password) throws BusinessException;
 
 	void exitStudyGroup(Long groupId, Long userId) throws BusinessException;
 

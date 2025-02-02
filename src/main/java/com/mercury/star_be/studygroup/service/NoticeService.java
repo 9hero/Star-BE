@@ -10,9 +10,9 @@ import com.mercury.star_be.studygroup.dto.response.NoticeUpdateResponse;
 
 public interface NoticeService {
 
-    NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, Long writerId);
-    NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, Long writerId, Long noticeId);
-    void deleteNotice(Long groupId, Long writerId, Long noticeId);
+    NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, String token);
+    NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, String token, Long noticeId);
+    void deleteNotice(Long groupId, String token, Long noticeId);
     List<NoticeResponse> getNoticeList(Long groupId);
     NoticeResponse getNotice(Long groupId, Long noticeId);
 }
