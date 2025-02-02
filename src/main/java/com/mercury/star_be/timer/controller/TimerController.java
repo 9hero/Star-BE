@@ -58,7 +58,7 @@ public class TimerController {
     }
 
     // 사용자가 직접 집중방을 나갈 때 처리
-    @MessageMapping("/groups/{groupId}/focusRoom/disconnect")
+    @MessageMapping("/api/groups/{groupId}/focusRoom/disconnect")
     @SendTo("/sub/groups/{groupId}/timers")
     public TimerDto handleDisconnect(@DestinationVariable Long groupId, Long userId, SimpMessageHeaderAccessor headerAccessor) {
         if (groupId != null && userId != null) {

@@ -87,25 +87,44 @@ public class Timer {
     /**
      * 타이머 종료
      * 시작한 날 + 1일에 종료할 경우 : 시작 시간 기준으로 자정까지 공부한 시간만 계산
+     * @return : 자정 이후 초과한 시간 반환.
      */
     public void end(){
         // 오늘인지 확인
         boolean isToday = studyDate.equals(LocalDate.now());
+        // 타이머가 START 인지, STOP 인지 확인
+
 
         // 종료 요청된 시간.
         this.endTime = LocalDateTime.now();
 
         // 오늘인 경우
         if (isToday) {
-            // 시작 시점부터 종료 시점까지 공부한 시간 계산
-            long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
-            this.totalTime += elapsedSeconds;
+            switch (this.status) {
+                case START:
+                    // 시작 시점부터 현재까지 공부한 시간 계산
+                    long elapsedSeconds = Duration.between(startTime, endTime).getSeconds();
+                    this.totalTime += elapsedSeconds;
+                    break;
+                case STOP:
+                    // 그냥 종료. - stop 에서 이미 totalTime 누적함.
+                    break;
+            }
         }
         // 다음날로 넘어간 경우, 자정까지 공부한 시간만 계산
-        else {
-            LocalDateTime endOfDay = studyDate.atTime(23, 59, 59);
-            long lastTimeSoFar = Duration.between(startTime, endOfDay).getSeconds();
-            this.totalTime += lastTimeSoFar;
+        else  {
+            switch (this.status) {
+                case START:
+                    // 시작 시점부터 자정까지 공부한 시간 계산
+                    LocalDateTime endOfDay = studyDate.atTime(23, 59, 59);
+                    long elapsedSeconds = Duration.between(startTime, endOfDay).getSeconds();
+                    this.totalTime += elapsedSeconds;
+                    // 초과한 시간은 새로운 타이머에서 setExceedTimeSoFarAfterMidnight() 에서 처리
+                    break;
+                case STOP:
+                    // 그냥 종료. - stop 에서 이미 totalTime 누적함.
+                    break;
+            }
         }
 
         // 종료 처리

@@ -11,4 +11,6 @@ public interface TimerService {
     TimerDto startMyTimer(long groupId, long UserId);
 
     TimerDto endTimerByGroupIdAndUserId(Long groupId, Long userId);
+
+    TimerDto getMyTimerByGroupIdAndUserId(long groupId, long userId);
 }

@@ -13,6 +13,7 @@ import lombok.*;
 public class TimerDto{
 
     private TimerEvent event;
+    private Long timerId;
     private Long userId;
     private String nickname;
     private long timeSoFar;
@@ -21,7 +22,8 @@ public class TimerDto{
     private String status;
 
     public TimerDto(Timer timer) {
-        this.userId = timer.getId();
+        this.timerId = timer.getId();
+        this.userId = timer.getUserId();
         this.nickname = timer.getUser().getNickname();
         this.timeSoFar = timer.getTimeSoFar();
         this.todayTotalTime = timer.getTotalTime();

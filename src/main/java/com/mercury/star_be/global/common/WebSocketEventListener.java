@@ -55,6 +55,10 @@ public class WebSocketEventListener {
         handleTimerDisconnection(event);
     }
 
+    /**
+     * Timer DISCONNECT 이벤트 핸들러
+     * @param event
+     */
     private void handleTimerDisconnection(SessionDisconnectEvent event) {
         // Redis에서 sessionId로 groupId와 userId 조회
         SetOperations<String, String> setOps = redisTemplate.opsForSet();
@@ -89,6 +93,10 @@ public class WebSocketEventListener {
         }
     }
 
+    /**
+     * FocusRoom CONNECT 이벤트 핸들러
+     * @param headerAccessor
+     */
     private void handleFocusRoomConnection(StompHeaderAccessor headerAccessor) {
         // 헤더에서 groupId와 userId 추출 닉네임도 추출 -db or client에서 가져옴
         String groupId = headerAccessor.getFirstNativeHeader("groupId");
@@ -122,14 +130,16 @@ public class WebSocketEventListener {
             System.out.println("User " + userId + " joined group " + groupId);
 
             // Entry 이벤트 브로드캐스트 객체
-            // timer 객체 불러오기
-            TimerDto entryEvent = timerService.startMyTimer(Long.parseLong(groupId), Long.parseLong(userId));
+            // 가장 최신 timer 객체 불러오기
+            TimerDto entryEvent = timerService.getMyTimerByGroupIdAndUserId(Long.parseLong(groupId), Long.parseLong(userId));
+            // 타이머가 없는 경우, 새로 입장한 사용자임. Entry 이벤트 객체 생성
             if (entryEvent == null) {
                 entryEvent = new TimerDto();
                 entryEvent.setEvent(TimerEvent.ENTRY);
                 entryEvent.setUserId(Long.parseLong(userId));
                 entryEvent.setNickname(nickname);
-                entryEvent.setStatus("rest");
+                entryEvent.setTimeSoFar(0);
+                entryEvent.setStatus("REST");
             }
 
             // Entry 이벤트 브로드캐스트
