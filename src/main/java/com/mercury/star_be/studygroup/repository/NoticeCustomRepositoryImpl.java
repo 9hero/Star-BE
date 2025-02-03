@@ -34,6 +34,7 @@ public class NoticeCustomRepositoryImpl implements NoticeCustomRepository {
 			.leftJoin(groupMember).on(notice.writer.id.eq(groupMember.member.id)
 				.and(groupMember.group.id.eq(groupId)))
 			.where(notice.studyGroup.id.eq(groupId))
+			.orderBy(notice.createdAt.desc())
 			.fetch();
 	}
 

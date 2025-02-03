@@ -1,6 +1,7 @@
 package com.mercury.star_be.user.controller;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,9 @@ import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.user.dto.request.UserBlockRequest;
 import com.mercury.star_be.user.dto.request.UserRequest;
 import com.mercury.star_be.user.dto.request.UserUnblockRequest;
+import com.mercury.star_be.user.dto.response.BlockUserListResponse;
 import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.service.UserBlockService;
+import com.mercury.star_be.user.service.BlockUserService;
 import com.mercury.star_be.user.service.UserService;
 import com.mercury.star_be.user.util.JwtUtil;
 
@@ -33,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
-    private final UserBlockService userBlockService;
+    private final BlockUserService blockUserService;
     private final JwtUtil jwtUtil;
 
     @PostMapping
@@ -91,23 +93,33 @@ public class UserController {
     }
 
 
-    /*
+    /**
      * 사용자 차단
      */
     @PostMapping("/api/users/blocks")
     public ApiResponse<Void> blockUser(@RequestBody UserBlockRequest userBlockRequest, Authentication auth) {
         UserResponse user = jwtUtil.getAuthenticatedUser(auth);
-        userBlockService.blockUser(user.getId(), userBlockRequest);
+        blockUserService.blockUser(user.getId(), userBlockRequest);
         return ApiResponse.success();
     }
 
-    /*
+    /**
      * 사용자 차단 해제
      */
     @DeleteMapping("/api/users/blocks")
     public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
         UserResponse user = jwtUtil.getAuthenticatedUser(auth);
-        userBlockService.unblockUser(user.getId(), userUnblockRequest);
+        blockUserService.unblockUser(user.getId(), userUnblockRequest);
         return ApiResponse.success();
+    }
+
+    /**
+     * 차단 사용자 목록 조회
+     */
+    @GetMapping("/api/users/blocks")
+    public ApiResponse<List<BlockUserListResponse>> getBlockUserList(Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        List<BlockUserListResponse> blockUserList = blockUserService.getBlockUserList(user.getId());
+        return ApiResponse.success(blockUserList);
     }
 }

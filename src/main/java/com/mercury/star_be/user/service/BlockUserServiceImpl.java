@@ -1,6 +1,7 @@
 package com.mercury.star_be.user.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.user.dto.request.UserBlockRequest;
 import com.mercury.star_be.user.dto.request.UserUnblockRequest;
+import com.mercury.star_be.user.dto.response.BlockUserListResponse;
 import com.mercury.star_be.user.entity.BlockUser;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.BlockUserRepository;
@@ -18,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
-public class UserBlockServiceImpl implements UserBlockService {
+public class BlockUserServiceImpl implements BlockUserService {
 
 	private final UserService userService;
 	private final BlockUserRepository blockUserRepository;
@@ -57,5 +59,10 @@ public class UserBlockServiceImpl implements UserBlockService {
 	@Override
 	public boolean isBlockUser(Long userId, Long targetUserId) {
 		return blockUserRepository.existsByUserIdAndBlockUserId(userId, targetUserId);
+	}
+
+	@Override
+	public List<BlockUserListResponse> getBlockUserList(Long userId) {
+		return blockUserRepository.findAllByUserId(userId);
 	}
 }
