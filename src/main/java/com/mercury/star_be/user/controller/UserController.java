@@ -1,33 +1,41 @@
 package com.mercury.star_be.user.controller;
 
-import com.mercury.star_be.global.common.ApiResponse;
-import com.mercury.star_be.user.dto.request.UserRequest;
-import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.entity.User;
-import com.mercury.star_be.user.repository.UserRepository;
-import com.mercury.star_be.user.service.UserService;
-import com.mercury.star_be.user.util.JwtUtil;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
+import com.mercury.star_be.global.common.ApiResponse;
+import com.mercury.star_be.user.dto.request.UserBlockRequest;
+import com.mercury.star_be.user.dto.request.UserRequest;
+import com.mercury.star_be.user.dto.request.UserUnblockRequest;
+import com.mercury.star_be.user.dto.response.BlockUserListResponse;
+import com.mercury.star_be.user.dto.response.UserResponse;
+import com.mercury.star_be.user.service.BlockUserService;
+import com.mercury.star_be.user.service.UserService;
+import com.mercury.star_be.user.util.JwtUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
     private final UserService userService;
+    private final BlockUserService blockUserService;
     private final JwtUtil jwtUtil;
 
     @PostMapping
@@ -85,6 +93,33 @@ public class UserController {
     }
 
 
+    /**
+     * 사용자 차단
+     */
+    @PostMapping("/api/users/blocks")
+    public ApiResponse<Void> blockUser(@RequestBody UserBlockRequest userBlockRequest, Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        blockUserService.blockUser(user.getId(), userBlockRequest);
+        return ApiResponse.success();
+    }
 
+    /**
+     * 사용자 차단 해제
+     */
+    @DeleteMapping("/api/users/blocks")
+    public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        blockUserService.unblockUser(user.getId(), userUnblockRequest);
+        return ApiResponse.success();
+    }
 
+    /**
+     * 차단 사용자 목록 조회
+     */
+    @GetMapping("/api/users/blocks")
+    public ApiResponse<List<BlockUserListResponse>> getBlockUserList(Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        List<BlockUserListResponse> blockUserList = blockUserService.getBlockUserList(user.getId());
+        return ApiResponse.success(blockUserList);
+    }
 }
