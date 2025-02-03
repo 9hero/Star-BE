@@ -33,11 +33,19 @@ public class RabbitMQConfig {
 
     private static final String CHAT_QUEUE_NAME = "chat.queue";
     private static final String CHAT_EXCHANGE_NAME = "chat.exchange";
-    private static final String ROUTING_KEY = "room.*";
+    private static final String ROUTING_KEY = "chat.*";
+    private static final String READ_CHECK_REQUEST_QUEUE_NAME = "readCheck.request.queue";
+    private static final String READ_CHECK_RESPONSE_QUEUE_NAME = "readCheck.response.queue";
+    private static final String READ_CHECK_REQUEST_ROUTING_KEY = "readCheck.request.*";
+    private static final String READ_CHECK_RESPONSE_ROUTING_KEY = "readCheck.response.*";
 
-    //Queue 등록
+    //Queue 등록(채팅 / 메시지 읽음)
     @Bean
     public Queue queue(){ return new Queue(CHAT_QUEUE_NAME, true); }
+    @Bean
+    public Queue readCheckRequestQueue(){ return new Queue(READ_CHECK_REQUEST_QUEUE_NAME, true); }
+    @Bean
+    public Queue readCheckResponseQueue(){ return new Queue(READ_CHECK_RESPONSE_QUEUE_NAME, true); }
 
     //Exchange 등록
     @Bean
@@ -47,6 +55,14 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    }
+    @Bean
+    public Binding readCheckRequestBinding(Queue readCheckRequestQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(readCheckRequestQueue).to(exchange).with(READ_CHECK_REQUEST_ROUTING_KEY);
+    }
+    @Bean
+    public Binding readCheckResponseBinding(Queue readCheckResponseQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(readCheckResponseQueue).to(exchange).with(READ_CHECK_RESPONSE_ROUTING_KEY);
     }
 
     /* messageConverter를 커스터마이징 하기 위해 Bean 새로 등록 */

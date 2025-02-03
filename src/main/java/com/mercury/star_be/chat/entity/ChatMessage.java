@@ -54,4 +54,16 @@ public class ChatMessage {
         this.chatRoom = chatRoom;
         this.chatMessageFiles = chatMessageFiles != null ? chatMessageFiles : List.of();
     }
+
+    public void updateFiles(List<ChatMessageFile> chatMessageFiles) {
+        this.chatMessageFiles = chatMessageFiles;
+    }
+
+    public void updateReceiver(User chatReceiver) {
+        this.chatReceiver = chatReceiver;
+    }
+
+    public void updateUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
+    }
 }
