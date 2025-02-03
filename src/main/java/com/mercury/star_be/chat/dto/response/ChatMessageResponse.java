@@ -18,5 +18,6 @@ public class ChatMessageResponse {
     private LocalDateTime createdAt;
     private int unreadCount;
     private String messageContent;
+    private String profileImgUrl;
     List<ChatMessageFileDto> messageFiles;
 }

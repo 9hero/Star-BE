@@ -90,6 +90,7 @@ public class ChatServiceImpl implements ChatService {
                         .content(chatMessage.getContent())
                         .unreadCount(chatMessage.getUnreadCount())
                         .createdAt(chatMessage.getCreatedAt())
+                        .profileImgUrl(chatMessage.getChatSender().getImage())
                         .messageFiles(chatMessage.getContent() == null ?
                                 (!chatMessage.getChatMessageFiles().isEmpty() ?
                                         chatMessage.getChatMessageFiles().stream()
@@ -206,6 +207,7 @@ public class ChatServiceImpl implements ChatService {
                 .createdAt(LocalDateTime.now())
                 .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방 인원)
                 .messageContent(chatMessageRequest.getMessageContent())
+                .profileImgUrl(chatSender.getImage())
                 .messageFiles(chatMessageRequest.getMessageFiles()) // 파일 정보 추가
                 .build();
 
@@ -313,13 +315,14 @@ public class ChatServiceImpl implements ChatService {
     public ChatRoomListResponse getUserChatRooms(Long userId) {
         Optional<List<UserChatRoom>> optionalUserChatRooms = userChatRoomRepository.findByChatUserId(userId);
         if (optionalUserChatRooms.isPresent()) {
+
             List<UserChatRoom> userChatRooms = optionalUserChatRooms.get();
             List<ChatRoomDto> chatRooms = new ArrayList<>();
             //리스트에 있는 값들에서 chatRoomId로 ChatRooms 찾아내기
             for (UserChatRoom userChatRoom : userChatRooms) {
                 Long chatRoomId = userChatRoom.getChatRoom().getId();
                 ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-                chatRooms.add(fromChatRoomEntity(chatRoom));
+                chatRooms.add(fromChatRoomEntity(chatRoom, userId));
             }
             ChatRoomListResponse chatRoomListResponse = ChatRoomListResponse.builder()
                     .userId(userId)
@@ -349,15 +352,19 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 최신메시지 가져오기 서비스
      */
-    public ChatRecentMessageDto findRecentMessage(Long chatRoomId) {
+    public ChatRecentMessageDto findRecentMessage(Long chatRoomId, Long userId) {
         ChatMessage chatMessage =
                 chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId).orElseThrow(
                         () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
                 );
+        // 송신자 조회
+        User chatSender = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
         return ChatRecentMessageDto.builder()
                 .id(chatMessage.getId())
                 //nickName은 추후 userRepository에서 가져옴
-                .nickName("test")
+                .nickName(chatSender.getNickname())
+                .profileImgUrl(chatSender.getImage())
                 .content(chatMessage.getContent())
                 .unreadCount(chatMessage.getUnreadCount())
                 .createdAt(chatMessage.getCreatedAt())
@@ -367,12 +374,12 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 채팅방 entity -> dto로 변환 서비스
      */
-    public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom) {
+    public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom, Long userId) {
         return ChatRoomDto.builder()
                 .id(chatRoom.getId())
                 .chatRoomType(chatRoom.getChatRoomType())
                 .groupId(chatRoom.getId())
-                .recentMessage(findRecentMessage(chatRoom.getId()))
+                .recentMessage(findRecentMessage(chatRoom.getId(), userId))
                 .build();
     }
     
