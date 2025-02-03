@@ -16,6 +16,7 @@ public enum StudyGroupErrorCode implements ErrorCode {
 	USER_NOT_EXIST_IN_GROUP(HttpStatus.CONFLICT, "유저가 가입되지 않은 그룹입니다."),
 	USER_NOT_HOST(HttpStatus.UNAUTHORIZED, "그룹장 권한이 없습니다."),
 	STUDY_GROUP_IS_EMPTY(HttpStatus.CONFLICT, "스터디 그룹에 유저가 없습니다."),
+	INVALID_GROUP_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다"),
 	INVALID_MAX_CAPACITY(HttpStatus.BAD_REQUEST, "최대 인원이 현재 인원보다 작을 수 없습니다.");
 
 	private final HttpStatus httpStatus;

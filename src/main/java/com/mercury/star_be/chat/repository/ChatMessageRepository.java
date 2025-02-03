@@ -11,5 +11,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     Optional<List<ChatMessage>> findByChatRoomId(Long chatRoomId);
     // 가장 최신의 채팅 메시지 하나를 가져오기
     Optional<ChatMessage> findFirstByChatRoomIdOrderByCreatedAtDesc(Long chatRoomId);
-
+    //두사람 간의 채팅 기록 count
+    int countByChatSenderIdAndChatReceiverId(Long senderId, Long receiverId);
 }

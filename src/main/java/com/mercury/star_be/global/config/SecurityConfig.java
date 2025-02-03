@@ -34,10 +34,11 @@ public class SecurityConfig{
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(
                                 "/api/**" // front단에서의 요청
-                                , "/docs/index.html" // rest docs 요청
-                                ,"/timer/**", "favion.ico",
-                            "/api/groups/**" // timer 웹소켓
-                                ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback",
+                                , "/docs/index.html", // rest docs 요청
+                                "/chat/**" // chat 웹소켓
+                                ,"/timer/**", "favion,ico" // timer 웹소켓
+                                ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback"
+                                ,"/groups",
                                 "/fileupload/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요

@@ -3,6 +3,7 @@ package com.mercury.star_be.studygroup.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.mercury.star_be.user.util.JwtUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,10 +38,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	private final StudyGroupRepository studyGroupRepository;
 	private final GroupMemberRepository groupMemberRepository;
 	private final UserRepository userRepository;
+	private final JwtUtil jwtUtil;
 
 	@Override
 	@Transactional
-	public StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest) {
+	public StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest, String token) {
 		StudyGroup studyGroup = StudyGroup.builder()
 			.name(studyGroupCreateRequest.getName())
 			.description(studyGroupCreateRequest.getDescription())
@@ -54,6 +56,18 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.build();
 
 		// TODO: GroupMember에 사용자 추가 필요
+		Long userId = jwtUtil.getid(token);
+		User user = userRepository.findById(userId).orElseThrow();
+
+		GroupMember groupMember = GroupMember.builder()
+				.nickname(user.getNickname())
+				.image(user.getImage())
+				.isHost(true)
+				.group(studyGroup)
+				.member(user)
+				.joinedAt(LocalDateTime.now())
+				.build();
+		groupMemberRepository.save(groupMember);
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
 		return new StudyGroupCreateResponse(savedGroup.getId());
 	}
@@ -135,8 +149,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public void joinStudyGroup(Long groupId, Long userId) throws BusinessException {
+	public void joinStudyGroup(Long groupId, String token, String password) throws BusinessException {
 
+		Long userId = jwtUtil.getid(token);
 		User user = userRepository.findById(userId).orElseThrow();
 
 		// 가입하려는 그룹이 존재하지 않을때
@@ -146,6 +161,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		// 가입하려는 그룹이 다 찼을떄
 		if (studyGroup.getMemberCount() >= studyGroup.getMaxCapacity()) {
 			throw new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_FULL);
+		}
+		// 그룹이 비밀번호로 보호되어 있는지 체크하고,
+		// 보호되어 있다면, 전달된 password와 일치하는지 검증
+		if (studyGroup.hasPassword()) {
+			if (password == null || !studyGroup.getPassword().equals(password)) {
+				throw new BusinessException(StudyGroupErrorCode.INVALID_GROUP_PASSWORD);
+			}
 		}
 
 		// 가입하려는 그룹에 이미 유저가 가입한 상태일때
