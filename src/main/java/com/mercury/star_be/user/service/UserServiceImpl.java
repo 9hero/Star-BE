@@ -1,21 +1,5 @@
 package com.mercury.star_be.user.service;
 
-import com.mercury.star_be.user.dto.request.UserRequest;
-import com.mercury.star_be.user.dto.response.*;
-import com.mercury.star_be.user.entity.User;
-import com.mercury.star_be.user.repository.UserRepository;
-import com.mercury.star_be.user.util.JwtUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -27,6 +11,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.mercury.star_be.global.error.BusinessException;
+import com.mercury.star_be.global.error.code.UserErrorCode;
+import com.mercury.star_be.user.dto.request.UserRequest;
+import com.mercury.star_be.user.dto.response.GoogleResponse;
+import com.mercury.star_be.user.dto.response.NaverResponse;
+import com.mercury.star_be.user.dto.response.Oauth2Response;
+import com.mercury.star_be.user.dto.response.UserResponse;
+import com.mercury.star_be.user.dto.response.kakaoResponse;
+import com.mercury.star_be.user.entity.User;
+import com.mercury.star_be.user.repository.UserRepository;
+import com.mercury.star_be.user.util.JwtUtil;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -164,5 +170,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         userRepository.delete(user);
     }
 
-
+    @Override
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+    }
 }

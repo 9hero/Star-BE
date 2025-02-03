@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum UserErrorCode implements ErrorCode {
 
-    USER_NOT_EXIST(HttpStatus.CONFLICT, "존재하지 않는 유져입니다");
+    USER_NOT_EXIST(HttpStatus.CONFLICT, "존재하지 않는 유져입니다"),
+    ALREADY_BLOCK_USER(HttpStatus.CONFLICT, "이미 차단한 유져입니다.");
 
     private final HttpStatus httpStatus;
 
