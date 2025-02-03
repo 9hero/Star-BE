@@ -39,6 +39,12 @@ public class RabbitMQConfig {
     private static final String READ_CHECK_REQUEST_ROUTING_KEY = "readCheck.request.*";
     private static final String READ_CHECK_RESPONSE_ROUTING_KEY = "readCheck.response.*";
 
+    // TIMER QUEUE
+    private static final String TIMER_QUEUE_NAME = "groups.queue";
+    private static final String TIMER_EXCHANGE_NAME = "groups.exchange";
+//    private static final String TIMER_ROUTING_KEY = "groups.*";
+    private static final String TIMER_ROUTING_KEY = "groups.#";
+
     //Queue 등록(채팅 / 메시지 읽음)
     @Bean
     public Queue queue(){ return new Queue(CHAT_QUEUE_NAME, true); }
@@ -47,9 +53,21 @@ public class RabbitMQConfig {
     @Bean
     public Queue readCheckResponseQueue(){ return new Queue(READ_CHECK_RESPONSE_QUEUE_NAME, true); }
 
+    // Timer Queue 등록
+    @Bean
+    public Queue timerQueue() {
+        return new Queue(TIMER_QUEUE_NAME,true);
+    }
+
     //Exchange 등록
     @Bean
     public TopicExchange exchange(){ return new TopicExchange(CHAT_EXCHANGE_NAME); }
+
+    // Timer Exchange 등록
+    @Bean
+    public TopicExchange timerExchange() {
+        return new TopicExchange(TIMER_EXCHANGE_NAME);
+    }
 
     //Exchange와 Queue 바인딩
     @Bean
@@ -63,6 +81,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding readCheckResponseBinding(Queue readCheckResponseQueue, TopicExchange exchange) {
         return BindingBuilder.bind(readCheckResponseQueue).to(exchange).with(READ_CHECK_RESPONSE_ROUTING_KEY);
+    }
+    // Timer Exchange와 Queue 바인딩
+    @Bean
+    public Binding timerBinding(Queue timerQueue, TopicExchange timerExchange) {
+        return BindingBuilder.bind(timerQueue).to(timerExchange).with(TIMER_ROUTING_KEY);
     }
 
     /* messageConverter를 커스터마이징 하기 위해 Bean 새로 등록 */

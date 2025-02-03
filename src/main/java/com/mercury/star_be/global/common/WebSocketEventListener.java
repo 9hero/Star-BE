@@ -5,6 +5,8 @@ import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,6 +29,7 @@ public class WebSocketEventListener {
     private final RedisTemplate<String, String> redisTemplate;
     private final TimerService timerService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RabbitMessagingTemplate rabbitTemplate;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectEvent event) {
@@ -87,7 +91,7 @@ public class WebSocketEventListener {
             disconnectEvent.setUserId(userId);
             disconnectEvent.setEvent(TimerEvent.DISCONNECT);
             messagingTemplate.convertAndSend(
-                    "/sub/groups/"+groupId+"/timers",
+                    "/topic/groups."+groupId+".timers",
                     disconnectEvent
             );
         }
@@ -115,6 +119,7 @@ public class WebSocketEventListener {
             String sessionId = headerAccessor.getSessionId();
             if (sessionId != null) {
                 setOps.add(sessionId, groupId+":"+userId+":"+nickname);
+                redisTemplate.expire(sessionId, Duration.ofDays(1));
             }else {
                 // 세션 아이디가 없을 경우 예외 처리
                 log.error("SessionId is null");
@@ -124,8 +129,8 @@ public class WebSocketEventListener {
             // Redis에 유저 추가
             setOps.add(redisKey, userId+":"+nickname);
 
-            // TTL 설정 (테스트 용 180초)
-//            redisTemplate.expire(redisKey, Duration.ofSeconds(180));
+            // TTL 설정
+            redisTemplate.expire(redisKey, Duration.ofDays(1));
 
             System.out.println("User " + userId + " joined group " + groupId);
 
@@ -134,6 +139,7 @@ public class WebSocketEventListener {
             TimerDto entryEvent = timerService.getMyTimerByGroupIdAndUserId(Long.parseLong(groupId), Long.parseLong(userId));
             // 타이머가 없는 경우, 새로 입장한 사용자임. Entry 이벤트 객체 생성
             if (entryEvent == null) {
+                System.out.println("타이머 없음 새로 입장~");
                 entryEvent = new TimerDto();
                 entryEvent.setEvent(TimerEvent.ENTRY);
                 entryEvent.setUserId(Long.parseLong(userId));
@@ -143,7 +149,8 @@ public class WebSocketEventListener {
             }
 
             // Entry 이벤트 브로드캐스트
-            messagingTemplate.convertAndSend("/sub/groups/"+groupId+"/timers", entryEvent);
+            messagingTemplate.convertAndSend("/topic/groups."+groupId+".timers", entryEvent);
+
         }
     }
 }

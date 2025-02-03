@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.Id;
+import lombok.ToString;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
+@ToString
 public class Timer {
 
     @Id
@@ -81,7 +83,7 @@ public class Timer {
         this.timeSoFar += elapsedSeconds;
         startTime = null;
         // End 안하면 totalTime 유실되기 때문에 추가
-        totalTime += timeSoFar;
+        totalTime += elapsedSeconds;
     }
 
     /**
@@ -92,9 +94,8 @@ public class Timer {
     public void end(){
         // 오늘인지 확인
         boolean isToday = studyDate.equals(LocalDate.now());
+
         // 타이머가 START 인지, STOP 인지 확인
-
-
         // 종료 요청된 시간.
         this.endTime = LocalDateTime.now();
 
@@ -169,6 +170,7 @@ public class Timer {
             case ENTRY:
                 timerEventDto.setEvent(TimerEvent.ENTRY);
                 timerEventDto.setStatus(TimerStatus.REST.toString());
+                System.out.println("입장 시, time 확인 timer.java"+this.getTimeSoFar());
                 break;
         }
         return timerEventDto;

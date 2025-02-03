@@ -256,6 +256,8 @@ public class TimerServiceImpl implements TimerService {
     public TimerDto getMyTimerByGroupIdAndUserId(long groupId, long userId) {
         // 최신 타이머 조회
         Timer timer = timerRepository.findRecentOneByStudyGroupIdAndUserId(groupId,userId);
+        System.out.println("최신 타이머 가져옴 TimerServiceImpl");
+        log.info("Timer: {}", timer);
         return timer == null ? null : timer.toEventTimerDto(TimerEvent.ENTRY);
     }
 }

@@ -15,7 +15,7 @@ public interface TimerRepository extends JpaRepository<Timer, Long> {
     Timer findByStudyGroupIdAndUserIdAndToday(@Param("groupId") Long groupId, @Param("userId") Long userId);
 
     // 가장 최근의 타이머 정보를 가져옴
-    @Query(value = "SELECT * FROM timer WHERE study_group_id = :groupId AND user_id = :userId ORDER BY start_time DESC LIMIT 1",
+    @Query(value = "SELECT * FROM timer WHERE study_group_id = :groupId AND user_id = :userId ORDER BY study_date DESC LIMIT 1",
         nativeQuery = true)
     Timer findRecentOneByStudyGroupIdAndUserId(@Param("groupId") Long groupId, @Param("userId") Long userId);
 

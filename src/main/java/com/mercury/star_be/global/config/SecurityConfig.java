@@ -38,7 +38,7 @@ public class SecurityConfig{
                                 "/chat/**" // chat 웹소켓
                                 ,"/timer/**", "favion,ico" // timer 웹소켓
                                 ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback"
-                                ,"/groups",
+                                ,"/groups/**",
                                 "/fileupload/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요
