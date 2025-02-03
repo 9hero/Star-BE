@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.user.dto.request.UserBlockRequest;
+import com.mercury.star_be.user.dto.request.UserUnblockRequest;
 import com.mercury.star_be.user.entity.BlockUser;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.BlockUserRepository;
@@ -28,7 +29,7 @@ public class UserBlockServiceImpl implements UserBlockService {
 		Long targetUserId = userBlockRequest.getTargetUserId();
 		userService.findById(targetUserId);
 		if (isBlockUser(userId, targetUserId)) {
-			throw new BusinessException(UserErrorCode.ALREADY_BLOCK_USER);
+			throw new BusinessException(UserErrorCode.ALREADY_BLOCKED_USER);
 		}
 
 		User user = userService.findById(userId);
@@ -38,6 +39,19 @@ public class UserBlockServiceImpl implements UserBlockService {
 			.user(user)
 			.build();
 		user.addBlockUser(blockUser);
+	}
+
+	@Override
+	@Transactional
+	public void unblockUser(Long userId, UserUnblockRequest userUnblockRequest) {
+		Long targetUserId = userUnblockRequest.getTargetUserId();
+		userService.findById(targetUserId);
+
+		BlockUser blockUser = blockUserRepository.findByUserIdAndBlockUserId(userId, targetUserId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.NOT_BLOCKED_USER));
+
+		User user = userService.findById(userId);
+		user.unblockUser(blockUser);
 	}
 
 	@Override

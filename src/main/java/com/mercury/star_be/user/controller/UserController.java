@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.user.dto.request.UserBlockRequest;
 import com.mercury.star_be.user.dto.request.UserRequest;
+import com.mercury.star_be.user.dto.request.UserUnblockRequest;
 import com.mercury.star_be.user.dto.response.UserResponse;
 import com.mercury.star_be.user.service.UserBlockService;
 import com.mercury.star_be.user.service.UserService;
@@ -97,6 +98,16 @@ public class UserController {
     public ApiResponse<Void> blockUser(@RequestBody UserBlockRequest userBlockRequest, Authentication auth) {
         UserResponse user = jwtUtil.getAuthenticatedUser(auth);
         userBlockService.blockUser(user.getId(), userBlockRequest);
+        return ApiResponse.success();
+    }
+
+    /*
+     * 사용자 차단 해제
+     */
+    @DeleteMapping("/api/users/blocks")
+    public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        userBlockService.unblockUser(user.getId(), userUnblockRequest);
         return ApiResponse.success();
     }
 }

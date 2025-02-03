@@ -64,4 +64,8 @@ public class User {
 	public void addBlockUser(BlockUser blockUser) {
 		blockUsers.add(blockUser);
 	}
+
+	public void unblockUser(BlockUser blockUser) {
+		blockUsers.remove(blockUser);
+	}
 }
