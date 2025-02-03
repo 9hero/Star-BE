@@ -1,6 +1,7 @@
 package com.mercury.star_be.studygroup.controller;
 
 import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
+import com.mercury.star_be.studygroup.dto.request.StudyGroupJoinRequest;
 import com.mercury.star_be.studygroup.dto.response.*;
 
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,17 @@ public class StudyGroupController {
     private final StudyGroupService studyGroupService;
 
     @PostMapping("/api/groups")
-    public ApiResponse<StudyGroupCreateResponse> createStudyGroup(@RequestBody @Valid StudyGroupCreateRequest studyGroupCreateRequest) {
-        StudyGroupCreateResponse studyGroupCreateResponse = studyGroupService.createStudyGroup(studyGroupCreateRequest);
+    public ApiResponse<StudyGroupCreateResponse> createStudyGroup(
+            @RequestBody @Valid StudyGroupCreateRequest studyGroupCreateRequest,
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader
+    ) {
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+
+        StudyGroupCreateResponse studyGroupCreateResponse = studyGroupService.createStudyGroup(studyGroupCreateRequest, token);
         return ApiResponse.success(studyGroupCreateResponse);
     }
 
@@ -57,13 +67,19 @@ public class StudyGroupController {
         return ApiResponse.success(response);
     }
 
-    //TODO: testcode 미작성 추후에 token 받아서 처리해야함
-    @PostMapping("/api/groups/{groupId}/join/{userId}")
+    @PostMapping("/api/groups/{groupId}/join")
     public ApiResponse joinStudyGroup(
             @PathVariable(value = "groupId") Long groupId,
-            @PathVariable(value = "userId") Long userId
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader,
+            @RequestBody (required = false)StudyGroupJoinRequest studyGroupJoinRequest
             ) {
-        studyGroupService.joinStudyGroup(groupId, userId);
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        String password = studyGroupJoinRequest != null ? studyGroupJoinRequest.getPassword() : null;
+        studyGroupService.joinStudyGroup(groupId, token, password);
         return ApiResponse.success();
     }
 
