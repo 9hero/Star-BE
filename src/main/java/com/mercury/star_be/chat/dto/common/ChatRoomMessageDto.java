@@ -18,6 +18,7 @@ public class ChatRoomMessageDto {
     private Long id;
     private Long senderId;
     private String nickName;
+    private String profileImgUrl;
     private String content;
     private int unreadCount;
     private LocalDateTime createdAt;

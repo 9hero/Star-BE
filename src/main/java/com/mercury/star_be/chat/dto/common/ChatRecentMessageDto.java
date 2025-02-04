@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class ChatRecentMessageDto {
     private Long id;
     private String nickName;
+    private String profileImgUrl;
     private String content;
     private int unreadCount;
     private LocalDateTime createdAt;

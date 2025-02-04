@@ -66,4 +66,8 @@ public class ChatMessage {
     public void updateUnreadCount(int unreadCount) {
         this.unreadCount = unreadCount;
     }
+
+    public void fileUploadContentString(String fileUrl){
+        this.content = fileUrl;
+    }
 }
