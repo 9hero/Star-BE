@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**채팅목록에서 채팅방 정보를 보여줄 때 사용하는 DTO*/
 @Getter
@@ -18,7 +19,7 @@ public class ChatRoomDto {
     @Enumerated(EnumType.STRING)
     private ChatRoomType chatRoomType;
     private Long groupId;
-
+    private List<Long> unreadMessages; //채팅방에서 읽지 않은 메시지들 id list
     private ChatRecentMessageDto recentMessage;
 
 }

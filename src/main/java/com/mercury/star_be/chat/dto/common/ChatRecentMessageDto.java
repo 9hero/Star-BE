@@ -17,7 +17,7 @@ public class ChatRecentMessageDto {
     private String nickName;
     private String profileImgUrl;
     private String content;
-    private int unreadCount;
+    private boolean isRead; //이 메시지를 읽었는지 확인하는 변수
     private LocalDateTime createdAt;
 
 

@@ -44,6 +44,7 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageFileRepository chatMessageFileRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
+    private final ChatCustomRepository chatCustomRepository;
     /**
      * 채팅방 조회
      */
@@ -363,16 +364,19 @@ public class ChatServiceImpl implements ChatService {
                 chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId).orElseThrow(
                         () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
                 );
-        // 송신자 조회
-        User chatSender = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+        //채팅메시지에서 송신자 조회
+        User chatSender = userRepository.findById(chatMessage.getChatSender().getId()).orElseThrow(
+                () ->new BusinessException(UserErrorCode.USER_NOT_EXIST));
+
+        //송신자가 누구던간에, 채팅목록을 띄우고 있는 인원이 이 메시지를 읽었는지 확인이 필요
+        boolean isRead = chatReadRepository.existsByChatMessageIdAndChatUserId(chatMessage.getId(), userId);
+        
         return ChatRecentMessageDto.builder()
                 .id(chatMessage.getId())
-                //nickName은 추후 userRepository에서 가져옴
                 .nickName(chatSender.getNickname())
                 .profileImgUrl(chatSender.getImage())
                 .content(chatMessage.getContent())
-                .unreadCount(chatMessage.getUnreadCount())
+                .isRead(isRead)
                 .createdAt(chatMessage.getCreatedAt())
                 .build();
     }
@@ -381,14 +385,21 @@ public class ChatServiceImpl implements ChatService {
      * 채팅방 entity -> dto로 변환 서비스
      */
     public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom, Long userId) {
+        //1:1 채팅은 그룹아이디가 null
+        Long groupId = null;
+        if (chatRoom.getStudyGroup() != null) {
+            groupId = chatRoom.getStudyGroup().getId();
+        }
+
         return ChatRoomDto.builder()
                 .id(chatRoom.getId())
                 .chatRoomType(chatRoom.getChatRoomType())
-                .groupId(chatRoom.getId())
+                .groupId(groupId)
+                .unreadMessages(findUnreadMessageIds(chatRoom.getId(), userId))
                 .recentMessage(findRecentMessage(chatRoom.getId(), userId))
                 .build();
     }
-    
+
     /**
      * 1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인 서비스
      * */
@@ -498,6 +509,16 @@ public class ChatServiceImpl implements ChatService {
             e.printStackTrace();
             throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
         }
+    }
+
+    @Override
+    public List<Long> findUnreadMessageIds(Long chatRoomId, Long userId) {
+        return chatCustomRepository.findUnreadMessageIds(chatRoomId, userId);
+    }
+
+    @Override
+    public void insertChatReads(List<Long> chatMessageIds, Long userId) {
+        chatCustomRepository.insertChatReads(chatMessageIds, userId);
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {
