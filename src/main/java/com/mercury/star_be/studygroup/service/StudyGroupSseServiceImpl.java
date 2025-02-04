@@ -2,9 +2,9 @@ package com.mercury.star_be.studygroup.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
-	private final RedisTemplate<String, Object> redisTemplate;
 	private final SseEmitterRepository sseEmitterRepository;
 	private final GroupMemberRepository groupMemberRepository;
 
@@ -44,11 +43,14 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 	private SseEmitter createSseEmitter(Long groupId, Long userId) {
 		SseEmitter sseEmitter = new SseEmitter(SSE_TIMEOUT);
-		sseEmitterRepository.save(groupId, userId, sseEmitter);
+		sseEmitterRepository.save(groupId, sseEmitter);
+		sseEmitterRepository.updateStatus(groupId, userId, ConnectionStatus.ONLINE);
 
 		// 요청이 완료되거나 타임아웃 발생 시 기존 SseEmitter 삭제
 		sseEmitter.onCompletion(() -> disconnect(groupId, userId, sseEmitter));
 		sseEmitter.onTimeout(() -> disconnect(groupId, userId, sseEmitter));
+
+		sendData(sseEmitter, "connect", "success");
 		return sseEmitter;
 	}
 
@@ -64,18 +66,13 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 	private void sendGroupMemberInfoList(Long groupId, SseEmitter sseEmitter) {
 		List<GroupMemberSseResponse> groupMemberInfoList = getGroupMemberInfoList(groupId);
-		try {
-			sseEmitter.send(SseEmitter.event()
-				.name("memberData")
-				.data(groupMemberInfoList));
-		} catch (IOException e) {
-			sseEmitter.completeWithError(e);
-		}
+		sendData(sseEmitter, "memberData", groupMemberInfoList);
 	}
 
 	private List<GroupMemberSseResponse> getGroupMemberInfoList(Long groupId) {
 		List<GroupMember> groupMembers = groupMemberRepository.findByGroupIdOrderByNicknameAsc(groupId);
-		List<Long> connectedUserIds = sseEmitterRepository.getConnectedUsers(groupId);
+		Map<Object, Object> connectedUsers = sseEmitterRepository.getConnectedUsers(groupId);
+		Set<Object> connectedUserIds = connectedUsers.keySet();
 
 		return groupMembers.stream()
 			.map(groupMember -> GroupMemberSseResponse.builder()
@@ -84,7 +81,9 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 				.image(groupMember.getImage())
 				.isHost(groupMember.isHost())
 				.status(
-					connectedUserIds.contains(groupMember.getId()) ? ConnectionStatus.ONLINE : ConnectionStatus.OFFLINE)
+					connectedUserIds.contains(groupMember.getId()) ?
+						ConnectionStatus.valueOf((String)connectedUsers.get(groupMember.getId()))
+						: ConnectionStatus.OFFLINE)
 				.build())
 			.toList();
 	}
@@ -93,14 +92,18 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		Set<SseEmitter> sseEmitters = sseEmitterRepository.findAllByGroupId(groupId);
 		sseEmitters.forEach(sseEmitter -> {
 			if (sseEmitter != null) {
-				try {
-					sseEmitter.send(SseEmitter.event()
-						.name("statusUpdate")
-						.data(data));
-				} catch (IOException e) {
-					sseEmitter.completeWithError(e);
-				}
+				sendData(sseEmitter, "statusUpdate", data);
 			}
 		});
+	}
+
+	private void sendData(SseEmitter sseEmitter, String eventName, Object data) {
+		try {
+			sseEmitter.send(SseEmitter.event()
+				.name(eventName)
+				.data(data));
+		} catch (IOException e) {
+			sseEmitter.completeWithError(e);
+		}
 	}
 }
