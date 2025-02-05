@@ -36,6 +36,9 @@ public class ChatMessage {
     @OneToMany(mappedBy = "chatMessage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMessageFile> chatMessageFiles;
 
+    @OneToMany(mappedBy = "chatMessage", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRead> chatReads;
+
     @Builder
     public ChatMessage(
             String content,
@@ -65,5 +68,9 @@ public class ChatMessage {
 
     public void updateUnreadCount(int unreadCount) {
         this.unreadCount = unreadCount;
+    }
+
+    public void fileUploadContentString(String fileUrl){
+        this.content = fileUrl;
     }
 }

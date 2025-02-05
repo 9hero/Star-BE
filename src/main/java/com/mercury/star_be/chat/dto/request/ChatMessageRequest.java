@@ -37,7 +37,7 @@ public class ChatMessageRequest {
     @Enumerated(EnumType.STRING)
     private ChatRoomType chatRoomType;
 
-    public void fileUploadContentString(){
+    public void fileUploadContentString(String fileUrl){
         this.messageContent = "fileUpload";
     }
 
