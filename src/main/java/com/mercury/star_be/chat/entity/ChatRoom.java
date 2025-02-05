@@ -25,6 +25,9 @@ public class ChatRoom {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserChatRoom> userChatRooms;
+
     @Builder
     public ChatRoom(
             ChatRoomType chatRoomType,
@@ -35,8 +38,12 @@ public class ChatRoom {
         this.chatRoomType = chatRoomType;
         this.createdAt = createdAt;
         this.studyGroup = studyGroup;
-        //this.userChatRooms = userChatRooms != null ? userChatRooms : List.of();
+        this.userChatRooms = userChatRooms != null ? userChatRooms : List.of();
 
+    }
+
+    public void insertUserChatRooms(UserChatRoom userChatRoom) {
+        this.userChatRooms.remove(userChatRoom);
     }
 
 }

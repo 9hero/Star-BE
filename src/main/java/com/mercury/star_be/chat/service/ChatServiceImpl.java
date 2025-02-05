@@ -249,9 +249,6 @@ public class ChatServiceImpl implements ChatService {
                 .studyGroup(null)
                 .build();
 
-        //채팅방 저장
-        chatRoomRepository.save(chatRoom);
-
         // 사용자 채팅방 생성(송신자 / 수신자)
         UserChatRoom senderUserChatRoom = UserChatRoom.builder()
                 .joinedAt(LocalDateTime.now())
@@ -267,11 +264,18 @@ public class ChatServiceImpl implements ChatService {
                 .chatUser(receiver)
                 .build();
 
+        chatRoom.insertUserChatRooms(senderUserChatRoom);
+        chatRoom.insertUserChatRooms(receiverUserChatRoom);
+
+        //채팅방 저장
+        chatRoomRepository.save(chatRoom);
+
         //1:1 채팅일 경우 수신자 정보 저장
         userChatRoomRepository.save(receiverUserChatRoom);
 
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
+
 
     }
     @Override
@@ -296,8 +300,6 @@ public class ChatServiceImpl implements ChatService {
                 .studyGroup(studyGroup)
                 .build();
 
-        //채팅방 저장
-        chatRoomRepository.save(chatRoom);
 
         // 사용자 채팅방 생성(송신자)
         UserChatRoom senderUserChatRoom = UserChatRoom.builder()
@@ -307,6 +309,10 @@ public class ChatServiceImpl implements ChatService {
                 .chatUser(sender)
                 .build();
 
+        chatRoom.insertUserChatRooms(senderUserChatRoom);
+
+        //채팅방 저장
+        chatRoomRepository.save(chatRoom);
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
 
