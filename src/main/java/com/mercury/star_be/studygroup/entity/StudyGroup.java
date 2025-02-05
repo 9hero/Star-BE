@@ -41,6 +41,9 @@ public class StudyGroup {
 	@OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> members = new ArrayList<>();
 
+	@OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Notice> notices = new ArrayList<>();
+
 	@Builder
 	public StudyGroup(String name, String description, String image, int maxCapacity, int memberCount, boolean isPublic,
 		boolean hasPassword, String password, LocalDateTime createdAt) {
@@ -74,6 +77,10 @@ public class StudyGroup {
 	public void addMember (GroupMember member){
 		members.add(member);
 		this.memberCount++;
+	}
+	@Transactional
+	public void addNotice (Notice notice) {
+		notices.add(notice);
 	}
 
 	public void decrementMemberCount() {
