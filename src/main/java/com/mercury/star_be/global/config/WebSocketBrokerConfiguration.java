@@ -27,14 +27,12 @@ public class WebSocketBrokerConfiguration implements WebSocketMessageBrokerConfi
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 웹소켓 연결 요청 엔드포인트
-        // ws://localhost:8080/chat/
         registry.addEndpoint("/chat")
-                .setAllowedOrigins("http://34.22.66.212:3001", "http://localhost:5173");
+                .setAllowedOrigins("http://34.22.66.212:3001");
 
         // 웹소켓 연결 요청 엔드포인트
-        // ws://localhost:8080/timer/
         registry.addEndpoint("/timer")
-                .setAllowedOrigins("http://34.22.66.212:3001", "http://localhost:5173");
+                .setAllowedOrigins("http://34.22.66.212:3001");
     }
 
     @Override
