@@ -19,6 +19,8 @@ import com.mercury.star_be.studygroup.service.StudyGroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class StudyGroupController {
@@ -41,10 +43,17 @@ public class StudyGroupController {
     }
 
     @PutMapping("/api/groups/{groupId}")
-    public ApiResponse<StudyGroupUpdateResponse> updateStudyGroup(@RequestBody @Valid StudyGroupUpdateRequest studyGroupUpdateRequest,
-        @PathVariable(value = "groupId") Long groupId) {
+    public ApiResponse<StudyGroupUpdateResponse> updateStudyGroup(
+            @RequestBody @Valid StudyGroupUpdateRequest studyGroupUpdateRequest,
+            @PathVariable(value = "groupId") Long groupId,
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader
+    ) {// 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
         StudyGroupUpdateResponse studyGroupUpdateResponse = studyGroupService.updateStudyGroup(studyGroupUpdateRequest,
-            groupId);
+            groupId, token);
         return ApiResponse.success(studyGroupUpdateResponse);
     }
 
@@ -84,12 +93,17 @@ public class StudyGroupController {
     }
 
     //TODO: testcode 미작성 추후에 token 받아서 처리해야함
-    @DeleteMapping("/api/groups/{groupId}/exit/{userId}")
+    @DeleteMapping("/api/groups/{groupId}/exit")
     public ApiResponse exitStudyGroup(
             @PathVariable(value = "groupId") Long groupId,
-            @PathVariable(value = "userId") Long userId
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader
     ) {
-        studyGroupService.exitStudyGroup(groupId, userId);
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        studyGroupService.exitStudyGroup(groupId, token);
         return ApiResponse.success();
     }
 
@@ -104,6 +118,7 @@ public class StudyGroupController {
         return ApiResponse.success();
     }
 
+    //TODO: token 받아서 처리해야함
     @PatchMapping("/api/users/{userId}/groups/{groupId}/change-nickname")
     public ApiResponse<ChangeGroupNicknameResponse> changeGroupNickname(
         @RequestBody ChangeGroupNicknameRequest changeGroupNicknameRequest,
@@ -113,4 +128,18 @@ public class StudyGroupController {
             changeGroupNicknameRequest);
         return ApiResponse.success(changeGroupNicknameResponse);
     }
+
+    @GetMapping("/api/groups/myGroups")
+    public ApiResponse<List<MyStudyGroupListResponse>> getMyStudyGroupList(
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader
+    ) {
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        List<MyStudyGroupListResponse> myStudyGroupListResponse = studyGroupService.getMyStudyGroupList(token);
+        return ApiResponse.success(myStudyGroupListResponse);
+    }
+
 }

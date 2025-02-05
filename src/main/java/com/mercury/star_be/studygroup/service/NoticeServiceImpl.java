@@ -55,9 +55,16 @@ public class NoticeServiceImpl implements NoticeService {
                 .studyGroup(studyGroup)
                 .createdAt(LocalDateTime.now())
                 .build();
-
+        studyGroup.addNotice(notice);
         Notice savedNotice = noticeRepository.save(notice);
-        return new NoticeCreateResponse(savedNotice.getId());
+        NoticeCreateResponse response = NoticeCreateResponse.builder()
+                .writer(savedNotice.getWriter().getNickname())
+                .createdAt(savedNotice.getCreatedAt())
+                .title(savedNotice.getTitle())
+                .content(savedNotice.getTitle())
+                .id(savedNotice.getId())
+                .build();
+        return response;
     }
 
     @Override
@@ -76,14 +83,14 @@ public class NoticeServiceImpl implements NoticeService {
         }
 
         notice.updateNotice(request.getTitle(), request.getContent());
+        System.out.println(notice.getCreatedAt());
 
-
-        //이거 작성자랑 스터디 그룹 굳이 보내줘야하는가? 답) 보내주면 ㅈ된다....
         return NoticeUpdateResponse.builder()
                 .id(notice.getId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
-                .createAt(notice.getCreatedAt())
+                .createdAt(notice.getCreatedAt())
+                .writer(notice.getWriter().getNickname())
                 .build();
     }
 
