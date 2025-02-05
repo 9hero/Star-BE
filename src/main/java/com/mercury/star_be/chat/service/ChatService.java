@@ -38,4 +38,8 @@ public interface ChatService {
     List<ChatRoomMemberDto> getChatRoomMembers(ChatRoom chatRoom);
     //읽음 update
     void updateReadCount(ChatReadRequest chatReadRequest, Long chatRoomId);
+    //사용자가 채팅방에서 읽지 않은 메시지들의 아이디 리스트
+    List<Long> findUnreadMessageIds(Long chatRoomId, Long userId);
+    //읽지 않은 메시지들의 아이디 리스트를 받아 한번에 읽음처리
+    void insertChatReads(List<Long> chatMessageIds, Long userId);
 }
