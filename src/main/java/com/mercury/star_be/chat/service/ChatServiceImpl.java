@@ -7,6 +7,7 @@ import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.*;
+import com.mercury.star_be.global.config.RabbitMQConfig;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_EXCHANGE_NAME;
+
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -45,6 +48,7 @@ public class ChatServiceImpl implements ChatService {
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
     private final ChatCustomRepository chatCustomRepository;
+    private final RabbitMQConfig rabbitMQConfig;
     /**
      * 채팅방 조회
      */
@@ -507,7 +511,7 @@ public class ChatServiceImpl implements ChatService {
         try {
             String messageJson = objectMapper.writeValueAsString(chatReadRequest);
             messagingTemplate
-                    .convertAndSend("chat.exchange", "readCheck.request." + chatRoomId, messageJson);
+                    .convertAndSend("readCheck.exchange", "readCheck.request." + chatRoomId, messageJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
@@ -522,13 +526,26 @@ public class ChatServiceImpl implements ChatService {
         return chatCustomRepository.findUnreadMessageIds(chatRoomId, userId);
     }
     /**읽지 않은 메시지들의 읽음처리 / 읽지 않은 사람 수 update 서비스*/
+    @Override
     @Transactional
-    public void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId){
+    public void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId, Long chatRoomId) {
         //바꿀게 없으면 pass
         if (!request.getUnreadMessages().isEmpty()) {
             insertChatReads(request, userId);
             updateChatReads(request);
-            //rabbitmq로 알림보내기. 해당 채팅방을 구독하고 있는 사람들에게. 특정
+            //해당 채팅방을 구독하고 있는 사람들에게, 메시지들이 읽음처리 되었음을 rabbitmq로 알림.
+            try {
+                //현재 채팅방의 메시지 읽음처리된 id list만 보내야함
+                String messageJson = objectMapper.writeValueAsString(request);
+                messagingTemplate
+                        .convertAndSend("/topic/readCheck.bulkResponse." + chatRoomId, messageJson);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+            } catch (AmqpException e) {
+                e.printStackTrace();
+                throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+            }
         }
     }
     /**
