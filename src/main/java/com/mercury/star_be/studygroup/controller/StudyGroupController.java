@@ -129,7 +129,7 @@ public class StudyGroupController {
         return ApiResponse.success(changeGroupNicknameResponse);
     }
 
-    @GetMapping("/api/myGroups")
+    @GetMapping("/api/groups/myGroups")
     public ApiResponse<List<MyStudyGroupListResponse>> getMyStudyGroupList(
             @RequestHeader (value = "Authorization", required = false) String authorizationHeader
     ) {
