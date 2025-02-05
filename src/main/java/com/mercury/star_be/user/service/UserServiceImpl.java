@@ -157,7 +157,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             throw new RuntimeException("파일 저장 실패");
         }
         // 저장된 URL 반환
-        return "http://localhost:8080/fileupload/" + fileName;
+        return "http://34.22.98.26:8080/fileupload/" + fileName;
     }
 
 
