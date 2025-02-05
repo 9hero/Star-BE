@@ -19,6 +19,8 @@ import com.mercury.star_be.studygroup.service.StudyGroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class StudyGroupController {
@@ -116,6 +118,7 @@ public class StudyGroupController {
         return ApiResponse.success();
     }
 
+    //TODO: token 받아서 처리해야함
     @PatchMapping("/api/users/{userId}/groups/{groupId}/change-nickname")
     public ApiResponse<ChangeGroupNicknameResponse> changeGroupNickname(
         @RequestBody ChangeGroupNicknameRequest changeGroupNicknameRequest,
@@ -125,4 +128,18 @@ public class StudyGroupController {
             changeGroupNicknameRequest);
         return ApiResponse.success(changeGroupNicknameResponse);
     }
+
+    @GetMapping("/api/myGroups")
+    public ApiResponse<List<MyStudyGroupListResponse>> getMyStudyGroupList(
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader
+    ) {
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        List<MyStudyGroupListResponse> myStudyGroupListResponse = studyGroupService.getMyStudyGroupList(token);
+        return ApiResponse.success(myStudyGroupListResponse);
+    }
+
 }
