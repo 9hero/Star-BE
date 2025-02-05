@@ -75,6 +75,20 @@ public class ChatController {
 
     }
 
+//    /**
+//     * 채팅방 내 메시지 읽음 update 컨트롤러
+//     * 복수의 아이디를 한번에 update
+//     * */
+//    @MessageMapping("/readCheck/bulk/{chatRoomId}")
+//    @SendTo("/topic/readCheck.bulk.{chatRoomId}")
+//    public void updateReadUsersBulk(
+//            @DestinationVariable
+//            Long chatRoomId,
+//            @Payload ChatUpdateReadMessagesResponse request
+//    ){
+//
+//    }
+
     /**내 채팅방 목록 조회 컨트롤러*/
     @GetMapping("/api/users/{userId}/chats")
     public ApiResponse<ChatRoomListResponse> getChatRoomList(
@@ -129,6 +143,19 @@ public class ChatController {
     ){
         ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(chatRoomJoinRequest);
         return ApiResponse.success(chatRoomJoinResponse);
+    }
+
+    /**한 채팅방의 한 유저가 읽지 않은 모든 메시지 읽음 처리 컨트롤러*/
+    @PostMapping("/api/chats/{chatRoomId}/insertAllUnreadChatMessages")
+    public ApiResponse<String> insertAllUnreadChatMessages(
+            @PathVariable Long chatRoomId,
+            @RequestBody
+            ChatUpdateReadMessagesRequest chatUpdateReadMessagesRequest
+    ){
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        chatService.updateAndInsertChatReads(chatUpdateReadMessagesRequest, userResponse.getId(), chatRoomId);
+        return ApiResponse.success("success");
     }
 
     //사용자 차단

@@ -1,5 +1,7 @@
 package com.mercury.star_be.chat.repository;
 
+import com.mercury.star_be.chat.dto.request.ChatUpdateReadMessagesRequest;
+
 import java.util.List;
 
 /**
@@ -10,5 +12,7 @@ public interface ChatCustomRepository {
     /**사용자가 채팅방에서 읽지 않은 메시지들의 아이디 리스트*/
     List<Long> findUnreadMessageIds(Long chatRoomId, Long userId);
     /**사용자의 읽지 않은 메시지들 전부 읽음 처리*/
-    void insertChatReads(List<Long> chatMessageIds, Long userId);
+    void insertChatReads(ChatUpdateReadMessagesRequest request, Long userId);
+    /**시용자의 읽지 않은 메시지들 unreadCount 전부 -1*/
+    void updateChatReads(ChatUpdateReadMessagesRequest request);
 }
