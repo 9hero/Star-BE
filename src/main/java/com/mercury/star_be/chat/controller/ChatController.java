@@ -131,6 +131,18 @@ public class ChatController {
         return ApiResponse.success(chatRoomJoinResponse);
     }
 
+    /**한 채팅방의 한 유저가 읽지 않은 모든 메시지 읽음 처리 컨트롤러*/
+    @PostMapping("/api/insertAllUnreadChatMessages")
+    public ApiResponse<String> insertAllUnreadChatMessages(
+            @RequestBody
+            ChatUpdateReadMessagesRequest chatUpdateReadMessagesRequest
+    ){
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        chatService.updateAndInsertChatReads(chatUpdateReadMessagesRequest, userResponse.getId());
+        return ApiResponse.success("success");
+    }
+
     //사용자 차단
     //사용자 차단 해제
     //차단 사용자 목록

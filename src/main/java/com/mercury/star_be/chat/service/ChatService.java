@@ -40,6 +40,10 @@ public interface ChatService {
     void updateReadCount(ChatReadRequest chatReadRequest, Long chatRoomId);
     //사용자가 채팅방에서 읽지 않은 메시지들의 아이디 리스트
     List<Long> findUnreadMessageIds(Long chatRoomId, Long userId);
-    //읽지 않은 메시지들의 아이디 리스트를 받아 한번에 읽음처리
-    void insertChatReads(List<Long> chatMessageIds, Long userId);
+    //읽지 않은 메시지들의 아이디 리스트를 받아  메시지 읽음 테이블에 insert / 메시지 테이블에 update
+    void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId);
+    //읽지 않은 메시지들의 아이디 리스트를 받아 메시지 읽음 테이블에 한번에 insert
+    void insertChatReads(ChatUpdateReadMessagesRequest chatUpdateReadMessagesRequest, Long userId);
+    //읽지 않은 메시지들의 아이디 리스트를 받아 메시지 테이블의 unreadCount 한번에 update
+    void updateChatReads(ChatUpdateReadMessagesRequest request);
 }

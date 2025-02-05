@@ -521,10 +521,29 @@ public class ChatServiceImpl implements ChatService {
     public List<Long> findUnreadMessageIds(Long chatRoomId, Long userId) {
         return chatCustomRepository.findUnreadMessageIds(chatRoomId, userId);
     }
-
+    /**읽지 않은 메시지들의 읽음처리 / 읽지 않은 사람 수 update 서비스*/
+    @Transactional
+    public void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId){
+        //바꿀게 없으면 pass
+        if (!request.getUnreadMessages().isEmpty()) {
+            insertChatReads(request, userId);
+            updateChatReads(request);
+            //rabbitmq로 알림보내기. 해당 채팅방을 구독하고 있는 사람들에게. 특정
+        }
+    }
+    /**
+     * 읽지 않은 메시지들 모두 읽음 처리(insert)
+     * */
     @Override
-    public void insertChatReads(List<Long> chatMessageIds, Long userId) {
-        chatCustomRepository.insertChatReads(chatMessageIds, userId);
+    public void insertChatReads(ChatUpdateReadMessagesRequest request, Long userId) {
+        chatCustomRepository.insertChatReads(request, userId);
+    }
+    /**
+     * 해당 메시지들 unreadCount 전부 -1
+     * */
+    @Override
+    public void updateChatReads(ChatUpdateReadMessagesRequest request) {
+        chatCustomRepository.updateChatReads(request);
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {
