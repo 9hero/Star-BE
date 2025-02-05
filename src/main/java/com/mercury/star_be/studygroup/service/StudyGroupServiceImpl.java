@@ -74,13 +74,20 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId) {
+	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId, String token) {
+
+		Long userId = jwtUtil.getid(token);
 		StudyGroup studyGroup = findById(groupId);
 		int updatedMaxCapacity = studyGroupUpdateRequest.getMaxCapacity();
 		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
 			throw new BusinessException(StudyGroupErrorCode.INVALID_MAX_CAPACITY);
 		}
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		if (!groupMember.isHost()) {
+			throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
 
+		}
 		studyGroup.updateStudyGroup(studyGroupUpdateRequest.getName(),
 			studyGroupUpdateRequest.getDescription(),
 			studyGroupUpdateRequest.getImage(),
@@ -191,7 +198,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public void exitStudyGroup(Long groupId, Long userId) throws BusinessException {
+	public void exitStudyGroup(Long groupId, String token) throws BusinessException {
+		Long userId = jwtUtil.getid(token);
 		User user = userRepository.findById(userId)
 				.orElseThrow();
 		// 그룹이 존재하는지
