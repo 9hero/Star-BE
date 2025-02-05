@@ -20,4 +20,5 @@ public class StudyGroupDetailResponse {
 	private Boolean isPublic;
 	private Boolean hasPassword;
 	private LocalDate createdAt;
+	// group member에서 로그인된 유저의 is host 가져오기
 }

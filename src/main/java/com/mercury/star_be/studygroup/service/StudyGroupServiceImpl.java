@@ -3,6 +3,7 @@ package com.mercury.star_be.studygroup.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.mercury.star_be.studygroup.dto.response.*;
 import com.mercury.star_be.user.util.JwtUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,12 +16,6 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
-import com.mercury.star_be.studygroup.dto.response.ChangeGroupNicknameResponse;
-import com.mercury.star_be.studygroup.dto.response.PaginationResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupListResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
@@ -290,4 +285,16 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		return studyGroupRepository.findById(id)
 			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 	}
+	@Override
+	public List<MyStudyGroupListResponse> getMyStudyGroupList(String token) {
+		Long myUserId = jwtUtil.getid(token);
+		// myUserId 를 통해 GroupMember 에서 내가 가입한 그룹을 찾는다...?
+		// query select  group_id from group_member where member_id = 20;
+		// 결과를 리스트로 받고
+		// StudyGroups 에서 group_id 를 통해 가져오는 정보를 builder 사용해서 MyStudyGroupListResponse 에 넣어준다....?
+		List<MyStudyGroupListResponse> myStudyGroupListResponses = studyGroupRepository.findMyStudyGroupList(myUserId);
+		return myStudyGroupListResponses;
+
+	}
+
 }

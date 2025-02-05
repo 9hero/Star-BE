@@ -1,16 +1,22 @@
 package com.mercury.star_be.studygroup.repository;
 
+import com.mercury.star_be.studygroup.dto.response.MyStudyGroupListResponse;
 import com.mercury.star_be.studygroup.entity.QStudyGroup;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+
+import static com.mercury.star_be.studygroup.entity.QGroupMember.groupMember;
+import static com.mercury.star_be.studygroup.entity.QStudyGroup.studyGroup;
 
 public class StudyGroupCustomRepositoryImpl implements StudyGroupCustomRepository{
     private final JPAQueryFactory jpaQueryFactory;
@@ -61,5 +67,19 @@ public class StudyGroupCustomRepositoryImpl implements StudyGroupCustomRepositor
                 .fetchCount();
 
         return new PageImpl<>(results, pageable, total);
+    }
+
+    @Override
+    public List<MyStudyGroupListResponse> findMyStudyGroupList(Long memberId) {
+        return jpaQueryFactory
+                .select(Projections.constructor(MyStudyGroupListResponse.class,
+                        studyGroup.id,
+                        studyGroup.image,
+                        studyGroup.name))
+                .from(groupMember)
+                .join(groupMember.group, studyGroup)
+                .where(groupMember.member.id.eq(memberId))
+                .orderBy(groupMember.joinedAt.desc()) // joinedAt 내림차순 정렬 추가
+                .fetch();
     }
 }

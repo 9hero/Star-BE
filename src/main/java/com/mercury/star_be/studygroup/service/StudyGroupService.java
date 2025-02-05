@@ -6,6 +6,8 @@ import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.*;
 
+import java.util.List;
+
 
 public interface StudyGroupService {
 
@@ -24,4 +26,6 @@ public interface StudyGroupService {
 	void changeHost (Long groupId, Long userId, Long newHostId);
 
 	ChangeGroupNicknameResponse changeGroupNickname(Long userId, Long groupId, ChangeGroupNicknameRequest changeGroupNicknameRequest);
+
+	List<MyStudyGroupListResponse> getMyStudyGroupList (String token);
 }
