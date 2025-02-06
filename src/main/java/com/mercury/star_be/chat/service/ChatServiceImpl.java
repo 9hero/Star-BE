@@ -7,6 +7,7 @@ import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.*;
+import com.mercury.star_be.global.config.RabbitMQConfig;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_EXCHANGE_NAME;
+
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -44,6 +47,8 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageFileRepository chatMessageFileRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
+    private final ChatCustomRepository chatCustomRepository;
+    private final RabbitMQConfig rabbitMQConfig;
     /**
      * 채팅방 조회
      */
@@ -90,6 +95,7 @@ public class ChatServiceImpl implements ChatService {
                         .content(chatMessage.getContent())
                         .unreadCount(chatMessage.getUnreadCount())
                         .createdAt(chatMessage.getCreatedAt())
+                        .profileImgUrl(chatMessage.getChatSender().getImage())
                         .messageFiles(chatMessage.getContent() == null ?
                                 (!chatMessage.getChatMessageFiles().isEmpty() ?
                                         chatMessage.getChatMessageFiles().stream()
@@ -139,20 +145,8 @@ public class ChatServiceImpl implements ChatService {
     public ChatMessageResponse sendMessage(ChatMessageRequest chatMessageRequest) {
         // Redis에 채팅 데이터 저장
 
-        // STOMP 메시지를 받아 RabbitMQ로 메시지 전달
+        // 채팅방 찾기
         ChatRoom chatRoom = findByChatRoomId(chatMessageRequest.getChatRoomId());
-
-        // 구독자에게 메시지 전달
-        try {
-            String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
-            messagingTemplate.convertAndSend("/topic/chat." + chatMessageRequest.getChatRoomId(), messageJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
-        } catch (MessagingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
-        }
 
         // 송신자 조회
         User chatSender = userRepository.findById(chatMessageRequest.getSenderId())
@@ -183,9 +177,12 @@ public class ChatServiceImpl implements ChatService {
         }
         // 메시지 파일 객체 생성 및 저장
         List<ChatMessageFile> chatMessageFiles = new ArrayList<>();
+        //파일들 url을 저장시킬 변수
+        StringBuilder fileUrls = new StringBuilder();
         if (chatMessageRequest.getMessageFiles() != null && !chatMessageRequest.getMessageFiles().isEmpty()) {
-            chatMessageRequest.fileUploadContentString();
+            
             for (ChatMessageFileDto dto : chatMessageRequest.getMessageFiles()) {
+                fileUrls.append(dto.getFileUrl()).append(" ");
                 ChatMessageFile chatMessageFile = ChatMessageFile.builder()
                         .fileUrl(dto.getFileUrl())
                         .fileType(dto.getFileType())
@@ -194,18 +191,34 @@ public class ChatServiceImpl implements ChatService {
                 chatMessageFiles.add(chatMessageFile);
                 chatMessageFileRepository.save(chatMessageFile);
             }
+            //파일url로 메시지 내용 변경
+            chatMessage.fileUploadContentString(fileUrls.toString());
+            chatMessageRequest.fileUploadContentString(fileUrls.toString());
         }
         // 파일 업데이트 및 저장
         chatMessage.updateFiles(chatMessageFiles);
         ChatMessage newChatMessage =  chatMessageRepository.save(chatMessage);
-        
+
+        // 구독자에게 메시지 전달
+        try {
+            String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
+            messagingTemplate.convertAndSend("/topic/chat." + chatMessageRequest.getChatRoomId(), messageJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+        }
+
         // ChatMessageResponse 생성
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .id(newChatMessage.getId())
                 .nickName(chatMessageRequest.getNickName())
                 .createdAt(LocalDateTime.now())
                 .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방 인원)
-                .messageContent(chatMessageRequest.getMessageContent())
+                .messageContent(newChatMessage.getContent())
+                .profileImgUrl(chatSender.getImage())
                 .messageFiles(chatMessageRequest.getMessageFiles()) // 파일 정보 추가
                 .build();
 
@@ -240,9 +253,6 @@ public class ChatServiceImpl implements ChatService {
                 .studyGroup(null)
                 .build();
 
-        //채팅방 저장
-        chatRoomRepository.save(chatRoom);
-
         // 사용자 채팅방 생성(송신자 / 수신자)
         UserChatRoom senderUserChatRoom = UserChatRoom.builder()
                 .joinedAt(LocalDateTime.now())
@@ -258,11 +268,18 @@ public class ChatServiceImpl implements ChatService {
                 .chatUser(receiver)
                 .build();
 
+        chatRoom.insertUserChatRooms(senderUserChatRoom);
+        chatRoom.insertUserChatRooms(receiverUserChatRoom);
+
+        //채팅방 저장
+        chatRoomRepository.save(chatRoom);
+
         //1:1 채팅일 경우 수신자 정보 저장
         userChatRoomRepository.save(receiverUserChatRoom);
 
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
+
 
     }
     @Override
@@ -287,8 +304,6 @@ public class ChatServiceImpl implements ChatService {
                 .studyGroup(studyGroup)
                 .build();
 
-        //채팅방 저장
-        chatRoomRepository.save(chatRoom);
 
         // 사용자 채팅방 생성(송신자)
         UserChatRoom senderUserChatRoom = UserChatRoom.builder()
@@ -298,6 +313,10 @@ public class ChatServiceImpl implements ChatService {
                 .chatUser(sender)
                 .build();
 
+        chatRoom.insertUserChatRooms(senderUserChatRoom);
+
+        //채팅방 저장
+        chatRoomRepository.save(chatRoom);
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
 
@@ -313,13 +332,14 @@ public class ChatServiceImpl implements ChatService {
     public ChatRoomListResponse getUserChatRooms(Long userId) {
         Optional<List<UserChatRoom>> optionalUserChatRooms = userChatRoomRepository.findByChatUserId(userId);
         if (optionalUserChatRooms.isPresent()) {
+
             List<UserChatRoom> userChatRooms = optionalUserChatRooms.get();
             List<ChatRoomDto> chatRooms = new ArrayList<>();
             //리스트에 있는 값들에서 chatRoomId로 ChatRooms 찾아내기
             for (UserChatRoom userChatRoom : userChatRooms) {
                 Long chatRoomId = userChatRoom.getChatRoom().getId();
                 ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-                chatRooms.add(fromChatRoomEntity(chatRoom));
+                chatRooms.add(fromChatRoomEntity(chatRoom, userId));
             }
             ChatRoomListResponse chatRoomListResponse = ChatRoomListResponse.builder()
                     .userId(userId)
@@ -349,17 +369,24 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 최신메시지 가져오기 서비스
      */
-    public ChatRecentMessageDto findRecentMessage(Long chatRoomId) {
+    public ChatRecentMessageDto findRecentMessage(Long chatRoomId, Long userId) {
         ChatMessage chatMessage =
                 chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId).orElseThrow(
                         () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
                 );
+        //채팅메시지에서 송신자 조회
+        User chatSender = userRepository.findById(chatMessage.getChatSender().getId()).orElseThrow(
+                () ->new BusinessException(UserErrorCode.USER_NOT_EXIST));
+
+        //송신자가 누구던간에, 채팅목록을 띄우고 있는 인원이 이 메시지를 읽었는지 확인이 필요
+        boolean isRead = chatReadRepository.existsByChatMessageIdAndChatUserId(chatMessage.getId(), userId);
+        
         return ChatRecentMessageDto.builder()
                 .id(chatMessage.getId())
-                //nickName은 추후 userRepository에서 가져옴
-                .nickName("test")
+                .nickName(chatSender.getNickname())
+                .profileImgUrl(chatSender.getImage())
                 .content(chatMessage.getContent())
-                .unreadCount(chatMessage.getUnreadCount())
+                .isRead(isRead)
                 .createdAt(chatMessage.getCreatedAt())
                 .build();
     }
@@ -367,15 +394,22 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 채팅방 entity -> dto로 변환 서비스
      */
-    public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom) {
+    public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom, Long userId) {
+        //1:1 채팅은 그룹아이디가 null
+        Long groupId = null;
+        if (chatRoom.getStudyGroup() != null) {
+            groupId = chatRoom.getStudyGroup().getId();
+        }
+
         return ChatRoomDto.builder()
                 .id(chatRoom.getId())
                 .chatRoomType(chatRoom.getChatRoomType())
-                .groupId(chatRoom.getId())
-                .recentMessage(findRecentMessage(chatRoom.getId()))
+                .groupId(groupId)
+                .unreadMessages(findUnreadMessageIds(chatRoom.getId(), userId))
+                .recentMessage(findRecentMessage(chatRoom.getId(), userId))
                 .build();
     }
-    
+
     /**
      * 1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인 서비스
      * */
@@ -477,7 +511,7 @@ public class ChatServiceImpl implements ChatService {
         try {
             String messageJson = objectMapper.writeValueAsString(chatReadRequest);
             messagingTemplate
-                    .convertAndSend("chat.exchange", "readCheck.request." + chatRoomId, messageJson);
+                    .convertAndSend("readCheck.exchange", "readCheck.request." + chatRoomId, messageJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
@@ -485,6 +519,48 @@ public class ChatServiceImpl implements ChatService {
             e.printStackTrace();
             throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
         }
+    }
+
+    @Override
+    public List<Long> findUnreadMessageIds(Long chatRoomId, Long userId) {
+        return chatCustomRepository.findUnreadMessageIds(chatRoomId, userId);
+    }
+    /**읽지 않은 메시지들의 읽음처리 / 읽지 않은 사람 수 update 서비스*/
+    @Override
+    @Transactional
+    public void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId, Long chatRoomId) {
+        //바꿀게 없으면 pass
+        if (!request.getUnreadMessages().isEmpty()) {
+            insertChatReads(request, userId);
+            updateChatReads(request);
+            //해당 채팅방을 구독하고 있는 사람들에게, 메시지들이 읽음처리 되었음을 rabbitmq로 알림.
+            try {
+                //현재 채팅방의 메시지 읽음처리된 id list만 보내야함
+                String messageJson = objectMapper.writeValueAsString(request);
+                messagingTemplate
+                        .convertAndSend("/topic/readCheck.bulkResponse." + chatRoomId, messageJson);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+            } catch (AmqpException e) {
+                e.printStackTrace();
+                throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+            }
+        }
+    }
+    /**
+     * 읽지 않은 메시지들 모두 읽음 처리(insert)
+     * */
+    @Override
+    public void insertChatReads(ChatUpdateReadMessagesRequest request, Long userId) {
+        chatCustomRepository.insertChatReads(request, userId);
+    }
+    /**
+     * 해당 메시지들 unreadCount 전부 -1
+     * */
+    @Override
+    public void updateChatReads(ChatUpdateReadMessagesRequest request) {
+        chatCustomRepository.updateChatReads(request);
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {

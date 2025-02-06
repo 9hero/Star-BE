@@ -97,6 +97,7 @@ public class WebSocketEventListener {
                     "/topic/groups."+groupId+".timers",
                     disconnectEvent
             );
+            System.out.println("타이머 종료 이벤트 브로드캐스트 완료");
         }
     }
 

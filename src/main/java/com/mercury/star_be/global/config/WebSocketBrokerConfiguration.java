@@ -22,19 +22,20 @@ public class WebSocketBrokerConfiguration implements WebSocketMessageBrokerConfi
     @Value("${spring.rabbitmq.port}")
     int rabbitmqPort;
 
-
+    @Value("${host}")
+    String host;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 웹소켓 연결 요청 엔드포인트
         // ws://localhost:8080/chat/
         registry.addEndpoint("/chat")
-                .setAllowedOrigins("http://localhost:5173");
+                .setAllowedOrigins("http://"+host+":5173");
 
         // 웹소켓 연결 요청 엔드포인트
         // ws://localhost:8080/timer/
         registry.addEndpoint("/timer")
-                .setAllowedOrigins("http://localhost:5173");
+                .setAllowedOrigins("http://"+host+":5173");
     }
 
     @Override

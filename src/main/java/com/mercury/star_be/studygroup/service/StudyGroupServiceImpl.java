@@ -3,6 +3,7 @@ package com.mercury.star_be.studygroup.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.mercury.star_be.studygroup.dto.response.*;
 import com.mercury.star_be.user.util.JwtUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,12 +16,6 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
-import com.mercury.star_be.studygroup.dto.response.ChangeGroupNicknameResponse;
-import com.mercury.star_be.studygroup.dto.response.PaginationResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupListResponse;
-import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
@@ -56,7 +51,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.build();
 
 		// TODO: GroupMember에 사용자 추가 필요
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId).orElseThrow();
 
 		GroupMember groupMember = GroupMember.builder()
@@ -74,13 +69,20 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId) {
+	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId, String token) {
+
+		Long userId = jwtUtil.getId(token);
 		StudyGroup studyGroup = findById(groupId);
 		int updatedMaxCapacity = studyGroupUpdateRequest.getMaxCapacity();
 		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
 			throw new BusinessException(StudyGroupErrorCode.INVALID_MAX_CAPACITY);
 		}
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		if (!groupMember.isHost()) {
+			throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
 
+		}
 		studyGroup.updateStudyGroup(studyGroupUpdateRequest.getName(),
 			studyGroupUpdateRequest.getDescription(),
 			studyGroupUpdateRequest.getImage(),
@@ -151,7 +153,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Transactional
 	public void joinStudyGroup(Long groupId, String token, String password) throws BusinessException {
 
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId).orElseThrow();
 
 		// 가입하려는 그룹이 존재하지 않을때
@@ -191,7 +193,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public void exitStudyGroup(Long groupId, Long userId) throws BusinessException {
+	public void exitStudyGroup(Long groupId, String token) throws BusinessException {
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId)
 				.orElseThrow();
 		// 그룹이 존재하는지
@@ -207,9 +210,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			studyGroupRepository.delete(studyGroup);
 			return; // 여기서 종료
 		}
+
+
 		// 유저가 호스트인 경우 새 호스트 지정
 		if(groupMember.isHost()) {
-			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc(studyGroup.getId(), groupMember.getId())
+			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc
+							(studyGroup.getId(), groupMember.getId())
 					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
 			newHost.updateGroupMember(
 					newHost.getId(),
@@ -227,8 +233,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), user.getId());
 		// 그룹의 멤버 카운트 감소
 		studyGroup.decrementMemberCount();
-
 	}
+
+
+
 
 	//TODO: token 받아서 처리하기, transactional?
 	@Override
@@ -282,4 +290,16 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		return studyGroupRepository.findById(id)
 			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 	}
+	@Override
+	public List<MyStudyGroupListResponse> getMyStudyGroupList(String token) {
+		Long myUserId = jwtUtil.getId(token);
+		// myUserId 를 통해 GroupMember 에서 내가 가입한 그룹을 찾는다...?
+		// query select  group_id from group_member where member_id = 20;
+		// 결과를 리스트로 받고
+		// StudyGroups 에서 group_id 를 통해 가져오는 정보를 builder 사용해서 MyStudyGroupListResponse 에 넣어준다....?
+		List<MyStudyGroupListResponse> myStudyGroupListResponses = studyGroupRepository.findMyStudyGroupList(myUserId);
+		return myStudyGroupListResponses;
+
+	}
+
 }

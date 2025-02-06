@@ -29,8 +29,9 @@ public class TimerController {
 
     // 집중방 입장 했음을 Redis에 저장하고 타이머 정보를 가져옴
     // 닉네임 그룹방에 해당하는 거로 조회해서 저장하기.
-    @GetMapping("/api/groups/{groupId}/timers/entry")
+    @GetMapping("/api/timers/groups/{groupId}/entry")
     public TimerDto enterFocusRoom(@PathVariable Long groupId) {
+        System.out.println("집중방 입장 요청 받음");
         return timerServiceImpl.enterFocusRoom(groupId);
     }
 

@@ -38,7 +38,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     @Transactional
     public NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, String token) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         User user = userRepository.findById(writerId).orElseThrow();
         StudyGroup studyGroup = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
@@ -55,15 +55,22 @@ public class NoticeServiceImpl implements NoticeService {
                 .studyGroup(studyGroup)
                 .createdAt(LocalDateTime.now())
                 .build();
-
+        studyGroup.addNotice(notice);
         Notice savedNotice = noticeRepository.save(notice);
-        return new NoticeCreateResponse(savedNotice.getId());
+        NoticeCreateResponse response = NoticeCreateResponse.builder()
+                .writer(savedNotice.getWriter().getNickname())
+                .createdAt(savedNotice.getCreatedAt())
+                .title(savedNotice.getTitle())
+                .content(savedNotice.getTitle())
+                .id(savedNotice.getId())
+                .build();
+        return response;
     }
 
     @Override
     @Transactional
     public NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, String token, Long noticeId) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {
@@ -76,21 +83,21 @@ public class NoticeServiceImpl implements NoticeService {
         }
 
         notice.updateNotice(request.getTitle(), request.getContent());
+        System.out.println(notice.getCreatedAt());
 
-
-        //이거 작성자랑 스터디 그룹 굳이 보내줘야하는가? 답) 보내주면 ㅈ된다....
         return NoticeUpdateResponse.builder()
                 .id(notice.getId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
-                .createAt(notice.getCreatedAt())
+                .createdAt(notice.getCreatedAt())
+                .writer(notice.getWriter().getNickname())
                 .build();
     }
 
     @Override
     @Transactional
     public void deleteNotice(Long groupId, String token, Long noticeId) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {

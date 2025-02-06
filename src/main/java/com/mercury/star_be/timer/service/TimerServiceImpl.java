@@ -292,6 +292,7 @@ public class TimerServiceImpl implements TimerService {
         // 사용자 정보 가져오기
         UserResponse userResponse = getLoginUserInfo();
         Long userId = userResponse.getId();
+        log.info("User: {}", userResponse);
         // 그룹 멤버 정보 가져오기
         GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
@@ -314,7 +315,6 @@ public class TimerServiceImpl implements TimerService {
         // 내 오늘자 타이머 정보 가져오기
         // 가장 최신 timer 객체 불러오기
         TimerDto entryEvent = getMyTimerByGroupIdAndUserId(groupId, userId);
-        entryEvent.setNickname(nickname);
         // 타이머가 없는 경우, 새로 입장한 사용자임. Entry 이벤트 객체 생성
         if (entryEvent == null) {
             System.out.println("타이머 없음 새로 입장~");
@@ -325,6 +325,7 @@ public class TimerServiceImpl implements TimerService {
             entryEvent.setTimeSoFar(0);
             entryEvent.setStatus("REST");
         }
+        entryEvent.setNickname(nickname);
         return entryEvent;
 
     }
@@ -334,8 +335,6 @@ public class TimerServiceImpl implements TimerService {
      * @return Long userId
      */
     private UserResponse getLoginUserInfo() {
-        UserResponse userResponse =
-                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userResponse;
+        return (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
