@@ -3,6 +3,9 @@ package com.mercury.star_be.global.common;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerService;
+import com.mercury.star_be.user.dto.response.UserResponse;
+import com.mercury.star_be.user.entity.User;
+import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
@@ -105,7 +108,21 @@ public class WebSocketEventListener {
         // 헤더에서 groupId와 userId 추출 닉네임도 추출 -db or client에서 가져옴
         String groupId = headerAccessor.getFirstNativeHeader("groupId");
         String userId = headerAccessor.getFirstNativeHeader("userId");
+
+        //TODO 그룹 멤버 닉네임으로 필요함...
         String nickname = headerAccessor.getFirstNativeHeader("nickname");
+        log.info("chekc nickname: {}", nickname);
+        /*
+            // JWT 토큰을 이용한 사용자 정보 조회인데 현재 토큰 없이 connect 해서 오류 발생
+            필터 적용은 가능하나 사용 불가 csrf 비활성 불가능함
+            : EnableWebSecurity 설정으로 인해 필터 적용가능 csrf 비활성화 불가능
+            UserResponse userResponse = UserResponse.getAuthenticatedUser();
+            if (userResponse != null) {
+                System.out.println("UserResponse: " + userResponse);
+                userId = userResponse.getId().toString();
+                nickname = userResponse.getNickname();
+            }
+         */
 
         System.out.println("Checking headers: groupId " + groupId + " uid: " + userId + " nick: " + nickname);
 
@@ -147,10 +164,11 @@ public class WebSocketEventListener {
                 entryEvent.setTimeSoFar(0);
                 entryEvent.setStatus("REST");
             }
+            // 타이머 있는 경우
+            entryEvent.setNickname(nickname);
 
             // Entry 이벤트 브로드캐스트
             messagingTemplate.convertAndSend("/topic/groups."+groupId+".timers", entryEvent);
-
         }
     }
 }

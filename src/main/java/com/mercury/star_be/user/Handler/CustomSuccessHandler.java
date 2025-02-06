@@ -37,7 +37,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 응답 설정
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("access", accessToken, CookieUtil.ACCESS_COOKIE_EXPIRATION).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("refresh", refreshToken, CookieUtil.REFRESH_COOKIE_EXPIRATION).toString());
-
+        response.addHeader("userid", id.toString());
         //원래 요청된 URL로 리다이렉트
         String redirectUrl = (String) request.getSession().getAttribute("SPRING_SECURITY_SAVED_REQUEST_URL");
         if (redirectUrl == null) {

@@ -3,10 +3,11 @@ package com.mercury.star_be.timer.controller;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerServiceImpl;
+
 import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -26,11 +27,17 @@ public class TimerController {
     private final TimerServiceImpl timerServiceImpl;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    // 집중방 입장 했음을 Redis에 저장하고 타이머 정보를 가져옴
+    // 닉네임 그룹방에 해당하는 거로 조회해서 저장하기.
+    @GetMapping("/api/groups/{groupId}/timers/entry")
+    public TimerDto enterFocusRoom(@PathVariable Long groupId) {
+        return timerServiceImpl.enterFocusRoom(groupId);
+    }
+
     // 집중방 입장한 사용자들의 타이머 정보를 가져옴
     @GetMapping("/api/groups/{groupId}/timers")
     public Set<TimerDto> getTimerData(@PathVariable Long groupId) {
-        System.out.println("groupId: " + groupId + " i got it from session! :");
-        return timerServiceImpl.getFocusRoomTimerDataByGroupId(groupId);
+        return timerServiceImpl.getFocusRoomTimerDataByGroupIdAndMyUID(groupId);
     }
 
     // 클라이언트가 메시지를 보낼 때 처리

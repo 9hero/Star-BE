@@ -56,7 +56,7 @@ public class SecurityConfig{
                 configuration.setAllowedHeaders(Arrays.asList("*"));
                 // configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
                 configuration.setMaxAge(3600L);
-                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie","userid"));
                 return configuration;
             }
         }));
@@ -67,7 +67,7 @@ public class SecurityConfig{
         http.httpBasic(auth -> auth.disable());
 
         // 필터 설정
-//        http.addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class); // JWT 필터
+        http.addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class); // JWT 필터
 
         // OAuth2 설정
         http.oauth2Login(oauth2 -> oauth2

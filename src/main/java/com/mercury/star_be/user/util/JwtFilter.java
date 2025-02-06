@@ -26,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestPath = request.getServletPath();
-        if (requestPath.startsWith("/fileupload") || requestPath.startsWith("/chat")) return true;
+        if (requestPath.startsWith("/fileupload") || requestPath.startsWith("/chat") || requestPath.startsWith("/timer")) return true;
         return excludeUrls.contains(requestPath);
     }
     private void sendUnauthorized(HttpServletResponse res, String message) throws IOException {

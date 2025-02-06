@@ -29,4 +29,14 @@ public class TimerDto{
         this.todayTotalTime = timer.getTotalTime();
         this.status = timer.getStatus().toString();
     }
+
+    public static TimerDto getEntryEventDtoWithNoTimer() {
+        return TimerDto.builder()
+                .event(TimerEvent.ENTRY)
+                .status("rest")
+                .todayTotalTime(0)
+                .ranking(0)
+                .timeSoFar(0)
+                .build();
+    }
 }
