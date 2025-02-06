@@ -46,13 +46,13 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 	private SseEmitter createSseEmitter(Long groupId, Long userId) {
 		SseEmitter sseEmitter = new SseEmitter(SSE_TIMEOUT);
-		sseEmitterRepository.save(groupId, sseEmitter);
+		sseEmitterRepository.save(groupId, userId, sseEmitter);
 		sseEmitterRepository.updateStatus(groupId, userId, ConnectionStatus.ONLINE);
 
 		// 요청이 완료되거나 타임아웃 발생 시 기존 SseEmitter 삭제
-		sseEmitter.onCompletion(() -> disconnect(groupId, userId, sseEmitter));
-		sseEmitter.onTimeout(() -> disconnect(groupId, userId, sseEmitter));
-		sseEmitter.onError(e -> disconnect(groupId, userId, sseEmitter));
+		sseEmitter.onCompletion(() -> disconnect(groupId, userId));
+		sseEmitter.onTimeout(() -> disconnect(groupId, userId));
+		sseEmitter.onError(e -> disconnect(groupId, userId));
 
 		return sseEmitter;
 	}
@@ -61,8 +61,8 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		return groupMemberRepository.existsByGroupIdAndMemberId(groupId, userId);
 	}
 
-	private void disconnect(Long groupId, Long userId, SseEmitter sseEmitter) {
-		sseEmitterRepository.delete(groupId, userId, sseEmitter);
+	private void disconnect(Long groupId, Long userId) {
+		sseEmitterRepository.delete(groupId, userId);
 
 		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
 			.userId(userId)
@@ -96,8 +96,8 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	}
 
 	private void sendToGroup(Long groupId, Object data) {
-		Set<SseEmitter> sseEmitters = sseEmitterRepository.findAllByGroupId(groupId);
-		sseEmitters.forEach(sseEmitter -> {
+		Map<Long, SseEmitter> groupSseEmitters = sseEmitterRepository.findAllByGroupId(groupId);
+		groupSseEmitters.forEach((userId, sseEmitter) -> {
 			if (sseEmitter != null) {
 				sendData(sseEmitter, "statusUpdate", data);
 			}
