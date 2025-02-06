@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +26,7 @@ public class SseEmitterRepository {
 	private static final String GROUP_PREFIX = "study_group";
 
 	public void save(Long groupId, SseEmitter sseEmitter) {
-		sseEmittersMap.computeIfAbsent(groupId, l -> ConcurrentHashMap.newKeySet()).add(sseEmitter);
+		sseEmittersMap.computeIfAbsent(groupId, l -> new CopyOnWriteArraySet<>()).add(sseEmitter);
 	}
 
 	public void updateStatus(Long groupId, Long userId, ConnectionStatus status) {
@@ -33,9 +34,11 @@ public class SseEmitterRepository {
 	}
 
 	public void delete(Long groupId, Long userId, SseEmitter sseEmitter) {
-		Set<SseEmitter> sseEmitters = sseEmittersMap.getOrDefault(groupId, Collections.emptySet());
-		sseEmitters.remove(sseEmitter);
-		if (sseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
+		Set<SseEmitter> sseEmitters = sseEmittersMap.get(groupId);
+		if (sseEmitters != null) {
+			sseEmitters.remove(sseEmitter);
+			if (sseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
+		}
 
 		redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
 	}

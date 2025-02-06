@@ -29,6 +29,9 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	@Override
 	public SseEmitter subscribe(Long groupId, Long userId) {
 		SseEmitter sseEmitter = createSseEmitter(groupId, userId);
+		boolean isGroupMember = checkGroupMember(groupId, userId);
+		sendData(sseEmitter, "connect", isGroupMember);
+
 		// SSE 연결 시 전체 그룹원 정보 send
 		sendGroupMemberInfoList(groupId, sseEmitter);
 
@@ -49,9 +52,13 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		// 요청이 완료되거나 타임아웃 발생 시 기존 SseEmitter 삭제
 		sseEmitter.onCompletion(() -> disconnect(groupId, userId, sseEmitter));
 		sseEmitter.onTimeout(() -> disconnect(groupId, userId, sseEmitter));
+		sseEmitter.onError(e -> disconnect(groupId, userId, sseEmitter));
 
-		sendData(sseEmitter, "connect", "success");
 		return sseEmitter;
+	}
+
+	private boolean checkGroupMember(Long groupId, Long userId) {
+		return groupMemberRepository.existsByGroupIdAndMemberId(groupId, userId);
 	}
 
 	private void disconnect(Long groupId, Long userId, SseEmitter sseEmitter) {
@@ -76,13 +83,13 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 		return groupMembers.stream()
 			.map(groupMember -> GroupMemberSseResponse.builder()
-				.id(groupMember.getId())
+				.id(groupMember.getMember().getId())
 				.nickname(groupMember.getNickname())
 				.image(groupMember.getImage())
 				.isHost(groupMember.isHost())
 				.status(
-					connectedUserIds.contains(groupMember.getId()) ?
-						ConnectionStatus.valueOf((String)connectedUsers.get(groupMember.getId()))
+					connectedUserIds.contains(groupMember.getMember().getId().toString()) ?
+						ConnectionStatus.valueOf((String)connectedUsers.get(groupMember.getMember().getId().toString()))
 						: ConnectionStatus.OFFLINE)
 				.build())
 			.toList();
@@ -103,7 +110,7 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 				.name(eventName)
 				.data(data));
 		} catch (IOException e) {
-			sseEmitter.completeWithError(e);
+			sseEmitter.complete();
 		}
 	}
 }
