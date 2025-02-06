@@ -38,7 +38,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     @Transactional
     public NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, String token) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         User user = userRepository.findById(writerId).orElseThrow();
         StudyGroup studyGroup = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
@@ -70,7 +70,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     @Transactional
     public NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, String token, Long noticeId) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {
@@ -97,7 +97,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     @Transactional
     public void deleteNotice(Long groupId, String token, Long noticeId) {
-        Long writerId = jwtUtil.getid(token);
+        Long writerId = jwtUtil.getId(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {
