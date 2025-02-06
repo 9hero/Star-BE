@@ -20,34 +20,49 @@ public class NoticeController {
 
     private final NoticeService noticeService;
 
-    //TODO: user id 토큰으로 변경 testcode 작성해야함
-    @PostMapping("/api/groups/{groupId}/notices/{userId}")
+    //TODO: testcode 작성해야함
+    @PostMapping("/api/groups/{groupId}/notices")
     public ApiResponse<NoticeCreateResponse> createNotice(
             @RequestBody @Valid NoticeCreateRequest request,
             @PathVariable(value = "groupId") Long groupId,
-            @PathVariable(value = "userId") Long userId)
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader)
     {
-        NoticeCreateResponse noticeCreateResponse = noticeService.createNotice(request, groupId, userId);
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        NoticeCreateResponse noticeCreateResponse = noticeService.createNotice(request, groupId, token);
         return ApiResponse.success(noticeCreateResponse);
     }
-    //TODO: user id 토큰으로 변경 testcode 작성해야함
-    @PutMapping("/api/groups/{groupId}/notices/{userId}/{noticeId}")
+
+    //TODO:testcode 작성해야함
+    @PutMapping("/api/groups/{groupId}/notices/{noticeId}")
     public ApiResponse<NoticeUpdateResponse> updateNotice(
             @RequestBody @Valid NoticeUpdateRequest request,
             @PathVariable(value = "groupId") Long groupId,
-            @PathVariable(value = "userId") Long userId,
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader,
             @PathVariable(value = "noticeId") Long noticeId) {
-        NoticeUpdateResponse noticeUpdateResponse = noticeService.updateNotice(request,groupId,userId,noticeId);
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        NoticeUpdateResponse noticeUpdateResponse = noticeService.updateNotice(request,groupId,token,noticeId);
         return ApiResponse.success(noticeUpdateResponse);
     }
-    //TODO: user id 토큰으로 변경 testcode 작성해야함
-    @DeleteMapping("/api/groups/{groupId}/notices/{userId}/{noticeId}")
+    //TODO: testcode 작성해야함
+    @DeleteMapping("/api/groups/{groupId}/notices/{noticeId}")
     public ApiResponse deleteNotice(
             @PathVariable(value = "groupId") Long groupId,
-            @PathVariable(value = "userId") Long userId,
+            @RequestHeader (value = "Authorization", required = false) String authorizationHeader,
             @PathVariable(value = "noticeId") Long noticeId) {
-
-        noticeService.deleteNotice(groupId, userId, noticeId);
+        // 토큰 처리
+        String token = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+        }
+        noticeService.deleteNotice(groupId, token, noticeId);
         return ApiResponse.success();
     }
 

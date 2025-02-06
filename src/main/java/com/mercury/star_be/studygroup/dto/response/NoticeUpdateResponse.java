@@ -15,7 +15,8 @@ public class NoticeUpdateResponse {
     private Long id;
     private String title;
     private String content;
-    private LocalDateTime createAt;
+    private String writer;
+    private LocalDateTime createdAt;
 
 
 }

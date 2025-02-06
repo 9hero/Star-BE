@@ -4,10 +4,14 @@ import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.global.error.CustomAuthenticationException;
 import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
 import com.mercury.star_be.user.Handler.CustomSuccessHandler;
+import com.mercury.star_be.user.dto.request.UserBlockRequest;
 import com.mercury.star_be.user.dto.request.UserRequest;
+import com.mercury.star_be.user.dto.request.UserUnblockRequest;
+import com.mercury.star_be.user.dto.response.BlockUserListResponse;
 import com.mercury.star_be.user.dto.response.UserResponse;
 import com.mercury.star_be.user.repository.RefreshRepository;
 import com.mercury.star_be.user.repository.UserRepository;
+import com.mercury.star_be.user.service.BlockUserService;
 import com.mercury.star_be.user.service.UserService;
 import com.mercury.star_be.user.util.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -22,14 +26,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 public class UserController {
 
-    private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final BlockUserService blockUserService;
+    private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
     private final CustomSuccessHandler customSuccessHandler;
@@ -96,4 +102,34 @@ public class UserController {
         throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
     }
 
+
+    /**
+     * 사용자 차단
+     */
+    @PostMapping("/api/users/blocks")
+    public ApiResponse<Void> blockUser(@RequestBody UserBlockRequest userBlockRequest, Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        blockUserService.blockUser(user.getId(), userBlockRequest);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 사용자 차단 해제
+     */
+    @DeleteMapping("/api/users/blocks")
+    public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        blockUserService.unblockUser(user.getId(), userUnblockRequest);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 차단 사용자 목록 조회
+     */
+    @GetMapping("/api/users/blocks")
+    public ApiResponse<List<BlockUserListResponse>> getBlockUserList(Authentication auth) {
+        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+        List<BlockUserListResponse> blockUserList = blockUserService.getBlockUserList(user.getId());
+        return ApiResponse.success(blockUserList);
+    }
 }

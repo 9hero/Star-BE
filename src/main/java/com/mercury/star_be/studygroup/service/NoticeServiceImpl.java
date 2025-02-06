@@ -16,6 +16,7 @@ import com.mercury.star_be.studygroup.repository.NoticeRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
+import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,11 +34,11 @@ public class NoticeServiceImpl implements NoticeService {
     private final StudyGroupRepository studyGroupRepository;
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
-
+    private final JwtUtil jwtUtil;
     @Override
     @Transactional
-    public NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, Long writerId) {
-
+    public NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, String token) {
+        Long writerId = jwtUtil.getid(token);
         User user = userRepository.findById(writerId).orElseThrow();
         StudyGroup studyGroup = studyGroupRepository.findById(groupId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
@@ -54,15 +55,22 @@ public class NoticeServiceImpl implements NoticeService {
                 .studyGroup(studyGroup)
                 .createdAt(LocalDateTime.now())
                 .build();
-
+        studyGroup.addNotice(notice);
         Notice savedNotice = noticeRepository.save(notice);
-        return new NoticeCreateResponse(savedNotice.getId());
+        NoticeCreateResponse response = NoticeCreateResponse.builder()
+                .writer(savedNotice.getWriter().getNickname())
+                .createdAt(savedNotice.getCreatedAt())
+                .title(savedNotice.getTitle())
+                .content(savedNotice.getTitle())
+                .id(savedNotice.getId())
+                .build();
+        return response;
     }
 
     @Override
     @Transactional
-    public NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, Long writerId, Long noticeId) {
-
+    public NoticeUpdateResponse updateNotice(NoticeUpdateRequest request, Long groupId, String token, Long noticeId) {
+        Long writerId = jwtUtil.getid(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {
@@ -75,20 +83,21 @@ public class NoticeServiceImpl implements NoticeService {
         }
 
         notice.updateNotice(request.getTitle(), request.getContent());
+        System.out.println(notice.getCreatedAt());
 
-
-        //이거 작성자랑 스터디 그룹 굳이 보내줘야하는가? 답) 보내주면 ㅈ된다....
         return NoticeUpdateResponse.builder()
                 .id(notice.getId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
-                .createAt(notice.getCreatedAt())
+                .createdAt(notice.getCreatedAt())
+                .writer(notice.getWriter().getNickname())
                 .build();
     }
 
     @Override
     @Transactional
-    public void deleteNotice(Long groupId, Long writerId, Long noticeId) {
+    public void deleteNotice(Long groupId, String token, Long noticeId) {
+        Long writerId = jwtUtil.getid(token);
         GroupMember hostMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, writerId)
                 .orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
         if (!hostMember.isHost()) {

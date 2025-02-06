@@ -61,7 +61,7 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
             return;
         }
 
-        // 블랙리스트 검증 (1분이상 차이 날 때만)
+        // 블랙리스트 검증
         if (jwtUtil.getExpiration(accessToken).before(jwtUtil.getBlacklistValue(jwtUtil.getId(accessToken)))) {
             sendUnauthorized(res, "Access token is blacklisted");
             return;

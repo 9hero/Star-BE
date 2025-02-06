@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -42,6 +43,18 @@ public class User {
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> groupMembers;
 
+	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<UserChatRoom> userChatRooms;
+
+	@OneToMany(mappedBy = "chatSender", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ChatMessage> sentMessages;
+
+	@OneToMany(mappedBy = "chatReceiver", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ChatMessage> receivedMessages;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<BlockUser> blockUsers = new ArrayList<>();
+
 	@Builder
 	public User(String email, String nickname, String provider, String image, String oauthId) {
 		this.email = email;
@@ -53,14 +66,11 @@ public class User {
 		this.oauthId = oauthId;
 	}
 
-	@OneToMany(mappedBy = "chatUser", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<UserChatRoom> chatRoomLists;
+	public void addBlockUser(BlockUser blockUser) {
+		blockUsers.add(blockUser);
+	}
 
-	@OneToMany(mappedBy = "chatSender", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ChatMessage> sentMessages;
-
-	@OneToMany(mappedBy = "chatReceiver", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ChatMessage> receivedMessages;
-
-
+	public void unblockUser(BlockUser blockUser) {
+		blockUsers.remove(blockUser);
+	}
 }

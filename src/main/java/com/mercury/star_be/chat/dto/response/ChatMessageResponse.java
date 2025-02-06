@@ -14,8 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class ChatMessageResponse {
     private Long id;
+    private String nickName;
     private LocalDateTime createdAt;
     private int unreadCount;
     private String messageContent;
+    private String profileImgUrl;
     List<ChatMessageFileDto> messageFiles;
 }

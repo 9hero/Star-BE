@@ -1,8 +1,10 @@
 package com.mercury.star_be.user.service;
 
 import com.mercury.star_be.file.service.GcsFileServiceImpl;
+import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.CustomAuthenticationException;
 import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
+import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.user.Handler.CustomSuccessHandler;
 import com.mercury.star_be.user.dto.request.UserRequest;
 import com.mercury.star_be.user.dto.response.*;
@@ -226,5 +228,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
      }
      **/
 
-
+    @Override
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+    }
 }
