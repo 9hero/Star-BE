@@ -6,12 +6,14 @@ import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
 import com.mercury.star_be.studygroup.dto.response.*;
 
+import java.util.List;
+
 
 public interface StudyGroupService {
 
 	StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest, String token);
 
-	StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId);
+	StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId, String token);
 
 	StudyGroupDetailResponse getStudyGroup(Long groupId);
 
@@ -19,9 +21,11 @@ public interface StudyGroupService {
 
 	void joinStudyGroup(Long groupId, String token, String password) throws BusinessException;
 
-	void exitStudyGroup(Long groupId, Long userId) throws BusinessException;
+	void exitStudyGroup(Long groupId, String token) throws BusinessException;
 
 	void changeHost (Long groupId, Long userId, Long newHostId);
 
 	ChangeGroupNicknameResponse changeGroupNickname(Long userId, Long groupId, ChangeGroupNicknameRequest changeGroupNicknameRequest);
+
+	List<MyStudyGroupListResponse> getMyStudyGroupList (String token);
 }

@@ -53,12 +53,11 @@ public class GlobalExceptionHandler {
 
 
 	// 401 Unauthorized - 인증 실패
-	@ExceptionHandler(AuthenticationException.class)
-	protected ResponseEntity<ErrorResponse> handleAuthenticationAuthException(AuthenticationException ex) {
-		ErrorCode errorCode = AuthenticationErrorCode.UNAUTHORIZED;
-		log.error("Authentication failed: {}", ex.getMessage());
-
-		ErrorResponse errorResponse = new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage());
-		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
+	@ExceptionHandler(CustomAuthenticationException.class)
+	public ResponseEntity<ErrorResponse> handleAuthenticationAuthException(CustomAuthenticationException ex) {
+		ErrorCode errorCode = ex.getErrorCode();
+		log.error("BusinessException: {}", ex.getMessage());
+		return ResponseEntity.status(errorCode.getHttpStatus())
+				.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
 }

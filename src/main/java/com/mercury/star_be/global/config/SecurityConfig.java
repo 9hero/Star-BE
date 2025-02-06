@@ -1,5 +1,7 @@
 package com.mercury.star_be.global.config;
 
+import com.mercury.star_be.global.error.GlobalExceptionHandler;
+import com.mercury.star_be.user.Handler.CustomFailedHandler;
 import com.mercury.star_be.user.Handler.CustomSuccessHandler;
 import com.mercury.star_be.user.service.UserServiceImpl;
 import com.mercury.star_be.user.util.JwtFilter;
@@ -17,6 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -24,6 +27,8 @@ public class SecurityConfig{
 
     private final UserServiceImpl customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
+    private final GlobalExceptionHandler globalExceptionHandler;
+    private final CustomFailedHandler customFailedHandler;
     private final JwtUtil jwtUtil;
 
 
@@ -38,7 +43,9 @@ public class SecurityConfig{
                                 ,"/timer/**", // timer 웹소켓
                                 "/chat/**" // chat 웹소켓
                                 ,"/timer/**", "favion,ico" // timer 웹소켓
-                                ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback"
+                                ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/oauth2Login", "/api/check-auth", "/oauth2/callback",
+                                "/api/auth/reissue", "/api/groups/**", "/groups/**", "/error",
+                                "/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback"
                                 ,"/groups",
                                 "/fileupload/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
@@ -55,12 +62,13 @@ public class SecurityConfig{
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:8080"));
+                configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:8080"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
                 configuration.setAllowCredentials(true);
-                configuration.setAllowedHeaders(Arrays.asList("*"));
                 // configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
                 configuration.setMaxAge(3600L);
-                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));
                 return configuration;
 
             }
@@ -78,7 +86,8 @@ public class SecurityConfig{
         http.oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
                         .userService(customOAuth2UserService)) // 사용자 정보 처리 서비스
-                .successHandler(customSuccessHandler));
+                .successHandler(customSuccessHandler)
+                .failureHandler((customFailedHandler)));
 
 
         // 인증되지 않은 사용자 리다이렉트 설정
