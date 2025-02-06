@@ -46,12 +46,17 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // String refreshToken = jwtUtil.createJwt("refresh", id, jwtUtil.REFRESH_TOKEN_EXPIRATION); // 24시간
 
 
+        /** 현재 Redis 설정 안됌
         //  Redis에 access 토큰 정보 확인 및 블랙리스트 등록
         jwtUtil.addToBlacklist(jwtUtil.getId(accessToken), jwtUtil.getExpiration(accessToken), jwtUtil.ACCESS_TOKEN_EXPIRATION);
+        **/
 
         // RefreshToken 조회
+//        RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
+//                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.MISSING_REFRESGTOKEN));
+
         RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
-                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.MISSING_REFRESGTOKEN));
+                .orElse(null);
 
         Date expirationDate = new Date(System.currentTimeMillis()+jwtUtil.REFRESH_TOKEN_EXPIRATION);
         Date createdDate = new Date(System.currentTimeMillis());

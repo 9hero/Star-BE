@@ -51,7 +51,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.build();
 
 		// TODO: GroupMember에 사용자 추가 필요
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId).orElseThrow();
 
 		GroupMember groupMember = GroupMember.builder()
@@ -71,7 +71,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Transactional
 	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId, String token) {
 
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		StudyGroup studyGroup = findById(groupId);
 		int updatedMaxCapacity = studyGroupUpdateRequest.getMaxCapacity();
 		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
@@ -153,7 +153,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Transactional
 	public void joinStudyGroup(Long groupId, String token, String password) throws BusinessException {
 
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId).orElseThrow();
 
 		// 가입하려는 그룹이 존재하지 않을때
@@ -194,7 +194,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Override
 	@Transactional
 	public void exitStudyGroup(Long groupId, String token) throws BusinessException {
-		Long userId = jwtUtil.getid(token);
+		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId)
 				.orElseThrow();
 		// 그룹이 존재하는지
@@ -292,7 +292,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	}
 	@Override
 	public List<MyStudyGroupListResponse> getMyStudyGroupList(String token) {
-		Long myUserId = jwtUtil.getid(token);
+		Long myUserId = jwtUtil.getId(token);
 		// myUserId 를 통해 GroupMember 에서 내가 가입한 그룹을 찾는다...?
 		// query select  group_id from group_member where member_id = 20;
 		// 결과를 리스트로 받고

@@ -61,11 +61,13 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
             return;
         }
 
+        /** 현재 Redis 설정 안됌
         // 블랙리스트 검증
         if (jwtUtil.getExpiration(accessToken).before(jwtUtil.getBlacklistValue(jwtUtil.getId(accessToken)))) {
             sendUnauthorized(res, "Access token is blacklisted");
             return;
         }
+        **/
 
         // 토큰 이용하여 시큐리티 내 인증객체 생성
         jwtUtil.createAuthentication(accessToken);

@@ -176,8 +176,11 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             String reissueAccessToken = jwtUtil.createJwt("access", id, jwtUtil.ACCESS_TOKEN_EXPIRATION);    // 24시간
             // String refreshToken = jwtUtil.createJwt("refresh", id, jwtUtil.REFRESH_TOKEN_EXPIRATION); // 24시간
 
+
+            /** 현재 Redis 설정 안됌
             //  Redis에 access 토큰 정보 확인 및 블랙리스트 등록
             jwtUtil.addToBlacklist(jwtUtil.getId(reissueAccessToken), jwtUtil.getExpiration(reissueAccessToken), jwtUtil.ACCESS_TOKEN_EXPIRATION);
+            **/
 
             // RefreshToken 조회
             RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
