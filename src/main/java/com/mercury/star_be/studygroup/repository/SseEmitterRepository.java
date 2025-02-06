@@ -1,14 +1,15 @@
 package com.mercury.star_be.studygroup.repository;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.mercury.star_be.studygroup.entity.ConnectionStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,31 +17,56 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SseEmitterRepository {
 
-	private final Map<Long, Set<SseEmitter>> sseEmittersMap = new ConcurrentHashMap<>();
+	private final Map<Long, Map<Long, SseEmitter>> sseEmittersMap = new ConcurrentHashMap<>();
 	private final RedisTemplate<String, Object> redisTemplate;
 
 	private static final String GROUP_PREFIX = "study_group";
 
 	public void save(Long groupId, Long userId, SseEmitter sseEmitter) {
-		sseEmittersMap.computeIfAbsent(groupId, l -> ConcurrentHashMap.newKeySet()).add(sseEmitter);
-		redisTemplate.opsForSet().add(GROUP_PREFIX + groupId, userId.toString());
+		Map<Long, SseEmitter> groupSseEmitters = sseEmittersMap.computeIfAbsent(groupId,
+			l -> new ConcurrentHashMap<>());
+
+		SseEmitter existingEmitter = groupSseEmitters.get(userId);
+		if (existingEmitter != null) {
+			existingEmitter.complete();
+		}
+		groupSseEmitters.put(userId, sseEmitter);
 	}
 
-	public void delete(Long groupId, Long userId, SseEmitter sseEmitter) {
-		Set<SseEmitter> sseEmitters = sseEmittersMap.getOrDefault(groupId, Collections.emptySet());
-		sseEmitters.remove(sseEmitter);
-		if (sseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
-
-		redisTemplate.opsForSet().remove(GROUP_PREFIX + groupId, userId.toString());
+	public void updateStatus(Long groupId, Long userId, ConnectionStatus status) {
+		redisTemplate.opsForHash().put(GROUP_PREFIX + groupId, userId.toString(), status.toString());
 	}
 
-	public List<Long> getConnectedUsers(Long groupId) {
-		return redisTemplate.opsForSet().members(GROUP_PREFIX + groupId).stream()
-			.map(o -> Long.valueOf(o.toString()))
-			.toList();
+	public void delete(Long groupId, Long userId) {
+		Map<Long, SseEmitter> groupSseEmitters = sseEmittersMap.getOrDefault(groupId, new ConcurrentHashMap<>());
+		groupSseEmitters.remove(userId);
+		if (groupSseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
+
+		redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
 	}
 
-	public Set<SseEmitter> findAllByGroupId(Long groupId) {
-		return sseEmittersMap.getOrDefault(groupId, Collections.emptySet());
+	public Map<Object, Object> getConnectedUsers(Long groupId) {
+		return redisTemplate.opsForHash().entries(GROUP_PREFIX + groupId);
+	}
+
+	public Map<Long, SseEmitter> findAllByGroupId(Long groupId) {
+		return sseEmittersMap.getOrDefault(groupId, new ConcurrentHashMap<>());
+	}
+
+	@Scheduled(fixedRate = 30 * 1000)	// 30초
+	public void sendHeartbeat() {
+		for (Map.Entry<Long, Map<Long, SseEmitter>> groupEntry : sseEmittersMap.entrySet()) {
+			Map<Long, SseEmitter> groupSseEmitters = groupEntry.getValue();
+			for (Map.Entry<Long, SseEmitter> userEntry : groupSseEmitters.entrySet()) {
+				SseEmitter emitter = userEntry.getValue();
+				try {
+					emitter.send(SseEmitter.event()
+						.name("heartbeat")
+						.data("ping"));
+				} catch (IOException e) {
+					emitter.complete();
+				}
+			}
+		}
 	}
 }

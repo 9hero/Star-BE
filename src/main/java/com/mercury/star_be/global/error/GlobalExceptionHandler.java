@@ -1,14 +1,18 @@
 package com.mercury.star_be.global.error;
 
-import com.mercury.star_be.global.error.code.CommonErrorCode;
-import com.mercury.star_be.global.error.code.ErrorCode;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
+import com.mercury.star_be.global.error.code.CommonErrorCode;
+import com.mercury.star_be.global.error.code.ErrorCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
@@ -55,18 +59,5 @@ public class GlobalExceptionHandler {
 		log.error("BusinessException: {}", ex.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus())
 				.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
-	}
-
-
-
-
-
-	// 나머지 에러
-	@ExceptionHandler(Exception.class)
-	protected ResponseEntity<ErrorResponse> handleException(Exception ex) {
-		ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
-		log.error("Exception: {}", ex.getMessage());
-		return ResponseEntity.status(errorCode.getHttpStatus())
-			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
 }
