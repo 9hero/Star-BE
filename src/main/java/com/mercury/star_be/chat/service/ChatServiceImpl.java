@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_BULK_RESPONSE_ROUTING_KEY;
 import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_EXCHANGE_NAME;
 
 @Service
@@ -48,7 +49,6 @@ public class ChatServiceImpl implements ChatService {
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
     private final ChatCustomRepository chatCustomRepository;
-    private final RabbitMQConfig rabbitMQConfig;
     /**
      * 채팅방 조회
      */
@@ -538,7 +538,7 @@ public class ChatServiceImpl implements ChatService {
                 //현재 채팅방의 메시지 읽음처리된 id list만 보내야함
                 String messageJson = objectMapper.writeValueAsString(request);
                 messagingTemplate
-                        .convertAndSend("/topic/readCheck.bulkResponse." + chatRoomId, messageJson);
+                        .convertAndSend(READ_CHECK_EXCHANGE_NAME, READ_CHECK_BULK_RESPONSE_ROUTING_KEY + chatRoomId, messageJson);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
