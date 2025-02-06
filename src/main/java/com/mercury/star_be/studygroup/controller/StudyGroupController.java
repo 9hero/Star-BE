@@ -57,11 +57,14 @@ public class StudyGroupController {
         return ApiResponse.success(studyGroupUpdateResponse);
     }
 
+
     @GetMapping("/api/groups/{groupId}")
     public ApiResponse<StudyGroupDetailResponse> getStudyGroup(@PathVariable(value = "groupId") Long groupId) {
-        StudyGroupDetailResponse studyGroupDetailResponse = studyGroupService.getStudyGroup(groupId);
+         StudyGroupDetailResponse studyGroupDetailResponse = studyGroupService.getStudyGroup(groupId);
         return ApiResponse.success(studyGroupDetailResponse);
     }
+
+
 
     @GetMapping("/api/groups")
     public ApiResponse<PaginationResponse<StudyGroupListResponse>> getStudyGroupList(

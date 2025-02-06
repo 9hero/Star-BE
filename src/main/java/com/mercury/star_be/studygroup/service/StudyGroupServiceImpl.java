@@ -210,9 +210,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			studyGroupRepository.delete(studyGroup);
 			return; // 여기서 종료
 		}
+
+
 		// 유저가 호스트인 경우 새 호스트 지정
 		if(groupMember.isHost()) {
-			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc(studyGroup.getId(), groupMember.getId())
+			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc
+							(studyGroup.getId(), groupMember.getId())
 					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
 			newHost.updateGroupMember(
 					newHost.getId(),
@@ -230,8 +233,10 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), user.getId());
 		// 그룹의 멤버 카운트 감소
 		studyGroup.decrementMemberCount();
-
 	}
+
+
+
 
 	//TODO: token 받아서 처리하기, transactional?
 	@Override

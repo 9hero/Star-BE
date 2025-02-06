@@ -24,16 +24,21 @@ public class User {
 	private String email;
 	@Column(length = 10)
 	@Setter
+	@Getter
 	private String nickname;
 	@Column(length = 10)
 	private String provider;
-	@Column(length = 50)
+	@Column(name = "oauthId", length = 50)
 	private String oauthId;
 	@Setter
 	private String image;
 	@Setter
+	@Getter
 	private boolean isActive;
 	private LocalDateTime createdAt;
+
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private RefreshToken refreshTokens;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupMember> groupMembers;
