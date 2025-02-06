@@ -1,13 +1,23 @@
 package com.mercury.star_be.user.service;
 
+import com.mercury.star_be.file.service.GcsFileServiceImpl;
+import com.mercury.star_be.global.error.CustomAuthenticationException;
+import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
+import com.mercury.star_be.user.Handler.CustomSuccessHandler;
 import com.mercury.star_be.user.dto.request.UserRequest;
 import com.mercury.star_be.user.dto.response.*;
+import com.mercury.star_be.user.entity.RefreshToken;
 import com.mercury.star_be.user.entity.User;
+import com.mercury.star_be.user.repository.RefreshRepository;
 import com.mercury.star_be.user.repository.UserRepository;
 import com.mercury.star_be.user.util.JwtUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -15,18 +25,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+
+import static com.mercury.star_be.global.error.code.AuthenticationErrorCode.USER_DEACTIVATED;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +39,10 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final GcsFileServiceImpl gcsFileService;
+    private final RefreshRepository refreshRepository;
+    private final CustomSuccessHandler customSuccessHandler;
+    private final EntityManager entityManager;
 
     @Override
     public UserResponse createUser(UserRequest userRequest) {
@@ -81,18 +90,21 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     public UserResponse saveUser(Oauth2Response oauth2Response, String oauthId) {
         // DB 조회
-        User existData = userRepository.findByoauthId(oauthId);
-        if (existData == null) {
-            User user = User.builder()
-                    .email(oauth2Response.getEmail())
-                    .nickname(oauth2Response.getName())
-                    .provider(oauth2Response.getProvider())
-                    .image(oauth2Response.getImage())
-                    .oauthId(oauthId)
-                    .build();
-            User savedUser = userRepository.save(user);
-            return new UserResponse(savedUser);
+        User existData = userRepository.findByoauthId(oauthId)
+                .orElseGet(() -> {
+                    User user = User.builder()
+                            .email(oauth2Response.getEmail())
+                            .nickname(oauth2Response.getName())
+                            .provider(oauth2Response.getProvider())
+                            .image(oauth2Response.getImage())
+                            .oauthId(oauthId)
+                            .build();
+                    return (UserResponse) userRepository.save(user);
+                });
+        if (!existData.isActive()) {
+            throw new CustomAuthenticationException(USER_DEACTIVATED);  // throw new AuthenticationException(USER_DEACTIVATED.getMessage()
         }
+        ;
 
         return new UserResponse(existData);
     }
@@ -127,7 +139,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         user.setNickname(nickname);
         // 3. 프로필 이미지가 있는 경우 파일 저장 후 URL 저장
         if (profileImg != null && !profileImg.isEmpty()) {
-            String imageUrl = saveImage(profileImg);
+            String imageUrl = gcsFileService.uploadImage(profileImg).getUrl();
             user.setImage(imageUrl);
         }
 
@@ -135,34 +147,84 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         userRepository.save(user);
     }
 
-
-
-    public String saveImage(MultipartFile file) throws UnsupportedEncodingException {
-        // 파일 저장 로직 구현
-        // 예: 로컬 저장소에 저장 후 URL 생성
-        String uploadDirectory = Paths.get("src/main/resources/static/fileupload/").toAbsolutePath().toString(); // 절대 경로
-        String fileName = UUID.randomUUID().toString() + "_" + URLEncoder.encode(Objects.requireNonNull(file.getOriginalFilename()), StandardCharsets.UTF_8);
-
-        Path path = Paths.get(uploadDirectory + "/" + fileName);
-        try {
-            Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException("파일 저장 실패");
-        }
-        // 저장된 URL 반환
-        return "http://localhost:8080/fileupload/" + fileName;
-    }
-
-
     @Override
     public void deleteUserInfo(Authentication auth) {
         UserResponse authenticatedUser = jwtUtil.getAuthenticatedUser(auth);
         User user = userRepository.findById(authenticatedUser.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        // DB에 업데이트된 유저 저장
-        userRepository.delete(user);
+        user.setActive(false);
+        userRepository.save(user);
     }
+
+
+    @Override
+    public boolean reissue(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws ServletException, IOException {
+        String accessToken = jwtUtil.getJwt(req);
+        Long userId = jwtUtil.getId(accessToken);
+        RefreshToken refreshToken = refreshRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.MISSING_REFRESGTOKEN));
+        boolean  test = (refreshToken.getExpiredAt()).after(new Date());
+        if (test) {
+            jwtUtil.createAuthentication(accessToken);
+            User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            Long id = user.getId();
+            // User 객체가 영속성 컨텍스트에 있으면 해당 객체를 가져옵니다.
+            User persistentUser = entityManager.find(User.class, user.getId());
+            // 토큰 생성
+            String reissueAccessToken = jwtUtil.createJwt("access", id, jwtUtil.ACCESS_TOKEN_EXPIRATION);    // 24시간
+            // String refreshToken = jwtUtil.createJwt("refresh", id, jwtUtil.REFRESH_TOKEN_EXPIRATION); // 24시간
+
+            //  Redis에 access 토큰 정보 확인 및 블랙리스트 등록
+            jwtUtil.addToBlacklist(jwtUtil.getId(reissueAccessToken), jwtUtil.getExpiration(reissueAccessToken), jwtUtil.ACCESS_TOKEN_EXPIRATION);
+
+            // RefreshToken 조회
+            RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
+                    .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.MISSING_REFRESGTOKEN));
+
+            Date expirationDate = new Date(System.currentTimeMillis() + jwtUtil.REFRESH_TOKEN_EXPIRATION);
+            Date createdDate = new Date(System.currentTimeMillis());
+            if (existingToken != null) {
+                // 기존 토큰 업데이트
+                existingToken.setExpiredAt(expirationDate);
+                existingToken.setCreatedAt(createdDate);
+            } else {
+                // 새로운 토큰 생성
+                existingToken = RefreshToken.builder()
+                        .user(persistentUser)
+                        .expiredAt(expirationDate)
+                        .build();
+            }
+            refreshRepository.save(existingToken);
+            // 응답 설정
+            res.setHeader("Authorization", "Bearer " + reissueAccessToken); // 키 값이 같을시,  내용을 덮어씌움
+            // res.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("reissue_access", reissueAccessToken, CookieUtil.ACCESS_COOKIE_EXPIRATION).toString()); // 키 값이 같을 시, 내용을 추가
+            return true;
+        } else {
+            System.out.println("재 로그인 필요");
+            return false;
+        }
+
+    }
+
+
+    /** 현재는 사용 X
+     public String saveImage(MultipartFile file) throws UnsupportedEncodingException {
+     // 파일 저장 로직 구현
+     // 예: 로컬 저장소에 저장 후 URL 생성
+     String uploadDirectory = Paths.get("src/main/resources/static/fileupload/").toAbsolutePath().toString(); // 절대 경로
+     String fileName = UUID.randomUUID().toString() + "_" + URLEncoder.encode(Objects.requireNonNull(file.getOriginalFilename()), StandardCharsets.UTF_8);
+
+     Path path = Paths.get(uploadDirectory + "/" + fileName);
+     try {
+     Files.createDirectories(path.getParent());
+     Files.write(path, file.getBytes());
+     } catch (IOException e) {
+     throw new RuntimeException("파일 저장 실패");
+     }
+     // 저장된 URL 반환
+     return "http://localhost:8080/fileupload/" + fileName;
+     }
+     **/
 
 
 }

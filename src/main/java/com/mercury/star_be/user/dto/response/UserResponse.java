@@ -67,5 +67,4 @@ public class UserResponse extends User implements OAuth2User {
         return this.getNickname();
     }
 
-
 }

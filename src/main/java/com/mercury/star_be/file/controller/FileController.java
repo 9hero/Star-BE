@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class FileController {
 
 	private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
-		"image/png", "image/jpeg", "image/webp"
+		"image/png", "image/jpeg", "image/webp" ,"image/jpg"
 	);
 
 	private final FileService fileService;
