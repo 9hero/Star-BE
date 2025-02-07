@@ -1,15 +1,14 @@
 package com.mercury.star_be.global.error;
 
-import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
 import com.mercury.star_be.global.error.code.CommonErrorCode;
 import com.mercury.star_be.global.error.code.ErrorCode;
 
@@ -54,25 +53,11 @@ public class GlobalExceptionHandler {
 
 
 	// 401 Unauthorized - 인증 실패
-	@ExceptionHandler(AuthenticationException.class)
-	protected ResponseEntity<ErrorResponse> handleAuthenticationAuthException(AuthenticationException ex) {
-		ErrorCode errorCode = AuthenticationErrorCode.UNAUTHORIZED;
-		log.error("Authentication failed: {}", ex.getMessage());
-
-		ErrorResponse errorResponse = new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage());
-		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
-	}
-
-
-
-
-
-	// 나머지 에러
-	@ExceptionHandler(Exception.class)
-	protected ResponseEntity<ErrorResponse> handleException(Exception ex) {
-		ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
-		log.error("Exception: {}", ex.getMessage());
+	@ExceptionHandler(CustomAuthenticationException.class)
+	public ResponseEntity<ErrorResponse> handleAuthenticationAuthException(CustomAuthenticationException ex) {
+		ErrorCode errorCode = ex.getErrorCode();
+		log.error("BusinessException: {}", ex.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus())
-			.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
+				.body(new ErrorResponse(errorCode.getHttpStatus().toString(), errorCode.getMessage()));
 	}
 }
