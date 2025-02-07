@@ -1,10 +1,13 @@
 package com.mercury.star_be.user.service;
 
-import com.mercury.star_be.file.service.GcsFileServiceImpl;
+
+import com.mercury.star_be.file.service.FileService;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.CustomAuthenticationException;
 import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
 import com.mercury.star_be.global.error.code.UserErrorCode;
+import com.mercury.star_be.studygroup.dto.request.GroupLeaveRequest;
+import com.mercury.star_be.studygroup.service.StudyGroupService;
 import com.mercury.star_be.user.Handler.CustomSuccessHandler;
 import com.mercury.star_be.user.dto.request.UserRequest;
 import com.mercury.star_be.user.dto.response.*;
@@ -25,12 +28,14 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.mercury.star_be.global.error.code.AuthenticationErrorCode.USER_DEACTIVATED;
@@ -41,7 +46,8 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    private final GcsFileServiceImpl gcsFileService;
+    private final FileService gcsFileService;
+    private final StudyGroupService studyGroupService;
     private final RefreshRepository refreshRepository;
     private final CustomSuccessHandler customSuccessHandler;
     private final EntityManager entityManager;
@@ -132,11 +138,13 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
     @Override
-    public void updateUserInfo(Authentication auth, String nickname, MultipartFile profileImg) throws UnsupportedEncodingException {
+    @Transactional
+    public void updateUserInfo(Authentication auth, String nickname, MultipartFile profileImg) throws IOException {
 
         UserResponse authenticatedUser = jwtUtil.getAuthenticatedUser(auth);
         User user = userRepository.findById(authenticatedUser.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.USER_NOTFIND) {
+                });
         // 2. 닉네임 업데이트
         user.setNickname(nickname);
         // 3. 프로필 이미지가 있는 경우 파일 저장 후 URL 저장
@@ -150,12 +158,27 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
     @Override
-    public void deleteUserInfo(Authentication auth) {
-        UserResponse authenticatedUser = jwtUtil.getAuthenticatedUser(auth);
-        User user = userRepository.findById(authenticatedUser.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setActive(false);
-        userRepository.save(user);
+    @Transactional
+    public void deleteUserInfo(GroupLeaveRequest request, HttpServletRequest httpServletReq, Authentication auth) {
+
+        // 그룹장 위임
+        User user = JwtUtil.getAuthenticatedUser(auth);
+        List<GroupLeaveRequest.GroupMemberInfo> GroupLeaveRequestList = request .getGroupMemberInfos();
+        if(!GroupLeaveRequestList.isEmpty()) {
+            for(GroupLeaveRequest.GroupMemberInfo GroupAndMemberInfo: GroupLeaveRequestList) {
+                studyGroupService.selectHost(GroupAndMemberInfo.getGroupId(), GroupAndMemberInfo.getMemberId());
+            }
+        }
+
+        // 그룹 유저 삭제 및 그룹 삭제
+        studyGroupService.simpleExitStudyGroup(jwtUtil.getJwt(httpServletReq));
+
+        // 유저 비활성화
+//        UserResponse authenticatedUser = JwtUtil.getAuthenticatedUser(auth);
+        User deleteUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.USER_NOTFIND));
+        deleteUser.setActive(false);
+        userRepository.save(deleteUser);
     }
 
 

@@ -32,6 +32,8 @@ public interface StudyGroupService {
 	void joinStudyGroup(Long groupId, String token, String password) throws BusinessException;
 
 	void exitStudyGroup(Long groupId, String token) throws BusinessException;
+	void simpleExitStudyGroup(String token) throws BusinessException;
+	void selectHost(Long groupId, Long MemberId) throws BusinessException;
 
 	void changeHost(Long groupId, Long userId, Long newHostId);
 

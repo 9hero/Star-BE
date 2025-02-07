@@ -17,6 +17,7 @@ public enum AuthenticationErrorCode  implements ErrorCode {
 
 
     // 401 Unauthorized - 인증 실패
+    USER_NOTFIND(HttpStatus.UNAUTHORIZED, "유저가 존재하지 않습니다."),
     USER_DEACTIVATED(HttpStatus.UNAUTHORIZED, "탈퇴한 유저입니다."),
     MISSING_ACCESSTOKEN(HttpStatus.UNAUTHORIZED, "Access 토큰이 없습니다."),
     MISSING_REFRESGTOKEN(HttpStatus.UNAUTHORIZED, "Access 토큰이 없습니다."),
