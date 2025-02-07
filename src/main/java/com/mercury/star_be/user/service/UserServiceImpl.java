@@ -177,10 +177,10 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             // String refreshToken = jwtUtil.createJwt("refresh", id, jwtUtil.REFRESH_TOKEN_EXPIRATION); // 24시간
 
 
-            /** 현재 Redis 설정 안됌
+
             //  Redis에 access 토큰 정보 확인 및 블랙리스트 등록
             jwtUtil.addToBlacklist(jwtUtil.getId(reissueAccessToken), jwtUtil.getExpiration(reissueAccessToken), jwtUtil.ACCESS_TOKEN_EXPIRATION);
-            **/
+
 
             // RefreshToken 조회
             RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
@@ -210,26 +210,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
 
     }
-
-
-    /** 현재는 사용 X
-     public String saveImage(MultipartFile file) throws UnsupportedEncodingException {
-     // 파일 저장 로직 구현
-     // 예: 로컬 저장소에 저장 후 URL 생성
-     String uploadDirectory = Paths.get("src/main/resources/static/fileupload/").toAbsolutePath().toString(); // 절대 경로
-     String fileName = UUID.randomUUID().toString() + "_" + URLEncoder.encode(Objects.requireNonNull(file.getOriginalFilename()), StandardCharsets.UTF_8);
-
-     Path path = Paths.get(uploadDirectory + "/" + fileName);
-     try {
-     Files.createDirectories(path.getParent());
-     Files.write(path, file.getBytes());
-     } catch (IOException e) {
-     throw new RuntimeException("파일 저장 실패");
-     }
-     // 저장된 URL 반환
-     return "http://localhost:8080/fileupload/" + fileName;
-     }
-     **/
 
     @Override
     public User findById(Long userId) {
