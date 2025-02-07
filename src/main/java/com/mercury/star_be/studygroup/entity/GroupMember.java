@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -65,5 +66,9 @@ public class GroupMember {
 	public String changeNickname(String nickname) {
 		this.nickname = nickname;
 		return this.nickname;
+	}
+
+	public void setHost() {
+		this.isHost = true;
 	}
 }
