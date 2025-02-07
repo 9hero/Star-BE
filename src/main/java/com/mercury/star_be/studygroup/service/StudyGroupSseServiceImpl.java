@@ -50,9 +50,9 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		sseEmitterRepository.updateStatus(groupId, userId, ConnectionStatus.ONLINE);
 
 		// 요청이 완료되거나 타임아웃 발생 시 기존 SseEmitter 삭제
-		sseEmitter.onCompletion(() -> disconnect(groupId, userId));
-		sseEmitter.onTimeout(() -> disconnect(groupId, userId));
-		sseEmitter.onError(e -> disconnect(groupId, userId));
+		sseEmitter.onCompletion(() -> disconnect(groupId, userId, sseEmitter));
+		sseEmitter.onTimeout(() -> disconnect(groupId, userId, sseEmitter));
+		sseEmitter.onError(e -> disconnect(groupId, userId, sseEmitter));
 
 		return sseEmitter;
 	}
@@ -61,8 +61,8 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		return groupMemberRepository.existsByGroupIdAndMemberId(groupId, userId);
 	}
 
-	private void disconnect(Long groupId, Long userId) {
-		sseEmitterRepository.delete(groupId, userId);
+	private void disconnect(Long groupId, Long userId, SseEmitter sseEmitter) {
+		sseEmitterRepository.delete(groupId, userId, sseEmitter);
 
 		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
 			.userId(userId)

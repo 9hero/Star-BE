@@ -37,12 +37,15 @@ public class SseEmitterRepository {
 		redisTemplate.opsForHash().put(GROUP_PREFIX + groupId, userId.toString(), status.toString());
 	}
 
-	public void delete(Long groupId, Long userId) {
+	public void delete(Long groupId, Long userId, SseEmitter sseEmitter) {
 		Map<Long, SseEmitter> groupSseEmitters = sseEmittersMap.getOrDefault(groupId, new ConcurrentHashMap<>());
-		groupSseEmitters.remove(userId);
-		if (groupSseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
+		SseEmitter existingSseEmitter = groupSseEmitters.get(userId);
+		if (existingSseEmitter.equals(sseEmitter)) {
+			groupSseEmitters.remove(userId);
+			if (groupSseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
 
-		redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
+			redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
+		}
 	}
 
 	public Map<Object, Object> getConnectedUsers(Long groupId) {

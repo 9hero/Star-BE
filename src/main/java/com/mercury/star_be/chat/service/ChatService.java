@@ -14,7 +14,8 @@ public interface ChatService {
     //채팅방 조회
     ChatRoom findByChatRoomId(Long chatRoomId);
     ChatRoomResponse getChatRoom(Long chatRoomId);
-
+    //그룹아이디로 채팅방 조회
+    ChatRoom findByGroupId(Long groupId);
     //채팅방 생성(그룹채팅방이면 그룹원들 id / DM이면 상대방 id가 필요)
     void createDMChatRoom(CreateChatRoomRequest createChatRoomRequest);
     void createGroupChatRoom(CreateChatRoomRequest createChatRoomRequest);
@@ -31,7 +32,7 @@ public interface ChatService {
     //1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인
     ChatMessageCountCkResponse findChatMessageRecord(ChatMessageCountCkRequest chatMessageCountCkRequest);
     //그룹채팅 가입
-    ChatRoomJoinResponse joinChatRoom(ChatRoomJoinRequest chatRoomJoinRequest);
+    ChatRoomJoinResponse joinChatRoom(Long groupId);
     //사용자 채팅방 조회(사용자 아이디, 채팅방 아이디)
     boolean isJoinedChatRoom(Long chatUserId, Long chatRoomId);
     //채팅방 id를 받아 List<ChatRoomMemberDto>로 return
@@ -46,4 +47,6 @@ public interface ChatService {
     void insertChatReads(ChatUpdateReadMessagesRequest chatUpdateReadMessagesRequest, Long userId);
     //읽지 않은 메시지들의 아이디 리스트를 받아 메시지 테이블의 unreadCount 한번에 update
     void updateChatReads(ChatUpdateReadMessagesRequest request);
+    //그룹아이디를 받아 해당 사용자의 해당 그룹 읽지 않은 메시지들 전부 읽음 처리
+    void updateGroupUnreadMessages(Long userId, Long chatRoomId, Long groupId);
 }

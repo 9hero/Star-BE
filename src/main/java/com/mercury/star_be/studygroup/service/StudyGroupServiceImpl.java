@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import com.mercury.star_be.studygroup.dto.response.*;
-import com.mercury.star_be.user.util.JwtUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,15 +12,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
+import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.studygroup.dto.request.ChangeGroupNicknameRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupCreateRequest;
 import com.mercury.star_be.studygroup.dto.request.StudyGroupUpdateRequest;
+import com.mercury.star_be.studygroup.dto.response.ChangeGroupNicknameResponse;
+import com.mercury.star_be.studygroup.dto.response.MyStudyGroupListResponse;
+import com.mercury.star_be.studygroup.dto.response.PaginationResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupCreateResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupDetailResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupEnterResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupListResponse;
+import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
+import com.mercury.star_be.user.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -56,13 +64,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		User user = userRepository.findById(userId).orElseThrow();
 
 		GroupMember groupMember = GroupMember.builder()
-				.nickname(user.getNickname())
-				.image(user.getImage())
-				.isHost(true)
-				.group(studyGroup)
-				.member(user)
-				.joinedAt(LocalDateTime.now())
-				.build();
+			.nickname(user.getNickname())
+			.image(user.getImage())
+			.isHost(true)
+			.group(studyGroup)
+			.member(user)
+			.joinedAt(LocalDateTime.now())
+			.build();
 		groupMemberRepository.save(groupMember);
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
 		return new StudyGroupCreateResponse(savedGroup.getId());
@@ -76,7 +84,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId, String token) {
+	public StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId,
+		String token) {
 
 		Long userId = jwtUtil.getId(token);
 		StudyGroup studyGroup = findById(groupId);
@@ -84,8 +93,8 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		if (studyGroup.getMemberCount() > updatedMaxCapacity) {
 			throw new BusinessException(StudyGroupErrorCode.INVALID_MAX_CAPACITY);
 		}
-		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
 		if (!groupMember.isHost()) {
 			throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
 
@@ -128,31 +137,59 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	}
 
 	@Override
-	public PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction, int page) {
+	public StudyGroupEnterResponse enterStudyGroup(Long groupId, String token) {
+		Long userId = jwtUtil.getId(token);
+		userRepository.findById(userId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
+			.orElseThrow(() -> new BusinessException((StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND)));
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		// groupMember의 isHost 값을 별도로 저장
+		boolean isHost = groupMember.isHost();
+
+		return StudyGroupEnterResponse.builder()
+			.id(studyGroup.getId())
+			.name(studyGroup.getName())
+			.description(studyGroup.getDescription())
+			.image(studyGroup.getImage())
+			.maxCapacity(studyGroup.getMaxCapacity())
+			.memberCount(studyGroup.getMemberCount())
+			.isPublic(studyGroup.isPublic())
+			.hasPassword(studyGroup.hasPassword())
+			.createdAt(studyGroup.getCreatedAt().toLocalDate())
+			.isHost(isHost)
+			.build();
+	}
+
+	@Override
+	public PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction,
+		int page) {
 		int size = 20;
 		Pageable pageable = PageRequest.of(page, size);
 
-		Page<StudyGroup> studyGroups = studyGroupRepository.findAllPublicByCreationDate(keyword, sort, direction, pageable);
+		Page<StudyGroup> studyGroups = studyGroupRepository.findAllPublicByCreationDate(keyword, sort, direction,
+			pageable);
 
 		List<StudyGroupListResponse> content = studyGroups.getContent().stream()
-				.map(studyGroup -> StudyGroupListResponse.builder()
-						.id(studyGroup.getId())
-						.name(studyGroup.getName())
-						.description(studyGroup.getDescription())
-						.image(studyGroup.getImage())
-						.maxCapacity(studyGroup.getMaxCapacity())
-						.memberCount(studyGroup.getMemberCount())
-						.isPublic(studyGroup.isPublic())
-						.hasPassword(studyGroup.hasPassword())
-						.createdAt(studyGroup.getCreatedAt())
-						.build()
-				)
-				.toList();
+			.map(studyGroup -> StudyGroupListResponse.builder()
+				.id(studyGroup.getId())
+				.name(studyGroup.getName())
+				.description(studyGroup.getDescription())
+				.image(studyGroup.getImage())
+				.maxCapacity(studyGroup.getMaxCapacity())
+				.memberCount(studyGroup.getMemberCount())
+				.isPublic(studyGroup.isPublic())
+				.hasPassword(studyGroup.hasPassword())
+				.createdAt(studyGroup.getCreatedAt())
+				.build()
+			)
+			.toList();
 
 		return new PaginationResponse<>(
-				content,
-				studyGroups.getNumber(),
-				studyGroups.isLast()
+			content,
+			studyGroups.getNumber(),
+			studyGroups.isLast()
 		);
 	}
 
@@ -161,11 +198,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	public void joinStudyGroup(Long groupId, String token, String password) throws BusinessException {
 
 		Long userId = jwtUtil.getId(token);
-		User user = userRepository.findById(userId).orElseThrow();
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
 		// 가입하려는 그룹이 존재하지 않을때
 		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 
 		// 가입하려는 그룹이 다 찼을떄
 		if (studyGroup.getMemberCount() >= studyGroup.getMaxCapacity()) {
@@ -187,13 +225,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 		// 그룹에 유져 추가
 		GroupMember groupMember = GroupMember.builder()
-				.group(studyGroup)
-				.member(user)
-				.isHost(false)
-				.image(user.getImage())
-				.nickname(user.getNickname())
-				.joinedAt(LocalDateTime.now())
-				.build();
+			.group(studyGroup)
+			.member(user)
+			.isHost(false)
+			.image(user.getImage())
+			.nickname(user.getNickname())
+			.joinedAt(LocalDateTime.now())
+			.build();
 
 		studyGroup.addMember(groupMember);
 	}
@@ -203,13 +241,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	public void exitStudyGroup(Long groupId, String token) throws BusinessException {
 		Long userId = jwtUtil.getId(token);
 		User user = userRepository.findById(userId)
-				.orElseThrow();
+			.orElseThrow();
 		// 그룹이 존재하는지
 		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 		// 탈퇴하려는 사람이 그룹에 존재하는지
-		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId,userId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
 		// 그룹의 멤버가 1명만 남아 있는 경우 (호스트 == 마지막 유저)
 		if (studyGroup.getMemberCount() == 1) {
 			// 그룹 삭제
@@ -219,18 +257,18 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		}
 
 		// 유저가 호스트인 경우 새 호스트 지정
-		if(groupMember.isHost()) {
+		if (groupMember.isHost()) {
 			GroupMember newHost = groupMemberRepository.findFirstByGroupIdAndIdNotOrderByJoinedAtAsc
-							(studyGroup.getId(), groupMember.getId())
-					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
+					(studyGroup.getId(), groupMember.getId())
+				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
 			newHost.updateGroupMember(
-					newHost.getId(),
-					newHost.getNickname(),
-					newHost.getImage(),
-					true, // 새 호스트 설정
-					newHost.getGroup(),
-					newHost.getMember(),
-					newHost.getJoinedAt()
+				newHost.getId(),
+				newHost.getNickname(),
+				newHost.getImage(),
+				true, // 새 호스트 설정
+				newHost.getGroup(),
+				newHost.getMember(),
+				newHost.getJoinedAt()
 			);
 			// TODO: @Transactional 과 관련된 질문
 			groupMemberRepository.save(newHost);
@@ -271,40 +309,41 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 
 
+
 	//TODO: token 받아서 처리하기, transactional?
 	@Override
 	@Transactional
 	public void changeHost(Long groupId, Long userId, Long newHostId) {
 
 		GroupMember currentHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
 		GroupMember newHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, newHostId)
-				.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
+			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.USER_NOT_EXIST_IN_GROUP));
 
 		if (!currentHost.isHost()) {
 			throw new BusinessException(StudyGroupErrorCode.USER_NOT_HOST);
 		}
 		currentHost.updateGroupMember(
-				currentHost.getId(),
-				currentHost.getNickname(),
-				currentHost.getImage(),
-				false, // 호트트 권한 박탈
-				currentHost.getGroup(),
-				currentHost.getMember(),
-				currentHost.getJoinedAt()
+			currentHost.getId(),
+			currentHost.getNickname(),
+			currentHost.getImage(),
+			false, // 호트트 권한 박탈
+			currentHost.getGroup(),
+			currentHost.getMember(),
+			currentHost.getJoinedAt()
 		);
 		newHost.updateGroupMember(
-				newHost.getId(),
-				newHost.getNickname(),
-				newHost.getImage(),
-				true, // 새 호스트 설정
-				newHost.getGroup(),
-				newHost.getMember(),
-				newHost.getJoinedAt()
+			newHost.getId(),
+			newHost.getNickname(),
+			newHost.getImage(),
+			true, // 새 호스트 설정
+			newHost.getGroup(),
+			newHost.getMember(),
+			newHost.getJoinedAt()
 		);
 		// 변경된 엔티티 저장
-//		groupMemberRepository.save(currentHost);
-//		groupMemberRepository.save(newHost);
+		//		groupMemberRepository.save(currentHost);
+		//		groupMemberRepository.save(newHost);
 	}
 
 	@Override
@@ -323,6 +362,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		return studyGroupRepository.findById(id)
 			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 	}
+
 	@Override
 	public List<MyStudyGroupListResponse> getMyStudyGroupList(String token) {
 		Long myUserId = jwtUtil.getId(token);

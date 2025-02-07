@@ -12,4 +12,5 @@ import java.util.List;
 @AllArgsConstructor
 public class ChatUpdateReadMessagesRequest {
     private List<Long> unreadMessages;
+    private Long chatRoomId;
 }
