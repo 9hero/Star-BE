@@ -17,26 +17,26 @@ import com.mercury.star_be.studygroup.dto.response.StudyGroupUpdateResponse;
 
 public interface StudyGroupService {
 
-	StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest, String token);
+	StudyGroupCreateResponse createStudyGroup(StudyGroupCreateRequest studyGroupCreateRequest, Long userId);
 
 	StudyGroupUpdateResponse updateStudyGroup(StudyGroupUpdateRequest studyGroupUpdateRequest, Long groupId,
-		String token);
+		Long userId);
 
 	StudyGroupDetailResponse getStudyGroup(Long groupId);
 
-	StudyGroupEnterResponse enterStudyGroup(Long groupId, String token);
+	StudyGroupEnterResponse enterStudyGroup(Long groupId, Long userId);
 
 	PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction,
 		int page);
 
-	void joinStudyGroup(Long groupId, String token, String password) throws BusinessException;
+	void joinStudyGroup(Long groupId, Long userId, String password) throws BusinessException;
 
-	void exitStudyGroup(Long groupId, String token) throws BusinessException;
+	void exitStudyGroup(Long groupId, Long userId) throws BusinessException;
 
 	void changeHost(Long groupId, Long userId, Long newHostId);
 
 	ChangeGroupNicknameResponse changeGroupNickname(Long userId, Long groupId,
 		ChangeGroupNicknameRequest changeGroupNicknameRequest);
 
-	List<MyStudyGroupListResponse> getMyStudyGroupList(String token);
+	List<MyStudyGroupListResponse> getMyStudyGroupList(Long userId);
 }
