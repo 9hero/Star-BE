@@ -17,6 +17,7 @@ import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 import com.mercury.star_be.studygroup.service.StudyGroupService;
+import com.mercury.star_be.user.dto.response.UserResponse;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.messaging.MessagingException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -78,6 +80,14 @@ public class ChatServiceImpl implements ChatService {
             .studyGroupId(studyGroupId)
             .build();
         return chatRoomResponse;
+    }
+    
+    /**그룽아이디로 채팅방 조회*/
+    @Override
+    public ChatRoom findByGroupId(Long groupId) {
+        return chatRoomRepository.findByStudyGroupId(groupId).orElseThrow(
+                () -> new BusinessException(ChatErrorCode.CHAT_ROOM_NOT_FOUND)
+        );
     }
 
     /**
@@ -561,6 +571,29 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public void updateChatReads(ChatUpdateReadMessagesRequest request) {
         chatCustomRepository.updateChatReads(request);
+    }
+
+    /**사용자의 한 그룹의 읽지 않은 메시지들 모두 읽음 처리*/
+    @Override
+    @Transactional
+    public void updateGroupUnreadMessages(Long userId, Long chatRoomId, Long groupId) {
+        
+        //사용자가 해당 채팅방에 있는 사람인지 체크
+        isJoinedChatRoom(userId, chatRoomId);
+        //채팅방의 읽지 않은 메시지 id들 받아오기
+        List<Long> unreadMessageIds = findUnreadMessageIds(chatRoomId, userId);
+        //읽지 않은 메시지가 존재할 때 읽음처리
+        System.out.println("useId : "+userId+", 채팅방 id : "+chatRoomId);
+        if (!unreadMessageIds.isEmpty()) {
+            ChatUpdateReadMessagesRequest request = ChatUpdateReadMessagesRequest.builder()
+                    .unreadMessages(unreadMessageIds)
+                    .chatRoomId(chatRoomId)
+                    .build();
+            //읽음 처리
+            updateAndInsertChatReads(request, userId, chatRoomId);
+        } else {
+            System.out.println("읽지 않은 메시지 없음.");
+        }    
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {

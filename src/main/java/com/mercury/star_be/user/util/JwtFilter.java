@@ -29,7 +29,7 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
         String requestPath = request.getServletPath();
         if (requestPath.matches("^/api/groups/\\d+$")) return false;
         if (requestPath.startsWith("/fileupload") ||
-                requestPath.startsWith("/api/groups")) return true;
+                requestPath.startsWith("/api/groups") || requestPath.startsWith("/chat")) return true;
         return excludeUrls.contains(requestPath);
     }
 
