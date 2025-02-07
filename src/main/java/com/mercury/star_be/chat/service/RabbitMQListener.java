@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercury.star_be.chat.dto.request.ChatReadRequest;
+import com.mercury.star_be.chat.dto.request.ChatUpdateReadMessagesRequest;
 import com.mercury.star_be.chat.dto.response.ChatReadResponse;
 import com.mercury.star_be.chat.entity.ChatMessage;
 import com.mercury.star_be.chat.entity.ChatRead;
@@ -25,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_BULK_RESPONSE_QUEUE_NAME;
+
 @Service
 @RequiredArgsConstructor
 public class RabbitMQListener {
@@ -34,6 +37,21 @@ public class RabbitMQListener {
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageRepository chatMessageRepository;
+
+    @RabbitListener(queues = READ_CHECK_BULK_RESPONSE_QUEUE_NAME)
+    public void sendUpdatedMessageIds(String messageJson){
+        ChatUpdateReadMessagesRequest request = null;
+        try {
+            request = objectMapper.readValue(messageJson, ChatUpdateReadMessagesRequest.class);
+            messagingTemplate.convertAndSend("/topic/readCheck.bulkResponse." + request.getChatRoomId(), messageJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+        }
+    }
 
     @RabbitListener(queues = "readCheck.request.queue")
     @Transactional

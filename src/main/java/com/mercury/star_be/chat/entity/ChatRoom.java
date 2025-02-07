@@ -28,6 +28,9 @@ public class ChatRoom {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserChatRoom> userChatRooms;
 
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMessage> chatMessages;
+
     @Builder
     public ChatRoom(
             ChatRoomType chatRoomType,
