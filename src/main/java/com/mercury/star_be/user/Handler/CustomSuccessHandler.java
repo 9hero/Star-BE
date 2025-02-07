@@ -87,5 +87,4 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         response.sendRedirect(redirectUrl); // 리다이렉트 URL로 이동
         }
-    }
 }
