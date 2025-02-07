@@ -107,6 +107,7 @@ copy {
     from asciidoctor.outputDir
     into 'src/main/resources/static/docs'
 }
+
 }
 clean {
 delete file('src/main/generated')
