@@ -105,10 +105,13 @@ public class TimerServiceImpl implements TimerService {
             // 타이머가 있는 유저
             else {
                 System.out.println("타이머 있음");
+                var timer = currentMembersTimers.get(memberId);
+                System.out.println(" 널 체크 : "+ (timer == null));
                 // Entity -> Dto
-                TimerDto timerDto = new TimerDto(currentMembersTimers.get(memberId));
+                TimerDto timerDto = new TimerDto(timer);
                 timerDto.setEvent(TimerEvent.ENTRY);
                 timerDto.setNickname(entry.getValue());
+                timerDto.setTimeSoFar(timer.getCalculatedTimeSoFarWhenStatusIsStart());
                 timerData.add(timerDto);
             }
         }
@@ -310,7 +313,7 @@ public class TimerServiceImpl implements TimerService {
         // TTL 설정
         redisTemplate.expire(redisKey, Duration.ofDays(1));
 
-        System.out.println("User " + userId + " joined group " + groupId);
+        System.out.println("User " + userId + " joined group 임플" + groupId);
 
         // 내 오늘자 타이머 정보 가져오기
         // 가장 최신 timer 객체 불러오기
@@ -326,6 +329,7 @@ public class TimerServiceImpl implements TimerService {
             entryEvent.setStatus("REST");
         }
         entryEvent.setNickname(nickname);
+
         return entryEvent;
 
     }
@@ -335,6 +339,9 @@ public class TimerServiceImpl implements TimerService {
      * @return Long userId
      */
     private UserResponse getLoginUserInfo() {
+        System.out.println("로그인 정보 가져옴");
+        UserResponse principal = (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        log.info("Principal2: {}", principal);
         return (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

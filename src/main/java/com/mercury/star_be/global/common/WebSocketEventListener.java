@@ -150,7 +150,7 @@ public class WebSocketEventListener {
             // TTL 설정
             redisTemplate.expire(redisKey, Duration.ofDays(1));
 
-            System.out.println("User " + userId + " joined group " + groupId);
+            System.out.println("User " + userId + " joined group 리스너" + groupId);
 
             // Entry 이벤트 브로드캐스트 객체
             // 가장 최신 timer 객체 불러오기

@@ -36,18 +36,9 @@ public class TimerController {
     }
 
     // 집중방 입장한 사용자들의 타이머 정보를 가져옴
-    @GetMapping("/api/groups/{groupId}/timers")
+    @GetMapping("/api/timers/groups/{groupId}")
     public Set<TimerDto> getTimerData(@PathVariable Long groupId) {
         return timerServiceImpl.getFocusRoomTimerDataByGroupIdAndMyUID(groupId);
-    }
-
-    // 클라이언트가 메시지를 보낼 때 처리
-    @MessageMapping("/groups/{groupId}/timers") // 클라이언트에서 "/pub/groups/{groupId}/timers"로 보낸 메시지를 처리
-    @SendTo("/topic/groups.{groupId}.timers") // "/topic/groups/{groupId}/timers"로 구독한 사용자들에게 메시지를 전송
-    public String handleTimerUpdate(@DestinationVariable Long groupId,String message) {
-        System.out.println("Received message: " + message+" from group: " + groupId);
-        System.out.println(" 통과는 함?");
-        return "Updated timer : " + message; // 클라이언트로 전송할 메시지
     }
 
     // 집중방 클라이언트가 타이머 시작을 알림

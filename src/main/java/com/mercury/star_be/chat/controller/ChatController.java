@@ -2,17 +2,16 @@ package com.mercury.star_be.chat.controller;
 
 import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
+import com.mercury.star_be.chat.entity.ChatRoom;
 import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
 
     private final ChatService chatService;
-    private final JwtUtil jwtUtil;
     /**
      * 채팅방 조회 컨트롤러
      * */
@@ -36,6 +34,28 @@ public class ChatController {
         //채팅방 조회
         ChatRoomResponse chatRoomResponse = chatService.getChatRoom(chatRoomId);
         return ApiResponse.success(chatRoomResponse);
+    }
+
+
+    /**
+     * 스터디그룹에서 채팅방으로 이동
+     * - 내 아이디, 그룹아이디 등으로 채팅방아이디를 찾고,
+     * - 채팅방아이디로 내가 읽지 않은 모든 메시지들 찾음
+     * - 읽지 않은 메시지가 있다면, unreadCount -1 / 채팅 읽음 테이블에 insert
+     * - 채팅방쪽에 그룹채팅변화체크 큐 하나 구독
+     * - 메시지를 받아 반영
+     * */
+    @PostMapping("/api/chat/updateGroupUnreadMessages/{groupId}")
+    public ApiResponse<Long> updateGroupUnreadMessages(
+        @PathVariable Long groupId
+    ){
+        //유저정보
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //채팅방정보
+        ChatRoom chatRoom = chatService.findByGroupId(groupId);
+        chatService.updateGroupUnreadMessages(userResponse.getId(), chatRoom.getId(), groupId);
+        return ApiResponse.success(chatRoom.getId());
     }
 
     /**
@@ -74,20 +94,6 @@ public class ChatController {
         chatService.updateReadCount(chatReadRequest, chatRoomId);
 
     }
-
-//    /**
-//     * 채팅방 내 메시지 읽음 update 컨트롤러
-//     * 복수의 아이디를 한번에 update
-//     * */
-//    @MessageMapping("/readCheck/bulk/{chatRoomId}")
-//    @SendTo("/topic/readCheck.bulk.{chatRoomId}")
-//    public void updateReadUsersBulk(
-//            @DestinationVariable
-//            Long chatRoomId,
-//            @Payload ChatUpdateReadMessagesResponse request
-//    ){
-//
-//    }
 
     /**내 채팅방 목록 조회 컨트롤러*/
     @GetMapping("/api/users/{userId}/chats")

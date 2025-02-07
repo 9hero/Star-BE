@@ -20,18 +20,21 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
             "/favicon.ico", // 오타 수정
             "/oauth2/callback",
             "/oauth2-jwt-header",
-            "/error" , // 에러 컨트롤러에 대한 포워딩 요청
+            "/error", // 에러 컨트롤러에 대한 포워딩 요청
             "/api/auth/reissue" // 토큰 재발급
     ));
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestPath = request.getServletPath();
-        if (requestPath.matches("^/api/groups/\\d+$") || requestPath.matches("^/api/groups/\\d+/timers$")) return false;
+        if (requestPath.matches("^/api/groups/\\d+$") ||
+                requestPath.matches("^/api/groups/\\d+/timers$") ||
+                requestPath.matches("^/api/groups/\\d+/subscribe$") ||
+                requestPath.matches("^/api/groups/\\d+/enter$")) return false;
         if (requestPath.startsWith("/fileupload") ||
+                requestPath.startsWith("/api/groups") ||
                 requestPath.startsWith("/timer") ||
-                requestPath.startsWith("/chat") ||
-                requestPath.startsWith("/api/groups")) return true;
+                requestPath.startsWith("/chat")) return true;
         return excludeUrls.contains(requestPath);
     }
 
@@ -46,8 +49,8 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
         // 토큰 체크
         String accessToken = jwtUtil.getJwt(req);
         if (accessToken == null) {
-             sendUnauthorized(res, "Access token is missing");
-             return;
+            sendUnauthorized(res, "Access token is missing");
+            return;
         }
 
         // 토큰 유효시간 체크
@@ -63,17 +66,15 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
             return;
         }
 
-        /** 현재 Redis 설정 안됌
+
         // 블랙리스트 검증
         if (jwtUtil.getExpiration(accessToken).before(jwtUtil.getBlacklistValue(jwtUtil.getId(accessToken)))) {
             sendUnauthorized(res, "Access token is blacklisted");
             return;
         }
-        **/
 
         // 토큰 이용하여 시큐리티 내 인증객체 생성
         jwtUtil.createAuthentication(accessToken);
-
 
         System.out.println("검증 완료");
         // 다음 필터로 요청 전달
