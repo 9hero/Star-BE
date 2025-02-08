@@ -1,5 +1,7 @@
 package com.mercury.star_be.studygroup.entity;
 
+import java.time.LocalDateTime;
+
 import com.mercury.star_be.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -13,10 +15,6 @@ import jakarta.persistence.ManyToOne;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -50,25 +48,16 @@ public class GroupMember {
 
 	}
 
-	// TODO: 질문 transactional 을 붙이면 save를 안쳐도 되는것인가?
-	//	@Transactional
-	public void updateGroupMember(Long id, String nickname, String image, boolean isHost, StudyGroup group , User member, LocalDateTime joinedAt) {
-		this.id = id;
-		this.nickname = nickname;
-		this.image = image;
-		this.isHost = isHost;
-		this.group = group;
-		this.member = member;
-		this.joinedAt = joinedAt;
+	public void setHost() {
+		this.isHost = true;
+	}
 
+	public void setGuest() {
+		this.isHost = false;
 	}
 
 	public String changeNickname(String nickname) {
 		this.nickname = nickname;
 		return this.nickname;
-	}
-
-	public void setHost() {
-		this.isHost = true;
 	}
 }

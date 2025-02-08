@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -119,7 +118,7 @@ public class UserController {
             PageRequest pageRequest = PageRequest.of(0, 2);
             List<Map<String, Object>> groupList = new ArrayList<>();
 
-            List<MyStudyGroupListResponse> myStudyGroupList = studyGroupServiceImpl.getMyStudyGroupList(token);
+            List<MyStudyGroupListResponse> myStudyGroupList = studyGroupServiceImpl.getMyStudyGroupList(userId);
 
             for (MyStudyGroupListResponse myStudyGroup : myStudyGroupList) {
                 Map<String, Object> groupInfoMap = new HashMap<>();
