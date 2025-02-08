@@ -172,7 +172,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Override
 	public PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction,
 		int page) {
-		int size = 20;
+		int size = 30;
 		Pageable pageable = PageRequest.of(page, size);
 
 		Page<StudyGroup> studyGroups = studyGroupRepository.findAllPublicByCreationDate(keyword, sort, direction,
