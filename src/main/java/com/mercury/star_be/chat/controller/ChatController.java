@@ -1,5 +1,7 @@
 package com.mercury.star_be.chat.controller;
 
+import com.google.protobuf.Api;
+import com.mercury.star_be.chat.dto.common.ChatRecentMessageDto;
 import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.ChatRoom;
@@ -76,8 +78,7 @@ public class ChatController {
     @MessageMapping("/chat/sendFile/{chatRoomId}")
     @SendTo("/topic/chat.{chatRoomId}")
     public ApiResponse<ChatMessageResponse> uploadChatFile(
-            @RequestBody
-            ChatMessageRequest chatMessageRequest
+            @Payload ChatMessageRequest chatMessageRequest
     ){
         ChatMessageResponse chatMessageResponse = chatService.sendMessage(chatMessageRequest);
         return ApiResponse.success(chatMessageResponse);
@@ -94,6 +95,11 @@ public class ChatController {
         chatService.updateReadCount(chatReadRequest, chatRoomId);
 
     }
+
+    /**
+     * 채팅목록으로 보낼 최신 메시지 전달 컨트롤러
+     *
+     * */
 
     /**내 채팅방 목록 조회 컨트롤러*/
     @GetMapping("/api/users/{userId}/chats")
@@ -165,6 +171,15 @@ public class ChatController {
                 (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         chatService.updateAndInsertChatReads(chatUpdateReadMessagesRequest, userResponse.getId(), chatRoomId);
         return ApiResponse.success("success");
+    }
+
+    //현재 접속중인 사용자들 반환
+    @GetMapping("/api/chats/{chatRoomId}/chatRoomConnectedUsers")
+    public ApiResponse<ChatRoomConnectedUsersResponse> chatRoomConnectedUsers(
+            @PathVariable Long chatRoomId
+    ){
+        ChatRoomConnectedUsersResponse response = chatService.getChatRoomConnectedUsers();
+        return ApiResponse.success(response);
     }
 
     //사용자 차단

@@ -8,6 +8,7 @@ import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.*;
 import com.mercury.star_be.global.config.RabbitMQConfig;
+import com.mercury.star_be.global.config.WebSocketEventListener;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
@@ -32,10 +33,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_BULK_RESPONSE_ROUTING_KEY;
-import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_EXCHANGE_NAME;
+import static com.mercury.star_be.global.config.RabbitMQConfig.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,7 @@ public class ChatServiceImpl implements ChatService {
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
     private final ChatCustomRepository chatCustomRepository;
+    private final WebSocketEventListener webSocketEventListener;
     /**
      * 채팅방 조회
      */
@@ -209,18 +211,6 @@ public class ChatServiceImpl implements ChatService {
         chatMessage.updateFiles(chatMessageFiles);
         ChatMessage newChatMessage =  chatMessageRepository.save(chatMessage);
 
-        // 구독자에게 메시지 전달
-        try {
-            String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
-            messagingTemplate.convertAndSend("/topic/chat." + chatMessageRequest.getChatRoomId(), messageJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
-        } catch (MessagingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
-        }
-
         // ChatMessageResponse 생성
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .id(newChatMessage.getId())
@@ -229,12 +219,37 @@ public class ChatServiceImpl implements ChatService {
                 .unreadCount(unreadCount) // 읽지 않은 메시지 수 (기본값 : 채팅방 인원)
                 .messageContent(newChatMessage.getContent())
                 .profileImgUrl(chatSender.getImage())
+                .senderId(chatSender.getId())
                 .messageFiles(chatMessageRequest.getMessageFiles()) // 파일 정보 추가
                 .build();
 
+        //채팅목록으로 새로운 메시지 전달
+        try {
+            ChatRecentMessageDto dto = ChatRecentMessageDto.builder()
+                    .id(response.getId())
+                    .nickName(response.getNickName())
+                    .profileImgUrl(response.getProfileImgUrl())
+                    .content(response.getMessageContent())
+                    .createdAt(response.getCreatedAt())
+                    .userId(chatSender.getId())
+                    .build();
+
+            String messageJson = objectMapper.writeValueAsString(dto);
+            messagingTemplate
+                    .convertAndSend(
+                            CHAT_EXCHANGE_NAME,
+                            CHAT_RECENT_MESSAGE_ROUTING_KEY + chatSender.getId(),
+                            messageJson
+                    );
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+        } catch (AmqpException e) {
+            e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+        }
         return response;
     }
-
 
     /**
      * 채팅방 생성 서비스
@@ -603,6 +618,15 @@ public class ChatServiceImpl implements ChatService {
         } else {
             System.out.println("읽지 않은 메시지 없음.");
         }    
+    }
+
+    /**현재 채팅방에 접속중인 유저들*/
+    @Override
+    public ChatRoomConnectedUsersResponse getChatRoomConnectedUsers() {
+        ChatRoomConnectedUsersResponse response = ChatRoomConnectedUsersResponse.builder()
+                .connectedUsers(webSocketEventListener.getConnectedUsers())
+                .build();
+        return response;
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {

@@ -3,6 +3,7 @@ package com.mercury.star_be.chat.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mercury.star_be.chat.dto.common.ChatRecentMessageDto;
 import com.mercury.star_be.chat.dto.request.ChatReadRequest;
 import com.mercury.star_be.chat.dto.request.ChatUpdateReadMessagesRequest;
 import com.mercury.star_be.chat.dto.response.ChatReadResponse;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static com.mercury.star_be.global.config.RabbitMQConfig.CHAT_RECENT_MESSAGE_QUEUE_NAME;
 import static com.mercury.star_be.global.config.RabbitMQConfig.READ_CHECK_BULK_RESPONSE_QUEUE_NAME;
 
 @Service
@@ -37,6 +39,31 @@ public class RabbitMQListener {
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageRepository chatMessageRepository;
+
+    /**
+     * 채팅방의 메시지를 채팅목록의 최신 메시지로 보냄
+     * */
+    @RabbitListener(queues = CHAT_RECENT_MESSAGE_QUEUE_NAME)
+    public void sendRecentMessage(String messageJson) {
+        ChatRecentMessageDto dto = null;
+        try {
+            dto = objectMapper.readValue(messageJson, ChatRecentMessageDto.class);
+            //이부분 변경필요
+            messagingTemplate.convertAndSend("/topic/chat.recentMessage." + dto.getUserId(), messageJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+        } catch (MessagingException e) {
+                e.printStackTrace();
+            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+        }
+    }
+
+    /**
+     * 채팅방에 메시지를 보냄
+     * 해당 채팅방을 구독하고 있는 사람들이 메시지를 받음
+     * */
+
 
     @RabbitListener(queues = READ_CHECK_BULK_RESPONSE_QUEUE_NAME)
     public void sendUpdatedMessageIds(String messageJson){
@@ -52,7 +79,7 @@ public class RabbitMQListener {
             throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
         }
     }
-
+    /**채팅메시지 읽음 update 메시지 전달*/
     @RabbitListener(queues = "readCheck.request.queue")
     @Transactional
     public void processReadCheckMessage(String messageJson) {
@@ -62,7 +89,7 @@ public class RabbitMQListener {
             ChatMessage chatMessage = chatMessageRepository.findById(chatReadRequest.getChatMessageId()).orElseThrow(
                     () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
             );
-
+            //특정 유저가 채팅메시지를 읽었는지 확인
             if (!chatReadRepository.existsByChatMessageIdAndChatUserId(chatReadRequest.getChatMessageId(), chatReadRequest.getChatUserId())) {
                 if (chatMessage.getUnreadCount() > 0) {
                     chatMessage.updateUnreadCount(chatMessage.getUnreadCount() - 1);

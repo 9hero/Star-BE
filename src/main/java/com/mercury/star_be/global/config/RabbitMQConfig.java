@@ -28,6 +28,7 @@ public class RabbitMQConfig {
 
 
     public static final String CHAT_QUEUE_NAME = "chat.queue";
+    public static final String CHAT_RECENT_MESSAGE_QUEUE_NAME = "chat.recentMessage.queue";
     public static final String READ_CHECK_REQUEST_QUEUE_NAME = "readCheck.request.queue";
     public static final String READ_CHECK_BULK_RESPONSE_QUEUE_NAME = "readCheck.bulkResponse.queue";
     public static final String READ_CHECK_RESPONSE_QUEUE_NAME = "readCheck.response.queue";
@@ -36,6 +37,7 @@ public class RabbitMQConfig {
     public static final String READ_CHECK_EXCHANGE_NAME = "readCheck.exchange";
 
     public static final String ROUTING_KEY = "chat.*";
+    public static final String CHAT_RECENT_MESSAGE_ROUTING_KEY = "chat.recentMessage.*";
     public static final String READ_CHECK_REQUEST_ROUTING_KEY = "readCheck.request.*";
     public static final String READ_CHECK_BULK_RESPONSE_ROUTING_KEY = "readCheck.bulkResponse.*";
     public static final String READ_CHECK_RESPONSE_ROUTING_KEY = "readCheck.response.*";
@@ -50,6 +52,11 @@ public class RabbitMQConfig {
     //채팅 큐
     @Bean
     public Queue queue(){ return new Queue(CHAT_QUEUE_NAME, true); }
+    //채팅목록 최신 메시지 큐
+    @Bean
+    public Queue recentMessageQueue() {
+        return new Queue(CHAT_RECENT_MESSAGE_QUEUE_NAME, true);
+    }
     //메시지 읽음 리퀘스트 큐
     @Bean
     public Queue readCheckRequestQueue(){ return new Queue(READ_CHECK_REQUEST_QUEUE_NAME, true); }
@@ -70,6 +77,10 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    }
+    @Bean
+    public Binding chatRecentMessageBinding(Queue recentMessageQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(recentMessageQueue).to(exchange).with(CHAT_RECENT_MESSAGE_ROUTING_KEY);
     }
     @Bean
     public Binding readCheckRequestBinding(Queue readCheckRequestQueue, TopicExchange readCheckExchange) {
