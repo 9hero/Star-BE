@@ -29,6 +29,7 @@ import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
+import com.mercury.star_be.user.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +41,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	private final StudyGroupRepository studyGroupRepository;
 	private final GroupMemberRepository groupMemberRepository;
 	private final UserRepository userRepository;
+	private final JwtUtil jwtUtil;
 
 	@Override
 	@Transactional
@@ -69,6 +71,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
 		return new StudyGroupCreateResponse(savedGroup.getId());
 	}
+
+
+	public List<Long> getGroupIdsByMemberId(Long memberId) {
+		return groupMemberRepository.findGroupIdsByMemberId(memberId);
+	}
+
 
 	@Override
 	@Transactional
@@ -252,6 +260,30 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), userId);
 		// 그룹의 멤버 카운트 감소
 		studyGroup.decrementMemberCount();
+	}
+
+	@Override
+	public void simpleExitStudyGroup(String token) throws BusinessException {
+		Long userId = jwtUtil.getId(token);
+		List<Long> groupIdList = groupMemberRepository.findGroupIdsByMemberId(userId);
+		for (Long groupId : groupIdList) {
+			StudyGroup studyGroup = studyGroupRepository.findById(groupId)
+					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
+			// 그룹의 멤버가 1명만 남아 있는 경우 (호스트 == 마지막 유저)
+			if (studyGroup.getMemberCount() == 1) studyGroupRepository.delete(studyGroup);
+			// 그룹 멤버 관계 삭제
+			groupMemberRepository.deleteByGroupIdAndMemberId(groupId, userId);
+			studyGroup.decrementMemberCount();
+		}
+	}
+
+	@Override
+	@Transactional
+	public void selectHost(Long groupId, Long MemberId) throws BusinessException {
+
+		GroupMember newHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, MemberId)
+						.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
+		newHost.setHost();
 	}
 
 	@Override

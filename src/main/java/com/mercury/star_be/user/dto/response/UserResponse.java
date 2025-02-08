@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.time.LocalDateTime;
@@ -67,4 +68,10 @@ public class UserResponse extends User implements OAuth2User {
         return this.getNickname();
     }
 
+    /*
+    * 현재 인증된 사용자 정보를 반환
+     */
+    public static UserResponse getAuthenticatedUser(){
+        return (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
 }
