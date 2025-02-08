@@ -68,26 +68,27 @@ public class WebSocketEventListener {
      */
     private void handleTimerDisconnection(SessionDisconnectEvent event) {
         // Redis에서 sessionId로 groupId와 userId 조회
+        String sessionId = event.getSessionId();
         SetOperations<String, String> setOps = redisTemplate.opsForSet();
-        Set<String> groupIdAndUserId = setOps.members(event.getSessionId());
+        Set<String> groupIdAndUserIdAndNickname = setOps.members("focus:"+event.getSessionId());
 
         // Redis에 세션 존재 시, 집중방 유저 접속 중임
-        if (groupIdAndUserId != null && !groupIdAndUserId.isEmpty()){
-            String[] split = groupIdAndUserId.iterator().next().split(":");
+        if (groupIdAndUserIdAndNickname != null && !groupIdAndUserIdAndNickname.isEmpty()){
+            String[] split = groupIdAndUserIdAndNickname.iterator().next().split(":");
             long groupId = Long.parseLong(split[0]);
             long userId = Long.parseLong(split[1]);
             String nickname = split[2];
 
-            System.out.println("groupId: " + groupId + " userId: " + userId);
+            log.info("disconnect groupId: {} userId: {} nickname : {}", groupId, userId,nickname);
 
             // 타이머 정지 처리
             System.out.println("sessionId: " + event.getSessionId());
             timerService.stopTimerByGroupIdAndUserId(groupId, userId);
 
             // Redis에서 삭제
-            Boolean delete = redisTemplate.delete(event.getSessionId());// 세션id 제거
+            Long delete = redisTemplate.opsForSet().remove("focus:"+sessionId,groupId+":"+userId+":"+nickname);// 세션id 제거
             Long removeCUser = redisTemplate.opsForSet().remove("focus:" + groupId, userId + ":" + nickname);
-            System.out.println("Remove session(T/F) and user : " +delete+" and " +removeCUser);
+            log.info("Remove session(T/F) and user : {} and {}",delete,removeCUser);
 
             // Disconnection 브로드캐스트
             TimerDto disconnectEvent = new TimerDto();
@@ -136,7 +137,7 @@ public class WebSocketEventListener {
             // 세션 id 저장 (세션 종료 시, Redis에서 제거하고 timer도 종료 : groupId, userId로 조회)
             String sessionId = headerAccessor.getSessionId();
             if (sessionId != null) {
-                setOps.add(sessionId, groupId+":"+userId+":"+nickname);
+                setOps.add("focus:"+sessionId, groupId+":"+userId+":"+nickname);
                 redisTemplate.expire(sessionId, Duration.ofDays(1));
             }else {
                 // 세션 아이디가 없을 경우 예외 처리
