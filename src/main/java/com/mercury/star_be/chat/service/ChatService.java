@@ -53,4 +53,7 @@ public interface ChatService {
     void updateGroupUnreadMessages(Long userId, Long chatRoomId, Long groupId);
     //현재 접속중인 채팅방 유저들
     ChatRoomConnectedUsersResponse getChatRoomConnectedUsers();
+    //채팅목록으로 채팅방의 최신 메시지 전달
+    ChatRecentMessageResponse sendRecentMessageToChatList(ChatRecentMessageRequest request);
+    boolean isReadCheck(ChatReadRequest request);
 }

@@ -84,6 +84,16 @@ public class ChatController {
         return ApiResponse.success(chatMessageResponse);
     }
 
+    /**채팅목록으로 최신 메시지 전달 컨트롤러*/
+    @MessageMapping("/chat/sendRecentMessageToChatList/{chatRoomId}")
+    @SendTo("/topic/chat.recentMessage.{chatRoomId}")
+    public ApiResponse<ChatRecentMessageResponse> sendRecentMessageToChatList(
+            @Payload ChatRecentMessageRequest chatRecentMessageRequest
+    ){
+        ChatRecentMessageResponse response = chatService.sendRecentMessageToChatList(chatRecentMessageRequest);
+        return ApiResponse.success(response);
+    }
+
     /**채팅방 내 메시지 읽음 udpate 컨트롤러*/
     @MessageMapping("/readCheck/{chatRoomId}")
     @SendTo("/topic/readCheck.{chatRoomId}")
@@ -95,11 +105,6 @@ public class ChatController {
         chatService.updateReadCount(chatReadRequest, chatRoomId);
 
     }
-
-    /**
-     * 채팅목록으로 보낼 최신 메시지 전달 컨트롤러
-     *
-     * */
 
     /**내 채팅방 목록 조회 컨트롤러*/
     @GetMapping("/api/users/{userId}/chats")
@@ -173,13 +178,23 @@ public class ChatController {
         return ApiResponse.success("success");
     }
 
-    //현재 접속중인 사용자들 반환
+    /**현재 접속중인 사용자들 반환*/
     @GetMapping("/api/chats/{chatRoomId}/chatRoomConnectedUsers")
     public ApiResponse<ChatRoomConnectedUsersResponse> chatRoomConnectedUsers(
             @PathVariable Long chatRoomId
     ){
         ChatRoomConnectedUsersResponse response = chatService.getChatRoomConnectedUsers();
         return ApiResponse.success(response);
+    }
+    
+    /**사용자가 이 메시지를 읽었는지 체크하는 컨트롤러*/
+    @PostMapping("/api/chats/isReadCheck")
+    public ApiResponse<Boolean> isReadCheck(
+            @RequestBody
+            ChatReadRequest chatReadRequest
+    ){
+        boolean isReadCheck = chatService.isReadCheck(chatReadRequest);
+        return ApiResponse.success(isReadCheck);
     }
 
     //사용자 차단

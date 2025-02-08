@@ -7,7 +7,6 @@ import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.*;
-import com.mercury.star_be.global.config.RabbitMQConfig;
 import com.mercury.star_be.global.config.WebSocketEventListener;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
@@ -15,9 +14,7 @@ import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.global.error.code.UserErrorCode;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
-import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
-import com.mercury.star_be.studygroup.service.StudyGroupService;
 import com.mercury.star_be.user.dto.response.UserResponse;
 import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
@@ -25,15 +22,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
-import org.springframework.messaging.MessagingException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.mercury.star_be.global.config.RabbitMQConfig.*;
@@ -182,11 +178,30 @@ public class ChatServiceImpl implements ChatService {
                 .build();
 
         // DM일 경우 수신자 추가
-        if (chatMessageRequest.getChatRoomType().equals(ChatRoomType.DM)){
-            User chatReceiver = userRepository.findById(chatMessageRequest.getReceiverId())
-                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
-            chatMessage.updateReceiver(chatReceiver);
+// DM일 경우 수신자 추가
+        if (chatMessageRequest.getChatRoomType().equals(ChatRoomType.DM)) {
+            // receiver가 없다면...
+            Long tempReceiverId = 0L;
+            if (chatMessageRequest.getReceiverId() == null) {
+                List<ChatRoomMemberDto> dmChatRoomMembers = getChatRoomMembers(chatRoom);
+                System.out.println("채팅방멤버: " + dmChatRoomMembers);
+                for (ChatRoomMemberDto chatRoomMemberDto : dmChatRoomMembers) {
+                    if (!chatRoomMemberDto.getId().equals(chatMessageRequest.getSenderId())) {
+                        tempReceiverId = chatRoomMemberDto.getId();
+                        System.out.println("상대방 아이디: " + tempReceiverId);
+                    }
+                }
+                User chatReceiver = userRepository.findById(tempReceiverId)
+                        .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+                System.out.println("상대방: " + chatReceiver);
+                chatMessage.updateReceiver(chatReceiver);
+            } else {
+                User chatReceiver = userRepository.findById(chatMessageRequest.getReceiverId())
+                        .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+                chatMessage.updateReceiver(chatReceiver);
+            }
         }
+
         // 메시지 파일 객체 생성 및 저장
         List<ChatMessageFile> chatMessageFiles = new ArrayList<>();
         //파일들 url을 저장시킬 변수
@@ -620,13 +635,35 @@ public class ChatServiceImpl implements ChatService {
         }    
     }
 
-    /**현재 채팅방에 접속중인 유저들*/
+    /**현재 채팅방에 접속중인 유저들 체크*/
     @Override
     public ChatRoomConnectedUsersResponse getChatRoomConnectedUsers() {
         ChatRoomConnectedUsersResponse response = ChatRoomConnectedUsersResponse.builder()
                 .connectedUsers(webSocketEventListener.getConnectedUsers())
                 .build();
         return response;
+    }
+
+    /**채팅목록으로 채팅방의 최신 메시지 전달 서비스*/
+    @Override
+    public ChatRecentMessageResponse sendRecentMessageToChatList(ChatRecentMessageRequest request) {
+
+        //request에서 값 뽑아서 response에 저장. return
+        ChatRecentMessageResponse response = ChatRecentMessageResponse.builder()
+                .id(request.getId())
+                .senderId(request.getSenderId())
+                .chatRoomId(request.getChatRoomId())
+                .nickName(request.getNickName())
+                .profileImgUrl(request.getProfileImgUrl())
+                .content(request.getContent())
+                .createdAt(LocalDateTime.now())
+                .build();
+        return response;
+    }
+
+    @Override
+    public boolean isReadCheck(ChatReadRequest request) {
+        return chatReadRepository.existsByChatMessageIdAndChatUserId(request.getChatMessageId(), request.getChatUserId());
     }
 
     public ChatMessage findChatMessage(Long chatMessageId) {
