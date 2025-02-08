@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mercury.star_be.chat.dto.request.CreateChatRoomRequest;
+import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.global.error.code.UserErrorCode;
@@ -41,6 +43,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	private final StudyGroupRepository studyGroupRepository;
 	private final GroupMemberRepository groupMemberRepository;
 	private final UserRepository userRepository;
+	private final ChatService chatService;
 	private final JwtUtil jwtUtil;
 
 	@Override
@@ -69,6 +72,14 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.build();
 		groupMemberRepository.save(groupMember);
 		StudyGroup savedGroup = studyGroupRepository.save(studyGroup);
+
+		// 그룹 생성 시 그룹 채팅방 생성
+		CreateChatRoomRequest createChatRoomRequest = CreateChatRoomRequest.builder()
+			.senderId(userId)
+			.groupId(savedGroup.getId())
+			.build();
+		chatService.createGroupChatRoom(createChatRoomRequest);
+
 		return new StudyGroupCreateResponse(savedGroup.getId());
 	}
 

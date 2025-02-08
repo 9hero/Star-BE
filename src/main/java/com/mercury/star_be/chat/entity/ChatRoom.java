@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**채팅방 정보*/
@@ -26,27 +27,24 @@ public class ChatRoom {
     private StudyGroup studyGroup;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserChatRoom> userChatRooms;
+    private List<UserChatRoom> userChatRooms = new ArrayList<>();
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMessage> chatMessages;
+    private List<ChatMessage> chatMessages = new ArrayList<>();
 
     @Builder
     public ChatRoom(
             ChatRoomType chatRoomType,
             LocalDateTime createdAt,
-            StudyGroup studyGroup,
-            List<UserChatRoom> userChatRooms
+            StudyGroup studyGroup
     ) {
         this.chatRoomType = chatRoomType;
         this.createdAt = createdAt;
         this.studyGroup = studyGroup;
-        this.userChatRooms = userChatRooms != null ? userChatRooms : List.of();
-
     }
 
     public void insertUserChatRooms(UserChatRoom userChatRoom) {
-        this.userChatRooms.remove(userChatRoom);
+        this.userChatRooms.add(userChatRoom);
     }
 
 }
