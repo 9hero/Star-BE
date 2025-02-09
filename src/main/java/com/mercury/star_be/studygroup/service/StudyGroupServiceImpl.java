@@ -64,7 +64,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		User user = userRepository.findById(userId).orElseThrow();
 		GroupMember groupMember = GroupMember.builder()
 			.nickname(user.getNickname())
-			.image(user.getImage())
 			.isHost(true)
 			.group(studyGroup)
 			.member(user)
@@ -234,7 +233,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.group(studyGroup)
 			.member(user)
 			.isHost(false)
-			.image(user.getImage())
 			.nickname(user.getNickname())
 			.joinedAt(LocalDateTime.now())
 			.build();

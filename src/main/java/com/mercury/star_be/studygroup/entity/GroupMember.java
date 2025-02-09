@@ -26,7 +26,6 @@ public class GroupMember {
 	private Long id;
 	@Column(length = 20)
 	private String nickname;
-	private String image;
 	private boolean isHost;
 	private LocalDateTime joinedAt;
 
@@ -38,14 +37,12 @@ public class GroupMember {
 	private User member;
 
 	@Builder
-	public GroupMember( String nickname,  String image,  boolean isHost, StudyGroup group ,User member, LocalDateTime joinedAt) {
+	public GroupMember( String nickname,  boolean isHost, StudyGroup group ,User member, LocalDateTime joinedAt) {
 		this.nickname = nickname;
-		this.image = image;
 		this.isHost = isHost;
 		this.group = group;
 		this.member = member;
 		this.joinedAt = joinedAt;
-
 	}
 
 	public void setHost() {
