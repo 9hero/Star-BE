@@ -8,10 +8,10 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.mercury.star_be.studygroup.dto.GroupMemberDto;
 import com.mercury.star_be.studygroup.dto.response.GroupMemberSseResponse;
 import com.mercury.star_be.studygroup.dto.response.MemberStatusSseResponse;
 import com.mercury.star_be.studygroup.entity.ConnectionStatus;
-import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.SseEmitterRepository;
 
@@ -29,8 +29,6 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	@Override
 	public SseEmitter subscribe(Long groupId, Long userId) {
 		SseEmitter sseEmitter = createSseEmitter(groupId, userId);
-		boolean isGroupMember = checkGroupMember(groupId, userId);
-		sendData(sseEmitter, "connect", isGroupMember);
 
 		// SSE 연결 시 전체 그룹원 정보 send
 		sendGroupMemberInfoList(groupId, sseEmitter);
@@ -54,11 +52,9 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		sseEmitter.onTimeout(() -> disconnect(groupId, userId, sseEmitter));
 		sseEmitter.onError(e -> disconnect(groupId, userId, sseEmitter));
 
+		// 연결 성공 응답
+		sendData(sseEmitter, "connect", true);
 		return sseEmitter;
-	}
-
-	private boolean checkGroupMember(Long groupId, Long userId) {
-		return groupMemberRepository.existsByGroupIdAndMemberId(groupId, userId);
 	}
 
 	private void disconnect(Long groupId, Long userId, SseEmitter sseEmitter) {
@@ -77,20 +73,22 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	}
 
 	private List<GroupMemberSseResponse> getGroupMemberInfoList(Long groupId) {
-		List<GroupMember> groupMembers = groupMemberRepository.findByGroupIdOrderByNicknameAsc(groupId);
-		Map<Object, Object> connectedUsers = sseEmitterRepository.getConnectedUsers(groupId);
-		Set<Object> connectedUserIds = connectedUsers.keySet();
+		List<GroupMemberDto> groupMembers = groupMemberRepository.findByGroupId(groupId);
+		Map<Object, Object> connectedUsersData = sseEmitterRepository.getConnectedUsers(groupId);
+		Set<Object> connectedUserIds = connectedUsersData.keySet();
 
 		return groupMembers.stream()
 			.map(groupMember -> GroupMemberSseResponse.builder()
-				.id(groupMember.getMember().getId())
+				.id(groupMember.getId())
 				.nickname(groupMember.getNickname())
 				.image(groupMember.getImage())
 				.isHost(groupMember.isHost())
 				.status(
-					connectedUserIds.contains(groupMember.getMember().getId().toString()) ?
-						ConnectionStatus.valueOf((String)connectedUsers.get(groupMember.getMember().getId().toString()))
+					connectedUserIds.contains(groupMember.getId().toString()) ?
+						ConnectionStatus.valueOf((String)connectedUsersData.get(groupMember.getId().toString()))
 						: ConnectionStatus.OFFLINE)
+				.studyTime(groupMember.getStudyTime() == null ? 0 : groupMember.getStudyTime())
+				.groupId(groupMember.getGroupId())
 				.build())
 			.toList();
 	}

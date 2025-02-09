@@ -510,7 +510,7 @@ public class ChatServiceImpl implements ChatService {
                 ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
                         .id(groupMember.getId())
                         .nickName(groupMember.getNickname())
-                        .profileImg(groupMember.getImage())
+                        .profileImg(groupMember.getMember().getImage())
                         .build();
                 chatRoomMembers.add(chatRoomMemberDto);
             }

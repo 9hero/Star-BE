@@ -3,15 +3,13 @@ package com.mercury.star_be.studygroup.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.mercury.star_be.studygroup.entity.GroupMember;
 import org.springframework.data.jpa.repository.Query;
 
-public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> {
+import com.mercury.star_be.studygroup.entity.GroupMember;
 
-	List<GroupMember> findByGroupIdOrderByNicknameAsc(Long groupId);
+public interface GroupMemberRepository extends JpaRepository<GroupMember, Long>, GroupMemberCustomRepository {
+
 	boolean existsByGroupIdAndMemberId(Long groupId, Long memberId);
 	void deleteByGroupIdAndMemberId(Long groupId, Long memberId);
 
