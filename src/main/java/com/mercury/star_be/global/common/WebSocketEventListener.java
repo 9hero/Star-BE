@@ -1,16 +1,14 @@
 package com.mercury.star_be.global.common;
 
+import com.mercury.star_be.studygroup.entity.ConnectionStatus;
 import com.mercury.star_be.studygroup.service.StudyGroupSseService;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerService;
-import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.entity.User;
-import com.mercury.star_be.user.util.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
@@ -104,7 +102,9 @@ public class WebSocketEventListener {
 
             // SSE: 집중방 Disconnect 시 현재 인원수 send
             int focusRoomMemberCount = redisTemplate.opsForSet().members("focus:" + groupId).size();
-            studyGroupSseService.sendFocusRoomMemberCount(groupId, focusRoomMemberCount);
+            studyGroupSseService.sendFocusRoomMemberCountToGroup(groupId, focusRoomMemberCount);
+            // SSE: 집중방 Disconnect 시 접속중 상태 send
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
         }
     }
 
@@ -180,7 +180,7 @@ public class WebSocketEventListener {
 
             // SSE: 집중방 입장 시 현재 인원수 send
             int focusRoomMemberCount = redisTemplate.opsForSet().members("focus:" + groupId).size();
-            studyGroupSseService.sendFocusRoomMemberCount(Long.parseLong(groupId), focusRoomMemberCount);
+            studyGroupSseService.sendFocusRoomMemberCountToGroup(Long.parseLong(groupId), focusRoomMemberCount);
         }
     }
 }

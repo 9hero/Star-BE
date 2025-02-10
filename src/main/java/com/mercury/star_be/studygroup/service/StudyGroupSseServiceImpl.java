@@ -25,6 +25,10 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	private final GroupMemberRepository groupMemberRepository;
 
 	private static final Long SSE_TIMEOUT = 60 * 60 * 1000L;	// 1시간
+	private static final String CONNECT_EVENT = "connect";
+	private static final String STATUS_UPDATE_EVENT = "statusUpdate";
+	private static final String MEMBER_DATA_EVENT = "memberData";
+	private static final String FOCUS_ROOM_MEMBER_COUNT_EVENT = "focusRoomMemberCount";
 
 	@Override
 	public SseEmitter subscribe(Long groupId, Long userId) {
@@ -33,21 +37,12 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		// SSE 연결 시 전체 그룹원 정보 send
 		sendGroupMemberInfoList(groupId, sseEmitter);
 
-		// 접속으로 변경된 정보 연결된 SSE에 send
-		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
-			.userId(userId)
-			.status(ConnectionStatus.ONLINE)
-			.build();
-		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
+		// 접속으로 변경된 상태를 그룹에 연결된 SSE에 send
+		sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
 
 		// 집중방 인원 수 send
-		sendFocusRoomConnectionMemberCount(groupId, sseEmitter);
+		sendFocusRoomMemberCount(groupId, sseEmitter);
 		return sseEmitter;
-	}
-
-	@Override
-	public void sendFocusRoomMemberCount(Long groupId, int memberCount) {
-		sendToGroup(groupId, "focusRoomMemberCount", memberCount);
 	}
 
 	private SseEmitter createSseEmitter(Long groupId, Long userId) {
@@ -61,7 +56,7 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 		sseEmitter.onError(e -> disconnect(groupId, userId, sseEmitter));
 
 		// 연결 성공 응답
-		sendData(sseEmitter, "connect", true);
+		sendData(sseEmitter, CONNECT_EVENT, true);
 		return sseEmitter;
 	}
 
@@ -72,12 +67,12 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.userId(userId)
 			.status(ConnectionStatus.OFFLINE)
 			.build();
-		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
+		sendToGroup(groupId, STATUS_UPDATE_EVENT, memberStatusSseResponse);
 	}
 
 	private void sendGroupMemberInfoList(Long groupId, SseEmitter sseEmitter) {
 		List<GroupMemberSseResponse> groupMemberInfoList = getGroupMemberInfoList(groupId);
-		sendData(sseEmitter, "memberData", groupMemberInfoList);
+		sendData(sseEmitter, MEMBER_DATA_EVENT, groupMemberInfoList);
 	}
 
 	private List<GroupMemberSseResponse> getGroupMemberInfoList(Long groupId) {
@@ -101,13 +96,24 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.toList();
 	}
 
-	public void sendMemberStatus(Long groupId, Long userId, ConnectionStatus status) {
+	@Override
+	public void sendFocusRoomMemberCountToGroup(Long groupId, int memberCount) {
+		sendToGroup(groupId, FOCUS_ROOM_MEMBER_COUNT_EVENT, memberCount);
+	}
+
+	public void sendFocusRoomMemberCount(Long groupId, SseEmitter sseEmitter) {
+		int focusRoomMemberCount = sseEmitterRepository.getFocusRoomMemberCount(groupId);
+		sendData(sseEmitter, FOCUS_ROOM_MEMBER_COUNT_EVENT, focusRoomMemberCount);
+	}
+
+	@Override
+	public void sendMemberStatusToGroup(Long groupId, Long userId, ConnectionStatus status) {
 		sseEmitterRepository.updateStatus(groupId, userId, status);
 		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
 			.userId(userId)
 			.status(status)
 			.build();
-		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
+		sendToGroup(groupId, STATUS_UPDATE_EVENT, memberStatusSseResponse);
 	}
 
 	private void sendToGroup(Long groupId, String eventName, Object data) {
@@ -117,11 +123,6 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 				sendData(sseEmitter, eventName, data);
 			}
 		});
-	}
-
-	public void sendFocusRoomConnectionMemberCount(Long groupId, SseEmitter sseEmitter) {
-		int focusRoomMemberCount = sseEmitterRepository.getFocusRoomMemberCount(groupId);
-		sendData(sseEmitter, "focusRoomMemberCount", focusRoomMemberCount);
 	}
 
 	private void sendData(SseEmitter sseEmitter, String eventName, Object data) {
