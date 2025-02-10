@@ -38,8 +38,16 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.userId(userId)
 			.status(ConnectionStatus.ONLINE)
 			.build();
-		sendToGroup(groupId, memberStatusSseResponse);
+		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
+
+		// 집중방 인원 수 send
+		sendFocusRoomConnectionMemberCount(groupId, sseEmitter);
 		return sseEmitter;
+	}
+
+	@Override
+	public void sendFocusRoomMemberCount(Long groupId, int memberCount) {
+		sendToGroup(groupId, "focusRoomMemberCount", memberCount);
 	}
 
 	private SseEmitter createSseEmitter(Long groupId, Long userId) {
@@ -64,7 +72,7 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.userId(userId)
 			.status(ConnectionStatus.OFFLINE)
 			.build();
-		sendToGroup(groupId, memberStatusSseResponse);
+		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
 	}
 
 	private void sendGroupMemberInfoList(Long groupId, SseEmitter sseEmitter) {
@@ -93,13 +101,27 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.toList();
 	}
 
-	private void sendToGroup(Long groupId, Object data) {
+	public void sendMemberStatus(Long groupId, Long userId, ConnectionStatus status) {
+		sseEmitterRepository.updateStatus(groupId, userId, status);
+		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
+			.userId(userId)
+			.status(status)
+			.build();
+		sendToGroup(groupId, "statusUpdate", memberStatusSseResponse);
+	}
+
+	private void sendToGroup(Long groupId, String eventName, Object data) {
 		Map<Long, SseEmitter> groupSseEmitters = sseEmitterRepository.findAllByGroupId(groupId);
 		groupSseEmitters.forEach((userId, sseEmitter) -> {
 			if (sseEmitter != null) {
-				sendData(sseEmitter, "statusUpdate", data);
+				sendData(sseEmitter, eventName, data);
 			}
 		});
+	}
+
+	public void sendFocusRoomConnectionMemberCount(Long groupId, SseEmitter sseEmitter) {
+		int focusRoomMemberCount = sseEmitterRepository.getFocusRoomMemberCount(groupId);
+		sendData(sseEmitter, "focusRoomMemberCount", focusRoomMemberCount);
 	}
 
 	private void sendData(SseEmitter sseEmitter, String eventName, Object data) {

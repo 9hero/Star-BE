@@ -1,5 +1,6 @@
 package com.mercury.star_be.global.common;
 
+import com.mercury.star_be.studygroup.service.StudyGroupSseService;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.service.TimerService;
@@ -33,6 +34,7 @@ public class WebSocketEventListener {
     private final TimerService timerService;
     private final SimpMessagingTemplate messagingTemplate;
     private final RabbitMessagingTemplate rabbitTemplate;
+    private final StudyGroupSseService studyGroupSseService;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectEvent event) {
@@ -99,6 +101,10 @@ public class WebSocketEventListener {
                     disconnectEvent
             );
             System.out.println("타이머 종료 이벤트 브로드캐스트 완료");
+
+            // SSE: 집중방 Disconnect 시 현재 인원수 send
+            int focusRoomMemberCount = redisTemplate.opsForSet().members("focus:" + groupId).size();
+            studyGroupSseService.sendFocusRoomMemberCount(groupId, focusRoomMemberCount);
         }
     }
 
@@ -171,6 +177,10 @@ public class WebSocketEventListener {
 
             // Entry 이벤트 브로드캐스트
             messagingTemplate.convertAndSend("/topic/groups."+groupId+".timers", entryEvent);
+
+            // SSE: 집중방 입장 시 현재 인원수 send
+            int focusRoomMemberCount = redisTemplate.opsForSet().members("focus:" + groupId).size();
+            studyGroupSseService.sendFocusRoomMemberCount(Long.parseLong(groupId), focusRoomMemberCount);
         }
     }
 }
