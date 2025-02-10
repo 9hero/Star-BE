@@ -7,10 +7,8 @@ import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.ChatMessage;
 import com.mercury.star_be.chat.entity.ChatRoom;
-import com.mercury.star_be.user.entity.User;
 
 import java.util.List;
-import java.util.Set;
 
 public interface ChatService {
     //채팅방 조회
@@ -51,8 +49,10 @@ public interface ChatService {
     void updateChatReads(ChatUpdateReadMessagesRequest request);
     //그룹아이디를 받아 해당 사용자의 해당 그룹 읽지 않은 메시지들 전부 읽음 처리
     void updateGroupUnreadMessages(Long userId, Long chatRoomId, Long groupId);
-    //현재 접속중인 채팅방 유저들
-    ChatRoomConnectedUsersResponse getChatRoomConnectedUsers();
+    //채팅방 접속 유저 추가
+    ChatRoomConnectedUserResponse insertChatRoomConnectedUsers(ChatRoomConnectedUserRequest request, Long chatRoomId);
+    //채팅방 접속 유저 삭제
+    ChatRoomConnectedUserResponse removeChatRoomConnectedUsers(ChatRoomConnectedUserRequest request, Long chatRoomId);
     //채팅목록으로 채팅방의 최신 메시지 전달
     ChatRecentMessageResponse sendRecentMessageToChatList(ChatRecentMessageRequest request);
     boolean isReadCheck(ChatReadRequest request);

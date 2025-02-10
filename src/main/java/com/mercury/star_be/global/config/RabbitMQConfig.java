@@ -8,7 +8,6 @@ import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +28,8 @@ public class RabbitMQConfig {
 
     public static final String CHAT_QUEUE_NAME = "chat.queue";
     public static final String CHAT_RECENT_MESSAGE_QUEUE_NAME = "chat.recentMessage.queue";
+    public static final String CHAT_CONNECT_QUEUE_NAME = "chat.connect.queue";
+    public static final String CHAT_DISCONNECT_QUEUE_NAME = "chat.disconnect.queue";
     public static final String READ_CHECK_REQUEST_QUEUE_NAME = "readCheck.request.queue";
     public static final String READ_CHECK_BULK_RESPONSE_QUEUE_NAME = "readCheck.bulkResponse.queue";
     public static final String READ_CHECK_RESPONSE_QUEUE_NAME = "readCheck.response.queue";
@@ -41,6 +42,8 @@ public class RabbitMQConfig {
     public static final String READ_CHECK_REQUEST_ROUTING_KEY = "readCheck.request.*";
     public static final String READ_CHECK_BULK_RESPONSE_ROUTING_KEY = "readCheck.bulkResponse.*";
     public static final String READ_CHECK_RESPONSE_ROUTING_KEY = "readCheck.response.*";
+    public static final String CHAT_CONNECT_ROUTING_KEY = "chat.connect.*";
+    public static final String CHAT_DISCONNECT_ROUTING_KEY = "chat.disconnect.*";
 
 
     //Queue 등록
@@ -57,6 +60,17 @@ public class RabbitMQConfig {
     public Queue recentMessageQueue() {
         return new Queue(CHAT_RECENT_MESSAGE_QUEUE_NAME, true);
     }
+    //채팅방 접속 큐
+    @Bean
+    public Queue chatConnectQueue() {
+        return new Queue(CHAT_CONNECT_QUEUE_NAME, true);
+    }
+    //채팅방 접속해제 큐
+    @Bean
+    public Queue chatDisconnectQueue() {
+        return new Queue(CHAT_DISCONNECT_QUEUE_NAME, true);
+    }
+
     //메시지 읽음 리퀘스트 큐
     @Bean
     public Queue readCheckRequestQueue(){ return new Queue(READ_CHECK_REQUEST_QUEUE_NAME, true); }
@@ -93,6 +107,14 @@ public class RabbitMQConfig {
     @Bean
     public Binding readCheckResponseBinding(Queue readCheckResponseQueue, TopicExchange readCheckExchange) {
         return BindingBuilder.bind(readCheckResponseQueue).to(readCheckExchange).with(READ_CHECK_RESPONSE_ROUTING_KEY);
+    }
+    @Bean
+    public Binding chatConnectBinding(Queue chatConnectQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(chatConnectQueue).to(exchange).with(CHAT_CONNECT_ROUTING_KEY);
+    }
+    @Bean
+    public Binding chatDisconnectBinding(Queue chatDisconnectQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(chatDisconnectQueue).to(exchange).with(CHAT_DISCONNECT_ROUTING_KEY);
     }
 
     /* messageConverter를 커스터마이징 하기 위해 Bean 새로 등록 */

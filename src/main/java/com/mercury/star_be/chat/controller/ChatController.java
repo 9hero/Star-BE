@@ -1,14 +1,11 @@
 package com.mercury.star_be.chat.controller;
 
-import com.google.protobuf.Api;
-import com.mercury.star_be.chat.dto.common.ChatRecentMessageDto;
 import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.ChatRoom;
 import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -105,6 +102,26 @@ public class ChatController {
         chatService.updateReadCount(chatReadRequest, chatRoomId);
 
     }
+    /**현재 접속한 사용자 반환*/
+    @MessageMapping("/chat/connect/{chatRoomId}")
+    @SendTo("/topic/chat.connect.{chatRoomId}")
+    public ApiResponse<ChatRoomConnectedUserResponse> chatRoomConnect(
+            @DestinationVariable Long chatRoomId,
+            @Payload ChatRoomConnectedUserRequest request
+    ){
+        ChatRoomConnectedUserResponse response = chatService.insertChatRoomConnectedUsers(request, chatRoomId);
+        return ApiResponse.success(response);
+    }
+    /**현재 접속 해제한 사용자 반환*/
+    @MessageMapping("/chat/disconnect/{chatRoomId}")
+    @SendTo("/topic/chat.disconnect.{chatRoomId}")
+    public ApiResponse<ChatRoomConnectedUserResponse> chatRoomDisconnect(
+            @DestinationVariable Long chatRoomId,
+            @Payload ChatRoomConnectedUserRequest request
+    ){
+        ChatRoomConnectedUserResponse response = chatService.removeChatRoomConnectedUsers(request, chatRoomId);
+        return ApiResponse.success(response);
+    }
 
     /**내 채팅방 목록 조회 컨트롤러*/
     @GetMapping("/api/users/{userId}/chats")
@@ -178,15 +195,6 @@ public class ChatController {
         return ApiResponse.success("success");
     }
 
-    /**현재 접속중인 사용자들 반환*/
-    @GetMapping("/api/chats/{chatRoomId}/chatRoomConnectedUsers")
-    public ApiResponse<ChatRoomConnectedUsersResponse> chatRoomConnectedUsers(
-            @PathVariable Long chatRoomId
-    ){
-        ChatRoomConnectedUsersResponse response = chatService.getChatRoomConnectedUsers();
-        return ApiResponse.success(response);
-    }
-    
     /**사용자가 이 메시지를 읽었는지 체크하는 컨트롤러*/
     @PostMapping("/api/chats/isReadCheck")
     public ApiResponse<Boolean> isReadCheck(

@@ -7,7 +7,6 @@ import com.mercury.star_be.chat.dto.request.*;
 import com.mercury.star_be.chat.dto.response.*;
 import com.mercury.star_be.chat.entity.*;
 import com.mercury.star_be.chat.repository.*;
-import com.mercury.star_be.global.config.WebSocketEventListener;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
@@ -22,14 +21,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.mercury.star_be.global.config.RabbitMQConfig.*;
@@ -48,7 +45,9 @@ public class ChatServiceImpl implements ChatService {
     private final StudyGroupRepository studyGroupRepository;
     private final ChatReadRepository chatReadRepository;
     private final ChatCustomRepository chatCustomRepository;
-    private final WebSocketEventListener webSocketEventListener;
+    private final RedisTemplate<String, String> redisTemplate;
+
+
     /**
      * 채팅방 조회
      */
@@ -635,13 +634,53 @@ public class ChatServiceImpl implements ChatService {
         }    
     }
 
-    /**현재 채팅방에 접속중인 유저들 체크*/
+    /** 현재 채팅방에 접속한 유저를 접속 멤버 리스트에 추가*/
     @Override
-    public ChatRoomConnectedUsersResponse getChatRoomConnectedUsers() {
-        ChatRoomConnectedUsersResponse response = ChatRoomConnectedUsersResponse.builder()
-                .connectedUsers(webSocketEventListener.getConnectedUsers())
+    @Transactional
+    public ChatRoomConnectedUserResponse insertChatRoomConnectedUsers(ChatRoomConnectedUserRequest request,  Long chatRoomId) {
+        String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
+        // 리스트에 멤버 추가
+        addConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
+        // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
+        Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+        // return
+        return ChatRoomConnectedUserResponse.builder()
+                .connectedMemberIds(connectedMembers)
                 .build();
-        return response;
+    }
+
+    /** 현재 채팅방에 접속한 유저를 접속 멤버 리스트에서 삭제*/
+    @Override
+    @Transactional
+    public ChatRoomConnectedUserResponse removeChatRoomConnectedUsers(ChatRoomConnectedUserRequest request, Long chatRoomId) {
+        String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
+        // 리스트에서 멤버 삭제
+        removeConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
+        // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
+        Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+        // return
+        return ChatRoomConnectedUserResponse.builder()
+                .connectedMemberIds(connectedMembers)
+                .build();
+    }
+
+    // redis에서 채팅방 접속 중인 사용자 가져오기
+    public Set<String> getConnectedMembers(String CHAT_ROOM_KEY) {
+        return redisTemplate.opsForSet().members(CHAT_ROOM_KEY);
+    }
+
+    // redis에서 채팅방 접속 중인 사용자 추가
+    public void addConnectedMember(String connectedMemberId, String CHAT_ROOM_KEY) {
+        if (connectedMemberId != null){
+        redisTemplate.opsForSet().add(CHAT_ROOM_KEY, String.valueOf(connectedMemberId));
+        }
+    }
+
+    // redis에서 접속 중인 사용자 삭제
+    public void removeConnectedMember(String connectedMemberId, String CHAT_ROOM_KEY) {
+        if (connectedMemberId != null){
+            redisTemplate.opsForSet().remove(CHAT_ROOM_KEY, connectedMemberId);
+        }
     }
 
     /**채팅목록으로 채팅방의 최신 메시지 전달 서비스*/

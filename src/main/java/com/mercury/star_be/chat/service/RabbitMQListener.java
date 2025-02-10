@@ -41,6 +41,11 @@ public class RabbitMQListener {
     private final ChatMessageRepository chatMessageRepository;
 
     /**
+     * 채팅방 접속자 구독 체크
+     * 채팅방의 사람이 해당 큐를 구독중인지를 체크함
+     * */
+
+    /**
      * 채팅방의 메시지를 채팅목록의 최신 메시지로 보냄
      * */
     @RabbitListener(queues = CHAT_RECENT_MESSAGE_QUEUE_NAME)
