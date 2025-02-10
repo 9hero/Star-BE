@@ -82,7 +82,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //원래 요청된 URL로 리다이렉트
         String redirectUrl = (String) request.getSession().getAttribute("SPRING_SECURITY_SAVED_REQUEST_URL");
         if (redirectUrl == null) {
-            redirectUrl = "http://mercurystar.duckdns.org"/oauth2/callback";
+            redirectUrl = "http://localhost:5173"/oauth2/callback";
         }
 
          response.sendRedirect(redirectUrl); // 리다이렉트 URL로 이동
