@@ -58,8 +58,8 @@ public class SecurityConfig{
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(Arrays.asList(
-                    "http://34.22.66.212:3001", 
-                    "http://34.22.98.26:8080", 
+                    "https://34.22.66.212:3001", 
+                    "https://34.22.98.26:8080", 
                     "http://mercurystarback.duckdns.org", 
                     "https://mercurystar.duckdns.org"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
