@@ -272,7 +272,7 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     @Transactional
-    public void createDMChatRoom(CreateChatRoomRequest createChatRoomRequest) {
+    public CreateDmChatRoomResponse createDMChatRoom(CreateChatRoomRequest createChatRoomRequest) {
         //송신자
         User sender =
                 userRepository.findById(createChatRoomRequest.getSenderId()).orElseThrow(
@@ -319,6 +319,11 @@ public class ChatServiceImpl implements ChatService {
         //사용자 채팅목록 저장
         userChatRoomRepository.save(senderUserChatRoom);
 
+        CreateDmChatRoomResponse response = CreateDmChatRoomResponse.builder()
+                .chatRoomId(chatRoom.getId())
+                .build();
+
+        return response;
 
     }
     @Override
@@ -453,14 +458,11 @@ public class ChatServiceImpl implements ChatService {
      * 1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인 서비스
      * */
     @Override
-    public ChatMessageCountCkResponse findChatMessageRecord(ChatMessageCountCkRequest chatMessageCountCkRequest) {
+    public ChatMessageCountCkResponse findChatMessageRecord(Long senderId, Long receiverId) {
         ChatMessageCountCkResponse response = ChatMessageCountCkResponse.builder()
                 .count(
-                        chatMessageRepository
-                                .countByChatSenderIdAndChatReceiverId(
-                                        chatMessageCountCkRequest.getSenderId(),
-                                        chatMessageCountCkRequest.getReceiverId()
-                                )
+                        chatCustomRepository
+                                .countByChatSenderIdAndChatReceiverIdAndRoomTypeDM(senderId, receiverId)
                 )
                 .build();
         return response;
@@ -537,8 +539,8 @@ public class ChatServiceImpl implements ChatService {
 
             for (GroupMember groupMember : chatRoom.getStudyGroup().getMembers()) {
                 ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
-                        .id(groupMember.getId())
-                        .nickName(groupMember.getNickname())
+                        .id(groupMember.getMember().getId())
+                        .nickName(groupMember.getMember().getNickname())
                         .profileImg(groupMember.getMember().getImage())
                         .build();
                 chatRoomMembers.add(chatRoomMemberDto);
@@ -632,6 +634,31 @@ public class ChatServiceImpl implements ChatService {
         } else {
             System.out.println("읽지 않은 메시지 없음.");
         }    
+    }
+    /**
+     * /두 사용자의 아이디를 받아 1:1채팅방 아이디를 return 하는 서비스
+     * 두 사용자 간의 채팅기록이 없을 때 사용함
+     * */
+    @Override
+    public Long findChatRoomIdByUserIds(Long senderId, Long receiverId) {
+        return chatCustomRepository.findChatRoomIdByUserIds(senderId, receiverId);
+    }
+    /**
+     * /두 사용자의 아이디를 받아 1:1채팅방 아이디를 return 하는 서비스
+     * 두 사용자 간의 채팅기록이 존재할 때 사용함
+     * */
+    @Override
+    public Long findExistingChatRoomId(Long senderId, Long receiverId) {
+        return chatCustomRepository.findExistingChatRoomId(senderId, receiverId);
+    }
+
+    /**사용자가 채팅방에서 읽지 않은 메시지들을 모두 읽음처리하는 서비스*/
+    @Override
+    public void insertUnreadMessagesToChatRead(Long chatRoomId) {
+
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        chatCustomRepository.insertUnreadMessagesToChatRead(chatRoomId, userResponse.getId());
     }
 
     /** 현재 채팅방에 접속한 유저를 접속 멤버 리스트에 추가*/

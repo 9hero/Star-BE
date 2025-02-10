@@ -134,37 +134,64 @@ public class ChatController {
     }
 
     /**
+     * 두 사용자 간 1:1채팅방 아이디 조회 컨트롤러
+     * 두 사용자의 아이디를 받아 1:1채팅방 아이디를 return
+     * 두 사용자 간의 채팅 기록이 없을 때 사용
+     * */
+    @GetMapping("/api/chat/findDmChatRoomId")
+    public ApiResponse<Long> findDmChatRoomId(
+            @RequestParam Long senderId,
+            @RequestParam Long receiverId
+    ){
+        Long chatRoomId = chatService.findChatRoomIdByUserIds(senderId, receiverId);
+        return ApiResponse.success(chatRoomId);
+    }
+
+    /**
+     * 두 사용자 간 1:1채팅방 아이디 조회 컨트롤러
+     * 두 사용자의 아이디를 받아 1:1채팅방 아이디를 return
+     * 두 사용자 간의 채팅 기록이 존재할 때 사용
+     * */
+    @GetMapping("/api/chat/findExistingChatRoomId")
+    public ApiResponse<Long> findExistingChatRoomId(
+            @RequestParam Long senderId,
+            @RequestParam Long receiverId
+    ){
+        Long chatRoomId = chatService.findExistingChatRoomId(senderId, receiverId);
+        return ApiResponse.success(chatRoomId);
+    }
+
+
+
+    /**
      * 1:1 채팅 사용자 간의 이전 채팅 메시지 숫자 확인 컨트롤러
      * */
     @GetMapping("/api/chat/chatMessageCountCk")
     public ApiResponse<ChatMessageCountCkResponse> chatMessageCountCk(
-        @RequestBody
-        ChatMessageCountCkRequest chatMessageCountCkRequest
+        @RequestParam Long senderId,
+        @RequestParam Long receiverId
     ){
         ChatMessageCountCkResponse chatMessageCountCkResponse
-                = chatService.findChatMessageRecord(chatMessageCountCkRequest);
+                = chatService.findChatMessageRecord(senderId, receiverId);
         return ApiResponse.success(chatMessageCountCkResponse);
     }
 
     /**1:1 채팅방 개설 컨트롤러*/
     @PostMapping("/api/chat/createDMChatRoom")
-    public ApiResponse<CreateChatRoomResponse> createDMChatRoom(
+    public ApiResponse<CreateDmChatRoomResponse> createDMChatRoom(
             @RequestBody CreateChatRoomRequest createChatRoomRequest
     ){
-        chatService.createDMChatRoom(createChatRoomRequest);
-        CreateChatRoomResponse createChatRoomResponse = CreateChatRoomResponse.builder()
-                .result("1:1 채팅방이 생성되었습니다.")
-                .build();
-        return ApiResponse.success(createChatRoomResponse);
+        CreateDmChatRoomResponse response = chatService.createDMChatRoom(createChatRoomRequest);
+        return ApiResponse.success(response);
     }
 
     /**그룹 채팅방 개설 컨트롤러*/
     @PostMapping("/api/chat/createGroupChatRoom")
-    public ApiResponse<CreateChatRoomResponse> createGroupChatRoom(
+    public ApiResponse<CreateGroupChatRoomResponse> createGroupChatRoom(
             @RequestBody CreateChatRoomRequest createChatRoomRequest
     ){
         chatService.createGroupChatRoom(createChatRoomRequest);
-        CreateChatRoomResponse createChatRoomResponse = CreateChatRoomResponse.builder()
+        CreateGroupChatRoomResponse createChatRoomResponse = CreateGroupChatRoomResponse.builder()
                 .result("그룹 채팅방이 생성되었습니다.")
                 .build();
         return ApiResponse.success(createChatRoomResponse);
@@ -192,6 +219,14 @@ public class ChatController {
         UserResponse userResponse =
                 (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         chatService.updateAndInsertChatReads(chatUpdateReadMessagesRequest, userResponse.getId(), chatRoomId);
+        return ApiResponse.success("success");
+    }
+
+    @PostMapping("/api/chats/{chatRoomId}/insertUnreadMessagesToChatRead")
+    public ApiResponse<String> insertUnreadMessagesToChatRead(
+            @PathVariable Long chatRoomId
+    ){
+        chatService.insertUnreadMessagesToChatRead(chatRoomId);
         return ApiResponse.success("success");
     }
 

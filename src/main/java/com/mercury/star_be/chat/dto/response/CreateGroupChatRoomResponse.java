@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 @Getter
 @AllArgsConstructor
-public class CreateChatRoomResponse {
+public class CreateGroupChatRoomResponse {
     private String result;
 }
