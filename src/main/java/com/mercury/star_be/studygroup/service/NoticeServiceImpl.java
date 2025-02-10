@@ -35,6 +35,7 @@ public class NoticeServiceImpl implements NoticeService {
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final JwtUtil jwtUtil;
+
     @Override
     @Transactional
     public NoticeCreateResponse createNotice(NoticeCreateRequest request, Long groupId, String token) {
@@ -51,6 +52,7 @@ public class NoticeServiceImpl implements NoticeService {
         Notice notice = Notice.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
+                .writerNickname(hostMember.getNickname())
                 .writer(user)
                 .studyGroup(studyGroup)
                 .createdAt(LocalDateTime.now())
@@ -58,7 +60,7 @@ public class NoticeServiceImpl implements NoticeService {
         studyGroup.addNotice(notice);
         Notice savedNotice = noticeRepository.save(notice);
         NoticeCreateResponse response = NoticeCreateResponse.builder()
-                .writer(savedNotice.getWriter().getNickname())
+                .writer(savedNotice.getWriterNickname())
                 .createdAt(savedNotice.getCreatedAt())
                 .title(savedNotice.getTitle())
                 .content(savedNotice.getTitle())
@@ -90,7 +92,7 @@ public class NoticeServiceImpl implements NoticeService {
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .createdAt(notice.getCreatedAt())
-                .writer(notice.getWriter().getNickname())
+                .writer(notice.getWriterNickname())
                 .build();
     }
 
