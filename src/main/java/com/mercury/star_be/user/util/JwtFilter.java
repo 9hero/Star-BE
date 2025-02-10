@@ -27,12 +27,12 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestPath = request.getServletPath();
-        if (requestPath.matches("^/api/groups/\\d+$") ||
+
+        if (requestPath.matches("^/api/groups/\\d+/$") ||
                 requestPath.matches("^/api/groups/\\d+/timers$") ||
-                requestPath.matches("^/api/groups/\\d+/subscribe$") ||
                 requestPath.matches("^/api/groups/\\d+/enter$")) return false;
         if (requestPath.startsWith("/fileupload") ||
-                requestPath.startsWith("/api/groups") ||
+//                requestPath.startsWith("/api/groups") ||
                 requestPath.startsWith("/timer") ||
                 requestPath.startsWith("/chat")) return true;
         return excludeUrls.contains(requestPath);
@@ -49,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
         // 토큰 체크
         String accessToken = jwtUtil.getJwt(req);
         if (accessToken == null) {
-            sendUnauthorized(res, "Access token is missing");
+            filterChain.doFilter(req, res);
             return;
         }
 

@@ -45,6 +45,10 @@ public class RabbitMQConfig {
     public static final String CHAT_CONNECT_ROUTING_KEY = "chat.connect.*";
     public static final String CHAT_DISCONNECT_ROUTING_KEY = "chat.disconnect.*";
 
+    // TIMER QUEUE
+    private static final String TIMER_QUEUE_NAME = "groups.queue";
+    private static final String TIMER_EXCHANGE_NAME = "groups.exchange";
+    private static final String TIMER_ROUTING_KEY = "groups.#";
 
     //Queue 등록
     @Bean
@@ -52,6 +56,9 @@ public class RabbitMQConfig {
         //chat.queue라는 이름의 새로운 큐를 생성
         return new Queue("chat.queue");
     }
+
+
+    //Queue 등록(채팅 / 메시지 읽음)
     //채팅 큐
     @Bean
     public Queue queue(){ return new Queue(CHAT_QUEUE_NAME, true); }
@@ -81,11 +88,23 @@ public class RabbitMQConfig {
     @Bean
     public Queue readCheckResponseQueue(){ return new Queue(READ_CHECK_RESPONSE_QUEUE_NAME, true); }
 
+    // Timer Queue 등록
+    @Bean
+    public Queue timerQueue() {
+        return new Queue(TIMER_QUEUE_NAME,true);
+    }
+
     //Exchange 등록
     @Bean
     public TopicExchange exchange(){ return new TopicExchange(CHAT_EXCHANGE_NAME); }
     @Bean
     public TopicExchange readCheckExchange(){ return new TopicExchange(READ_CHECK_EXCHANGE_NAME); }
+
+    // Timer Exchange 등록
+    @Bean
+    public TopicExchange timerExchange() {
+        return new TopicExchange(TIMER_EXCHANGE_NAME);
+    }
 
     //Exchange와 Queue 바인딩
     @Bean
@@ -107,6 +126,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding readCheckResponseBinding(Queue readCheckResponseQueue, TopicExchange readCheckExchange) {
         return BindingBuilder.bind(readCheckResponseQueue).to(readCheckExchange).with(READ_CHECK_RESPONSE_ROUTING_KEY);
+    }
+    // Timer Exchange와 Queue 바인딩
+    @Bean
+    public Binding timerBinding(Queue timerQueue, TopicExchange timerExchange) {
+        return BindingBuilder.bind(timerQueue).to(timerExchange).with(TIMER_ROUTING_KEY);
     }
     @Bean
     public Binding chatConnectBinding(Queue chatConnectQueue, TopicExchange exchange) {
