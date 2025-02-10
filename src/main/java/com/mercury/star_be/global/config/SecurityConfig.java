@@ -39,21 +39,16 @@ public class SecurityConfig{
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(
                                 "/api/**" // front단에서의 요청
-                                , "/docs/index.html" // rest docs 요청
-                                ,"/timer/**", // timer 웹소켓
+                                , "/docs/index.html", // rest docs 요청
                                 "/chat/**" // chat 웹소켓
                                 ,"/timer/**", "favion,ico" // timer 웹소켓
                                 ,"/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/oauth2Login", "/api/check-auth", "/oauth2/callback",
-                                "/api/auth/reissue", "/api/groups/**", "/groups/**", "/error",
-                                "/", "/login/oauth2/code/**", "/oauth2-jwt-header", "/reissue", "/oauth2Login", "/api/check-auth", "/oauth2/callback"
-                                ,"/groups",
+                                "/api/auth/reissue", "/api/groups/**", "/groups/**", "/error","/reissue",
+                                "/groups",
                                 "/fileupload/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요
                 );
-
-
-
 
 
         // CORS 설정
@@ -61,15 +56,20 @@ public class SecurityConfig{
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(Arrays.asList("http://34.22.66.212:3001", "http://34.22.98.26:8080"));
+
+                configuration.setAllowedOrigins(Arrays.asList(
+                    "http://34.22.66.212:3001", 
+                    "http://34.22.98.26:8080", 
+                    "http://mercurystarback.duckdns.org", 
+                    "https://mercurystar.duckdns.org"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
                 configuration.setAllowedHeaders(List.of("*"));
                 configuration.setAllowCredentials(true);
                 // configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
                 configuration.setMaxAge(3600L);
-                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));
+                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie","Content-Type","userid"));
                 return configuration;
-
             }
         }));
 

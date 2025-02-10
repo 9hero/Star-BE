@@ -3,6 +3,11 @@ package com.mercury.star_be.user.controller;
 import com.mercury.star_be.global.common.ApiResponse;
 import com.mercury.star_be.global.error.CustomAuthenticationException;
 import com.mercury.star_be.global.error.code.AuthenticationErrorCode;
+import com.mercury.star_be.studygroup.dto.request.GroupLeaveRequest;
+import com.mercury.star_be.studygroup.dto.response.GroupMembeResponse;
+import com.mercury.star_be.studygroup.dto.response.MyStudyGroupListResponse;
+import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
+import com.mercury.star_be.studygroup.service.StudyGroupServiceImpl;
 import com.mercury.star_be.user.Handler.CustomSuccessHandler;
 import com.mercury.star_be.user.dto.request.UserBlockRequest;
 import com.mercury.star_be.user.dto.request.UserRequest;
@@ -19,15 +24,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,7 +44,8 @@ public class UserController {
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
     private final CustomSuccessHandler customSuccessHandler;
-
+    private final StudyGroupServiceImpl studyGroupServiceImpl;
+    private final GroupMemberRepository groupMemberRepository;
 
     @PostMapping("/api/auth/reissue")
     public ResponseEntity<String> reissue(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws ServletException, IOException {
@@ -71,6 +77,7 @@ public class UserController {
     }
 
 
+    /** 유저 정보 조회 **/
     @GetMapping("/api/user-info")
     public ResponseEntity<Map<String, Object>> getuserInfo(Authentication auth) {
         if (JwtUtil.getAuthenticatedUser(auth) != null) {
@@ -80,11 +87,86 @@ public class UserController {
     }
 
 
+    /**
+     * 유저가 속한 그룹 및 그룹멤버 조회
+     **/
+//    @GetMapping("/api/user/joinGroup-info")
+//    public ApiResponse<Map<String, Object>> getUserJoinedGroupInfo(HttpServletRequest req, Authentication auth) {
+//        if (JwtUtil.getAuthenticatedUser(auth) != null) {
+//
+//            String token = jwtUtil.getJwt(req);
+//            Map<String, Object> myGroupAndGroupMember = new HashMap<>();
+//            List<MyStudyGroupListResponse> myStudyGroupList = studyGroupServiceImpl.getMyStudyGroupList(token);
+//
+//            // 각 그룹에 대한 정보를 Map에 담기
+//            for (MyStudyGroupListResponse myStudyGroup : myStudyGroupList) {
+//                List<GroupMember> groupMembers = groupMemberRepository.findByGroupIdOrderByNicknameAsc(myStudyGroup.getId());
+//                myGroupAndGroupMember.put("MyGroupInfo", myStudyGroup);
+//                myGroupAndGroupMember.put("MyGroupMember", groupMembers);
+//            }
+//            return ApiResponse.success(myGroupAndGroupMember);
+//        }
+//        throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
+//    }
+
+
+    @GetMapping("/api/user/joinGroup-info")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getUserJoinedGroupInfo(HttpServletRequest req, Authentication auth) {
+        if (JwtUtil.getAuthenticatedUser(auth) != null) {
+            String token = jwtUtil.getJwt(req);
+            Long userId = jwtUtil.getId(token);
+            PageRequest pageRequest = PageRequest.of(0, 2);
+            List<Map<String, Object>> groupList = new ArrayList<>();
+
+            List<MyStudyGroupListResponse> myStudyGroupList = studyGroupServiceImpl.getMyStudyGroupList(userId);
+
+            for (MyStudyGroupListResponse myStudyGroup : myStudyGroupList) {
+                Map<String, Object> groupInfoMap = new HashMap<>();
+
+                // DTO로 매핑 로직 수정
+                List<GroupMembeResponse> groupMemberDTOs = groupMemberRepository.findByGroupIdOrderByJoinedAtAsc(myStudyGroup.getId())
+                        .stream()
+                        .map(GroupMembeResponse::new)  // 생성자 참조로 수정
+                        .collect(Collectors.toList());
+
+                if (groupMemberDTOs.size() > 1) {  // size가 1이 아닌 경우에 대한 조건 수정
+                    if (Objects.equals(groupMemberDTOs.get(0).getMemberId(), userId)) {
+                        // 내가 방장 O  & 사람들 있음
+                        groupInfoMap.put("groupId", myStudyGroup.getId());
+                        groupInfoMap.put("name", myStudyGroup.getName());
+                        groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
+                        groupInfoMap.put("members", groupMemberDTOs);
+                        groupInfoMap.put("selectedMembers", groupMemberDTOs.get(1));  // 두 번째 멤버
+                        groupInfoMap.put("isHost", "1");
+                    } else {
+                        // 내가 방장 X  & 사람들 있음
+                        groupInfoMap.put("groupId", myStudyGroup.getId());
+                        groupInfoMap.put("name", myStudyGroup.getName());
+                        groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
+                        groupInfoMap.put("members", groupMemberDTOs);
+                        groupInfoMap.put("isHost", "0");
+                    }
+                }else { // 나 혼자 있는 방
+                    groupInfoMap.put("groupId", myStudyGroup.getId());
+                    groupInfoMap.put("name", myStudyGroup.getName());
+                    groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
+                    groupInfoMap.put("isHost", "1");
+                }
+                groupList.add(groupInfoMap);
+            }
+            return ResponseEntity.ok(ApiResponse.success(groupList));
+        }
+        throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
+    }
+
+
+
+    /** 유저 조회 **/
     @PostMapping("/api/user-info")
     public ResponseEntity<String> updateUserInfo(
             Authentication auth,
             @RequestParam("nickname") String nickname,  // nickname 파라미터
-            @RequestParam(value = "profileImg", required = false) MultipartFile profileImg) throws UnsupportedEncodingException {  // 이미지 파일 파라미터
+            @RequestParam(value = "profileImg", required = false) MultipartFile profileImg) throws IOException {  // 이미지 파일 파라미터
         if (JwtUtil.getAuthenticatedUser(auth) != null) {
             userService.updateUserInfo(auth, nickname, profileImg);
             return ResponseEntity.status(200).body("Success");
@@ -92,11 +174,11 @@ public class UserController {
         throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
     }
 
-
+    /** 유저 삭제 **/
     @DeleteMapping("/api/user-info")
-    public ResponseEntity<String> deleteUserInfo(Authentication auth) {
+    public ResponseEntity<String> deleteUserInfo(@RequestBody GroupLeaveRequest request, HttpServletRequest httpServletreq, Authentication auth) {
         if (JwtUtil.getAuthenticatedUser(auth) != null) {
-            userService.deleteUserInfo(auth);
+            userService.deleteUserInfo(request, httpServletreq, auth);
             return ResponseEntity.status(200).body("Success");
         }
         throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);

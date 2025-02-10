@@ -436,16 +436,23 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         return response;
     }
-    /**그룹채팅 가입 서비스*/
+    /**
+     * 그룹채팅 가입 서비스
+     * 사용자 아이디와 그룹아이디로
+     * */
     @Override
     @Transactional
-    public ChatRoomJoinResponse joinChatRoom(ChatRoomJoinRequest chatRoomJoinRequest) {
+    public ChatRoomJoinResponse joinChatRoom(Long groupId) {
+
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         User joinUser =
-                userRepository.findById(chatRoomJoinRequest.getUserId()).orElseThrow(
+                userRepository.findById(userResponse.getId()).orElseThrow(
                         () -> new RuntimeException(String.valueOf(UserErrorCode.USER_NOT_EXIST))
                 );
-        ChatRoom chatRoom = findByChatRoomId(chatRoomJoinRequest.getChatRoomId());
+
+        ChatRoom chatRoom = findByGroupId(groupId);
         UserChatRoom userChatRoom = UserChatRoom.builder()
                 .joinedAt(LocalDateTime.now())
                 .isBlock(false)
@@ -459,6 +466,8 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         return chatRoomJoinResponse;
     }
+
+
     /**
      * 사용자가 해당 채팅방을 구독중인지 확인하는 서비스
      * */
@@ -501,7 +510,7 @@ public class ChatServiceImpl implements ChatService {
                 ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
                         .id(groupMember.getId())
                         .nickName(groupMember.getNickname())
-                        .profileImg(groupMember.getImage())
+                        .profileImg(groupMember.getMember().getImage())
                         .build();
                 chatRoomMembers.add(chatRoomMemberDto);
             }

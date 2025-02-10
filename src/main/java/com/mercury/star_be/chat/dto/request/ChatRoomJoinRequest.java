@@ -11,6 +11,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class ChatRoomJoinRequest {
-    private Long chatRoomId;
+    private Long groupId;
     private Long userId;
 }

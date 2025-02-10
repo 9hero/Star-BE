@@ -142,12 +142,15 @@ public class ChatController {
         return ApiResponse.success(createChatRoomResponse);
     }
 
-    /**채팅방 가입 컨트롤러*/
-    @PostMapping("/api/chat/joinChatRoom")
+    /**
+     * 채팅방 가입 컨트롤러
+     * 그룹아이디를 path로 받아와 가입
+     * */
+    @PostMapping("/api/chat/joinChatRoom/{groupId}")
     public ApiResponse<ChatRoomJoinResponse> joinChatRoom(
-            @RequestBody ChatRoomJoinRequest chatRoomJoinRequest
+            @PathVariable Long groupId
     ){
-        ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(chatRoomJoinRequest);
+        ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(groupId);
         return ApiResponse.success(chatRoomJoinResponse);
     }
 
