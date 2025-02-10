@@ -49,7 +49,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         //  Redis에 access 토큰 정보 확인 및 블랙리스트 등록
         jwtUtil.addToBlacklist(jwtUtil.getId(accessToken), jwtUtil.getExpiration(accessToken), jwtUtil.ACCESS_TOKEN_EXPIRATION);
-
+              System.out.println("Redis에 access 토큰 정보 확인 및 블랙리스트 등록");
 
         // RefreshToken 조회
 //        RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
@@ -57,22 +57,24 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         RefreshToken existingToken = refreshRepository.findByUser_Id(persistentUser.getId())
                 .orElse(null);
-
+ System.out.println("Refresh 토큰 정보 ");
         Date expirationDate = new Date(System.currentTimeMillis()+jwtUtil.REFRESH_TOKEN_EXPIRATION);
         Date createdDate = new Date(System.currentTimeMillis());
         if (existingToken != null) {
             // 기존 토큰 업데이트
+             System.out.println("기존 토큰 업데이트 ");
             existingToken.setExpiredAt(expirationDate);
             existingToken.setCreatedAt(createdDate);
         } else {
             // 새로운 토큰 생성
+              System.out.println("새로운 토큰 생성");
             existingToken = RefreshToken.builder()
                     .user(persistentUser)
                     .expiredAt(expirationDate)
                     .build();
         }
         refreshRepository.save(existingToken);
-
+         System.out.println("토큰생성");
 
         // 응답 설정
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("access", accessToken, CookieUtil.ACCESS_COOKIE_EXPIRATION).toString());
