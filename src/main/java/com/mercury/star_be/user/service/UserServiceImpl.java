@@ -112,7 +112,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         if (!existData.isActive()) {
             throw new CustomAuthenticationException(USER_DEACTIVATED);  // throw new AuthenticationException(USER_DEACTIVATED.getMessage()
         }
-        ;
 
         return new UserResponse(existData);
     }
