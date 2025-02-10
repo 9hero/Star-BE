@@ -66,7 +66,7 @@ public class SecurityConfig{
                     "https://mercurystarback.duckdns.org", 
                     "https://mercurystar.duckdns.org"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
+                configuration.setAllowedOriginPatterns(Arrays.asList("https://mercurystarback.duckdns.org/", "https://mercurystar.duckdns.org")/);
                 configuration.setAllowedHeaders(List.of("*"));
                 configuration.setAllowCredentials(true);
                 // configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
