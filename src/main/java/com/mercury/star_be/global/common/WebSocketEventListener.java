@@ -138,7 +138,7 @@ public class WebSocketEventListener {
             String sessionId = headerAccessor.getSessionId();
             if (sessionId != null) {
                 setOps.add("focus:"+sessionId, groupId+":"+userId+":"+nickname);
-                redisTemplate.expire(sessionId, Duration.ofDays(1));
+                Boolean expire = redisTemplate.expire("focus:"+sessionId, Duration.ofDays(1));
             }else {
                 // 세션 아이디가 없을 경우 예외 처리
                 log.error("SessionId is null");
