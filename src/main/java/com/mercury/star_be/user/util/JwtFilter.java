@@ -21,20 +21,17 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
             "/oauth2/callback",
             "/oauth2-jwt-header",
             "/error", // 에러 컨트롤러에 대한 포워딩 요청
-            "/api/auth/reissue" // 토큰 재발급
+            "/api/auth/reissue", // 토큰 재발급
+            "/api/check-auth" // 로그인 성공 체크
     ));
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestPath = request.getServletPath();
-
-        if (requestPath.matches("^/api/groups/\\d+/$") ||
-                requestPath.matches("^/api/groups/\\d+/timers$") ||
-                requestPath.matches("^/api/groups/\\d+/enter$")) return false;
-        if (requestPath.startsWith("/fileupload") ||
-//                requestPath.startsWith("/api/groups") ||
-                requestPath.startsWith("/timer") ||
-                requestPath.startsWith("/chat")) return true;
+        if (requestPath.matches("/api/groups$") && request.getMethod().equalsIgnoreCase("get") ||
+            requestPath.startsWith("/fileupload") ||
+            requestPath.startsWith("/timer")  ||
+            requestPath.startsWith("/chat")) return true;
         return excludeUrls.contains(requestPath);
     }
 
@@ -49,7 +46,8 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
         // 토큰 체크
         String accessToken = jwtUtil.getJwt(req);
         if (accessToken == null) {
-            filterChain.doFilter(req, res);
+            sendUnauthorized(res, "Access token is missing");
+            // filterChain.doFilter(req,res); // 오픈 api
             return;
         }
 

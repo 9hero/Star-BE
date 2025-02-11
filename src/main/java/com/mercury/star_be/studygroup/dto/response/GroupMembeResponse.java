@@ -7,7 +7,9 @@ import lombok.Getter;
 public class GroupMembeResponse {
 
     private final Long id;
+    @Getter
     private final String nickname;
+    @Getter
     private final boolean isHost;
     private final Long memberId;  // member_id를 Long 타입으로 추가
 
