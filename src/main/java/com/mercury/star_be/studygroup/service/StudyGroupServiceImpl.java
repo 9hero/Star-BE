@@ -206,7 +206,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
-		// 가입하려는 그룹이 존재하지 않을때
+		// 가입하려는 그룹이 존재하지 체크
 		StudyGroup studyGroup = studyGroupRepository.findById(groupId)
 			.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 
@@ -214,6 +214,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		if (studyGroup.getMemberCount() >= studyGroup.getMaxCapacity()) {
 			throw new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_FULL);
 		}
+
 		// 그룹이 비밀번호로 보호되어 있는지 체크하고,
 		// 보호되어 있다면, 전달된 password와 일치하는지 검증
 		if (studyGroup.hasPassword()) {
@@ -236,6 +237,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.nickname(user.getNickname())
 			.joinedAt(LocalDateTime.now())
 			.build();
+
+		// 그룹채팅방 가입
+		chatService.joinChatRoom(groupId);
 
 		studyGroup.addMember(groupMember);
 	}
