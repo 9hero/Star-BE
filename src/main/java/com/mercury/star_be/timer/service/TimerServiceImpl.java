@@ -163,8 +163,8 @@ public class TimerServiceImpl implements TimerService {
             // 오늘 시작한 타이머인 경우
             boolean isToday = timer.getStudyDate().equals(LocalDate.now());
             if (isToday) {
-                // SSE: 타이머 일시 정지 시 접속중 상태 send
-                studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
+                // SSE: 타이머 일시 정지 시 휴식중 상태 send
+                studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.RESTING);
 
                 // 타이머 중지
                 timer.stop();
