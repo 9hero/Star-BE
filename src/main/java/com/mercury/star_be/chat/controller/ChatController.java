@@ -58,6 +58,25 @@ public class ChatController {
     }
 
     /**
+     * DM에서 채팅방으로 이동 시 사용
+     * - 채팅방아이디로 내가 읽지 않은 모든 메시지들 찾음
+     * - 읽지 않은 메시지가 있다면, unreadCount -1 / 채팅 읽음 테이블에 insert
+     * - 채팅방쪽에 그룹채팅변화체크 큐 하나 구독
+     * - 메시지를 받아 반영
+     * */
+    @PostMapping("/api/chat/updateGroupUnreadMessagesForDM/{chatRoomId}")
+    public ApiResponse<String> updateGroupUnreadMessagesForDM(
+            @PathVariable Long chatRoomId
+    ){
+        //유저정보
+        UserResponse userResponse =
+                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //채팅방정보
+        chatService.updateGroupUnreadMessagesForDM(userResponse.getId(), chatRoomId);
+        return ApiResponse.success("success");
+    }
+
+    /**
      * 채팅 메시지 전송 컨트롤러(일반 텍스트)
      * /pub/chat/sendTextMessage/{chatRoomId} 경로로 보낸 메시지를 받음
      * 이 컨트롤러에서 처리된 메시지를 /sub/chat/{chatRoomId} 경로로 구독하고 있는 클라이언트에게 전송
@@ -172,6 +191,15 @@ public class ChatController {
     ){
         ChatMessageCountCkResponse chatMessageCountCkResponse
                 = chatService.findChatMessageRecord(senderId, receiverId);
+        return ApiResponse.success(chatMessageCountCkResponse);
+    }
+
+    @GetMapping("/api/chat/{groupId}/chatMessageCountCk")
+    public ApiResponse<ChatMessageCountCkResponse> chatMessageCountCk(
+            @PathVariable Long groupId
+    ){
+        ChatMessageCountCkResponse chatMessageCountCkResponse
+                = chatService.findChatMessageRecordForGroup(groupId);
         return ApiResponse.success(chatMessageCountCkResponse);
     }
 

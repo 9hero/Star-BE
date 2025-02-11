@@ -421,17 +421,17 @@ public class ChatServiceImpl implements ChatService {
      * 최신메시지 가져오기 서비스
      */
     public ChatRecentMessageDto findRecentMessage(Long chatRoomId, Long userId) {
-        ChatMessage chatMessage =
-                chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId).orElseThrow(
-                        () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
-                );
+        Optional<ChatMessage> optionalChatMessage =
+                chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId);
+        if (optionalChatMessage.isPresent()) {
+            ChatMessage chatMessage = optionalChatMessage.get();
         //채팅메시지에서 송신자 조회
         User chatSender = userRepository.findById(chatMessage.getChatSender().getId()).orElseThrow(
                 () ->new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
         //송신자가 누구던간에, 채팅목록을 띄우고 있는 인원이 이 메시지를 읽었는지 확인이 필요
         boolean isRead = chatReadRepository.existsByChatMessageIdAndChatUserId(chatMessage.getId(), userId);
-        
+
         return ChatRecentMessageDto.builder()
                 .id(chatMessage.getId())
                 .nickName(chatSender.getNickname())
@@ -440,6 +440,19 @@ public class ChatServiceImpl implements ChatService {
                 .isRead(isRead)
                 .createdAt(chatMessage.getCreatedAt())
                 .build();
+        } else {
+            User user = userRepository.findById(userId).orElseThrow(
+                    () -> new BusinessException(UserErrorCode.USER_NOT_EXIST)
+            );
+            return ChatRecentMessageDto.builder()
+                    .nickName(user.getNickname())
+                    .profileImgUrl(user.getImage())
+                    .content("아직 채팅메시지가 없습니다!")
+                    .userId(userId)
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+        }
     }
 
     /**
@@ -493,6 +506,17 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         return response;
     }
+
+    @Override
+    public ChatMessageCountCkResponse findChatMessageRecordForGroup(Long groupId) {
+        ChatRoom chatRoom = findByGroupId(groupId);
+        int count = chatMessageRepository.countByChatRoomId(chatRoom.getId());
+        ChatMessageCountCkResponse response = ChatMessageCountCkResponse.builder()
+                .count(Long.parseLong(String.valueOf(count)))
+                .build();
+        return response;
+    }
+
     /**
      * 그룹채팅 가입 서비스
      * 사용자 아이디와 그룹아이디로
@@ -602,6 +626,32 @@ public class ChatServiceImpl implements ChatService {
         return chatCustomRepository.findUnreadMessageIds(chatRoomId, userId);
     }
     /**읽지 않은 메시지들의 읽음처리 / 읽지 않은 사람 수 update 서비스*/
+//    @Override
+//    @Transactional
+//    public void updateAndInsertChatReadsAnother(Long userId, Long chatRoomId) {
+//        List<Long> findUnreadMessageIds = findUnreadMessageIds(chatRoomId, userId);
+//        //바꿀게 없으면 pass
+//        if (!findUnreadMessageIds.isEmpty()) {
+//            //insertUnreadMessagesToChatRead
+//            insertChatReads(request, userId);
+//            updateChatReads(request);
+//            //해당 채팅방을 구독하고 있는 사람들에게, 메시지들이 읽음처리 되었음을 rabbitmq로 알림.
+//            try {
+//                //현재 채팅방의 메시지 읽음처리된 id list만 보내야함
+//                String messageJson = objectMapper.writeValueAsString(request);
+//                messagingTemplate
+//                        .convertAndSend(READ_CHECK_EXCHANGE_NAME, READ_CHECK_BULK_RESPONSE_ROUTING_KEY + chatRoomId, messageJson);
+//            } catch (JsonProcessingException e) {
+//                e.printStackTrace();
+//                throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
+//            } catch (AmqpException e) {
+//                e.printStackTrace();
+//                throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+//            }
+//        }
+//    }
+
+    /**읽지 않은 메시지들의 읽음처리 / 읽지 않은 사람 수 update 서비스*/
     @Override
     @Transactional
     public void updateAndInsertChatReads(ChatUpdateReadMessagesRequest request, Long userId, Long chatRoomId) {
@@ -661,6 +711,29 @@ public class ChatServiceImpl implements ChatService {
             System.out.println("읽지 않은 메시지 없음.");
         }    
     }
+
+    /**사용자의 한 채팅방의 읽지 않은 메시지들 모두 읽음 처리*/
+    @Override
+    @Transactional
+    public void updateGroupUnreadMessagesForDM(Long userId, Long chatRoomId) {
+        //사용자가 해당 채팅방에 있는 사람인지 체크
+        isJoinedChatRoom(userId, chatRoomId);
+        //채팅방의 읽지 않은 메시지 id들 받아오기
+        List<Long> unreadMessageIds = findUnreadMessageIds(chatRoomId, userId);
+        //읽지 않은 메시지가 존재할 때 읽음처리
+        System.out.println("useId : "+userId+", 채팅방 id : "+chatRoomId);
+        if (!unreadMessageIds.isEmpty()) {
+            ChatUpdateReadMessagesRequest request = ChatUpdateReadMessagesRequest.builder()
+                    .unreadMessages(unreadMessageIds)
+                    .chatRoomId(chatRoomId)
+                    .build();
+            //읽음 처리
+            updateAndInsertChatReads(request, userId, chatRoomId);
+        } else {
+            System.out.println("읽지 않은 메시지 없음.");
+        }
+    }
+
     /**
      * /두 사용자의 아이디를 받아 1:1채팅방 아이디를 return 하는 서비스
      * 두 사용자 간의 채팅기록이 없을 때 사용함
