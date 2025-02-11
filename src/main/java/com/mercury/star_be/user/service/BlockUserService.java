@@ -11,6 +11,8 @@ public interface BlockUserService {
 	void blockUser(Long userId, UserBlockRequest userBlockRequest);
 
 	void unblockUser(Long userId, UserUnblockRequest userUnblockRequest);
+	void unblockUser(Long userId, Long targetUserId);
+	void unblockUser(Long userId );
 
 	boolean isBlockUser(Long userId, Long targetUserId);
 

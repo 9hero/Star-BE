@@ -46,7 +46,8 @@ public class SecurityConfig{
                                 "/api/auth/reissue", "/api/groups/**", "/groups/**", "/error","/reissue",
                                 "/groups",
                                 "/fileupload/**",
-                                "/api/timers/ranking/**"
+                                "/api/timers/ranking/**",
+                                "/api/chats/**"
                         ).permitAll() //기본 permiAll로 셋팅. 추후 변경 필요
                         .anyRequest().authenticated()  // 위 경로 말고 다른 경로들은 전부 인증필요
                 );

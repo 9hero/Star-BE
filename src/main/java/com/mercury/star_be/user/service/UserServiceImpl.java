@@ -158,7 +158,18 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     @Transactional
-    public void deleteUserInfo(GroupLeaveRequest request, HttpServletRequest httpServletReq, Authentication auth) {
+    public void deleteUserInfo(Long userId) {
+        User deleteUser = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.USER_NOTFIND));
+        deleteUser.setActive(false);
+        userRepository.save(deleteUser);
+    }
+
+
+
+    @Override
+    @Transactional
+    public void exituserJoinGroup(GroupLeaveRequest request, HttpServletRequest httpServletReq, Authentication auth) {
 
         // 그룹장 위임
         User user = JwtUtil.getAuthenticatedUser(auth);
@@ -168,17 +179,12 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
                 studyGroupService.selectHost(GroupAndMemberInfo.getGroupId(), GroupAndMemberInfo.getMemberId());
             }
         }
-
         // 그룹 유저 삭제 및 그룹 삭제
         studyGroupService.simpleExitStudyGroup(jwtUtil.getJwt(httpServletReq));
-
-        // 유저 비활성화
-//        UserResponse authenticatedUser = JwtUtil.getAuthenticatedUser(auth);
-        User deleteUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new CustomAuthenticationException(AuthenticationErrorCode.USER_NOTFIND));
-        deleteUser.setActive(false);
-        userRepository.save(deleteUser);
     }
+
+
+
 
 
     @Override

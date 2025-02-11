@@ -135,8 +135,10 @@ public class UserController {
                         .collect(Collectors.toList());
 
                 if (groupMemberDTOs.size() > 1) {  // size가 1이 아닌 경우에 대한 조건 수정
-                    if (Objects.equals(groupMemberDTOs.get(0).getMemberId(), userId)) {
-                        // 내가 방장 O  & 사람들 있음
+                    // 내가 방장 O  & 사람들 있음
+                    if (groupMemberDTOs.stream().anyMatch(user -> user.isHost() && Objects.equals(user.getMemberId(), userId))) {
+                    // if (Objects.equals(groupMemberDTOs.get(0).getMemberId(), userId)) {
+                        groupInfoMap.put("nickname", groupMemberDTOs.get(0).getNickname());
                         groupInfoMap.put("groupId", myStudyGroup.getId());
                         groupInfoMap.put("name", myStudyGroup.getName());
                         groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
@@ -145,6 +147,15 @@ public class UserController {
                         groupInfoMap.put("isHost", "1");
                     } else {
                         // 내가 방장 X  & 사람들 있음
+
+                        String nickname = null;
+                        for (GroupMembeResponse groupMemberDTO : groupMemberDTOs) {
+                            if (Objects.equals(groupMemberDTO.getMemberId(), userId)) {
+                                nickname = groupMemberDTO.getNickname();
+                                break;  // 첫 번째로 일치하는 값 찾으면 루프 종료
+                            }
+                        }
+                        groupInfoMap.put("nickname", nickname);
                         groupInfoMap.put("groupId", myStudyGroup.getId());
                         groupInfoMap.put("name", myStudyGroup.getName());
                         groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
@@ -152,6 +163,7 @@ public class UserController {
                         groupInfoMap.put("isHost", "0");
                     }
                 }else { // 나 혼자 있는 방
+                    groupInfoMap.put("nickname", groupMemberDTOs.get(0).getNickname());
                     groupInfoMap.put("groupId", myStudyGroup.getId());
                     groupInfoMap.put("name", myStudyGroup.getName());
                     groupInfoMap.put("imageUrl", myStudyGroup.getImageUrl());
@@ -166,7 +178,7 @@ public class UserController {
 
 
 
-    /** 유저 조회 **/
+    /** 유저 수정 **/
     @PostMapping("/api/user-info")
     public ResponseEntity<String> updateUserInfo(
             Authentication auth,
@@ -179,15 +191,40 @@ public class UserController {
         throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
     }
 
+
     /** 유저 삭제 **/
     @DeleteMapping("/api/user-info")
-    public ResponseEntity<String> deleteUserInfo(@RequestBody GroupLeaveRequest request, HttpServletRequest httpServletreq, Authentication auth) {
+    public ResponseEntity<String> deleteUserInfo(
+            @RequestBody(required = false) GroupLeaveRequest request, // null 허용
+            HttpServletRequest httpServletreq,
+            Authentication auth
+    ) {
         if (JwtUtil.getAuthenticatedUser(auth) != null) {
-            userService.deleteUserInfo(request, httpServletreq, auth);
+            if (request != null) {
+                userService.exituserJoinGroup(request, httpServletreq, auth);
+            }
+            userService.deleteUserInfo(jwtUtil.getId(jwtUtil.getJwt(httpServletreq)));
             return ResponseEntity.status(200).body("Success");
         }
         throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
     }
+
+
+
+
+
+    @DeleteMapping("/api/userJoinGroup")
+    public ResponseEntity<String> exituserJoinGroup(@RequestBody GroupLeaveRequest request, HttpServletRequest httpServletreq, Authentication auth) {
+        if (JwtUtil.getAuthenticatedUser(auth) != null) {
+            userService.exituserJoinGroup(request, httpServletreq, auth);
+            return ResponseEntity.status(200).body("Success");
+        }
+        throw new CustomAuthenticationException(AuthenticationErrorCode.MISSING_ACCESSTOKEN);
+    }
+
+
+
+
 
 
     /**
@@ -203,12 +240,29 @@ public class UserController {
     /**
      * 사용자 차단 해제
      */
-    @DeleteMapping("/api/users/blocks")
-    public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
-        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
-        blockUserService.unblockUser(user.getId(), userUnblockRequest);
+//    @DeleteMapping("/api/users/blocks")
+//    public ApiResponse<Void> unblockUser(@RequestBody UserUnblockRequest userUnblockRequest, Authentication auth) {
+//        UserResponse user = jwtUtil.getAuthenticatedUser(auth);
+//        blockUserService.unblockUser(user.getId(), userUnblockRequest);
+//        return ApiResponse.success();
+//    }
+
+    @DeleteMapping("/api/users/blocks/{targetUserId}")
+    public ApiResponse<Void> unblockUser(@PathVariable Long targetUserId, Authentication auth) {
+        UserResponse user = JwtUtil.getAuthenticatedUser(auth);
+        blockUserService.unblockUser(user.getId(), targetUserId);
         return ApiResponse.success();
     }
+
+    @DeleteMapping("/api/users/blocks/")
+    public ApiResponse<Void> unblockAllUser(Authentication auth) {
+        UserResponse user = JwtUtil.getAuthenticatedUser(auth);
+        blockUserService.unblockUser(user.getId());
+        return ApiResponse.success();
+    }
+
+
+
 
     /**
      * 차단 사용자 목록 조회

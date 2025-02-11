@@ -2,10 +2,12 @@ package com.mercury.star_be.timer.service;
 
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
+import com.mercury.star_be.studygroup.entity.ConnectionStatus;
 import com.mercury.star_be.studygroup.entity.GroupMember;
 import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
+import com.mercury.star_be.studygroup.service.StudyGroupSseService;
 import com.mercury.star_be.timer.dto.TimerDto;
 import com.mercury.star_be.timer.dto.TimerEvent;
 import com.mercury.star_be.timer.entity.Timer;
@@ -38,6 +40,7 @@ public class TimerServiceImpl implements TimerService {
     private final UserRepository userRepository;
     private final StudyGroupRepository studyGroupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final StudyGroupSseService studyGroupSseService;
 
     /**
      * 집중방 id로 집중방에 접속한 사용자들의 타이머 정보 가져오기 (타이머가 없는 경우도 포함)
@@ -160,6 +163,9 @@ public class TimerServiceImpl implements TimerService {
             // 오늘 시작한 타이머인 경우
             boolean isToday = timer.getStudyDate().equals(LocalDate.now());
             if (isToday) {
+                // SSE: 타이머 일시 정지 시 휴식중 상태 send
+                studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.RESTING);
+
                 // 타이머 중지
                 timer.stop();
                 Timer savedTimer = timerRepository.save(timer);
@@ -201,6 +207,9 @@ public class TimerServiceImpl implements TimerService {
     @Override
     @Transactional
     public TimerDto startMyTimer(long groupId, long UserId) {
+        // SSE: 타이머 시작 시 공부중 상태 send
+        studyGroupSseService.sendMemberStatusToGroup(groupId, UserId, ConnectionStatus.STUDYING);
+
         // [오늘] 시작한 타이머가 있는 경우 (타이머 재개 & n번 째 공부 시작)
         Timer timer = timerRepository.findByStudyGroupIdAndUserIdAndToday(groupId, UserId);
         if (timer != null) {
@@ -250,6 +259,9 @@ public class TimerServiceImpl implements TimerService {
             log.info("Timer not found");
             return null;
         }else {
+            // SSE: 타이머 종료 시 접속중 상태 send
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
+
             // 타이머 종료
             timer.end();
             Timer savedTimer = timerRepository.save(timer);

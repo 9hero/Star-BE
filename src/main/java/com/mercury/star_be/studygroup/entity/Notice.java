@@ -19,6 +19,8 @@ public class Notice {
     private String title;
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+    @Column(length = 20)
+    private String writerNickname;
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -29,9 +31,11 @@ public class Notice {
     private StudyGroup studyGroup;
 
     @Builder
-    public Notice ( String title, String content, LocalDateTime createdAt, User writer, StudyGroup studyGroup) {
+    public Notice(String title, String content, String writerNickname, LocalDateTime createdAt, User writer,
+        StudyGroup studyGroup) {
         this.title = title;
-        this. content = content;
+        this.content = content;
+        this.writerNickname = writerNickname;
         this.createdAt = createdAt;
         this.writer = writer;
         this.studyGroup = studyGroup;

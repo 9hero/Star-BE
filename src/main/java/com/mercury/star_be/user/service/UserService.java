@@ -27,7 +27,8 @@ public interface UserService {
     UserResponse saveUser(Oauth2Response oauth2Response, String username);
     Map<String, Object> getUserInfo(Authentication auth);
     void updateUserInfo(Authentication auth, String nickname , MultipartFile profileImg) throws IOException;
-    void deleteUserInfo(GroupLeaveRequest request, HttpServletRequest httpServletReq, Authentication auth);
+    void deleteUserInfo(Long userId);
+    void exituserJoinGroup(GroupLeaveRequest request, HttpServletRequest httpServletReq, Authentication auth);
     boolean reissue(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws ServletException, IOException;
     // void updateUserInfo(Authentication , UserResponse );
     User findById(Long userId);
