@@ -100,7 +100,6 @@ public class ChatController {
             @Payload ChatReadRequest chatReadRequest
     ){
         chatService.updateReadCount(chatReadRequest, chatRoomId);
-
     }
     /**현재 접속한 사용자 반환*/
     @MessageMapping("/chat/connect/{chatRoomId}")

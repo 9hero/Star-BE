@@ -78,6 +78,13 @@ public class ChatServiceImpl implements ChatService {
             .build();
         return chatRoomResponse;
     }
+
+    /**
+     * 채팅방 이름 입력 서비스
+     * DM : 간단하게 상대방 닉네임
+     * GROUP : 간단하게 스터디그룹명
+     * */
+    //public
     
     /**그룽아이디로 채팅방 조회*/
     @Override
@@ -441,8 +448,26 @@ public class ChatServiceImpl implements ChatService {
     public ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom, Long userId) {
         //1:1 채팅은 그룹아이디가 null
         Long groupId = null;
+        String chatRoomName = "";
+        //group일 경우
         if (chatRoom.getStudyGroup() != null) {
             groupId = chatRoom.getStudyGroup().getId();
+            StudyGroup studyGroup = studyGroupRepository.findById(groupId).orElseThrow(
+                    () -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND)
+            );
+            chatRoomName = studyGroup.getName();
+        } else {//dm일 경우
+            //채팅방 아이디로 모든 사용자 채팅방 검색
+            List<UserChatRoom> userChatRooms =
+                    userChatRoomRepository.findByChatRoomId(chatRoom.getId()).orElseThrow(
+                            () -> new BusinessException(ChatErrorCode.USER_CHAT_ROOM_NOT_FOUND)
+                    );
+            for (UserChatRoom userChatRoom : userChatRooms) {
+                if (!userChatRoom.getChatUser().getId().equals(userId)) {
+                    chatRoomName = userChatRoom.getChatUser().getNickname();
+                }
+            }
+            //둘 중에서, 받아온 userId가 아닌 entity의 사용자명
         }
 
         return ChatRoomDto.builder()
@@ -451,6 +476,7 @@ public class ChatServiceImpl implements ChatService {
                 .groupId(groupId)
                 .unreadMessages(findUnreadMessageIds(chatRoom.getId(), userId))
                 .recentMessage(findRecentMessage(chatRoom.getId(), userId))
+                .chatRoomName(chatRoomName)
                 .build();
     }
 
