@@ -5,6 +5,7 @@ import static com.mercury.star_be.user.entity.QUser.*;
 
 import java.util.List;
 
+import com.mercury.star_be.user.entity.BlockUser;
 import org.springframework.stereotype.Repository;
 
 import com.mercury.star_be.user.dto.response.BlockUserListResponse;
@@ -34,4 +35,9 @@ public class BlockUserCustomRepositoryImpl implements BlockUserCustomRepository 
 			.orderBy(blockUser.createdAt.desc())
 			.fetch();
 	}
+
+
+
+
+
 }

@@ -15,7 +15,7 @@ public class CookieUtil {
                 //.httpOnly(true) // HttpOnly 속성 설정
                 .path("/") // 모든 경로에 쿠키를 포함
                 .maxAge(expiredS) // 1시간 유효기간 설정
-                .sameSite("Strict") // CSRF 방지용
+                .sameSite("Lax") // CSRF 방지용
                 .build();
         return  cookie;
 
