@@ -26,7 +26,7 @@ public class NoticeCustomRepositoryImpl implements NoticeCustomRepository {
 					notice.id,
 					notice.title,
 					notice.content,
-					groupMember.nickname.as("writer"),
+					notice.writerNickname.as("writer"),
 					notice.createdAt
 				)
 			)
@@ -45,7 +45,7 @@ public class NoticeCustomRepositoryImpl implements NoticeCustomRepository {
 					notice.id,
 					notice.title,
 					notice.content,
-					groupMember.nickname.as("writer"),
+					notice.writerNickname.as("writer"),
 					notice.createdAt
 				)
 			)

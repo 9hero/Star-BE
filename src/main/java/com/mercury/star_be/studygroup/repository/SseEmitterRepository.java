@@ -56,6 +56,10 @@ public class SseEmitterRepository {
 		return sseEmittersMap.getOrDefault(groupId, new ConcurrentHashMap<>());
 	}
 
+	public int getFocusRoomMemberCount(Long groupId) {
+		return redisTemplate.opsForSet().members("focus:" + groupId).size();
+	}
+
 	@Scheduled(fixedRate = 30 * 1000)	// 30초
 	public void sendHeartbeat() {
 		for (Map.Entry<Long, Map<Long, SseEmitter>> groupEntry : sseEmittersMap.entrySet()) {

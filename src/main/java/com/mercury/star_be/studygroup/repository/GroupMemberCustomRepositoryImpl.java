@@ -35,7 +35,10 @@ public class GroupMemberCustomRepositoryImpl implements GroupMemberCustomReposit
 		)
 			.from(groupMember)
 			.join(user).on(groupMember.member.id.eq(user.id))
-			.leftJoin(timer).on(timer.studyDate.eq(LocalDate.now()))
+			.leftJoin(timer).on(groupMember.member.id.eq(timer.user.id)
+				.and(groupMember.group.id.eq(timer.studyGroup.id))
+				.and(timer.studyDate.eq(LocalDate.now()))
+			)
 			.where(groupMember.group.id.eq(groupId))
 			.orderBy(groupMember.nickname.asc())
 			.fetch();
