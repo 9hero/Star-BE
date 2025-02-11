@@ -2,6 +2,7 @@ package com.mercury.star_be.user.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,33 @@ public class BlockUserServiceImpl implements BlockUserService {
 		User user = userService.findById(userId);
 		user.unblockUser(blockUser);
 	}
+
+	@Override
+	@Transactional
+	public void unblockUser(Long userId, Long targetUserId) {
+		userService.findById(targetUserId);
+		BlockUser blockUser = blockUserRepository.findByUserIdAndBlockUserId(userId, targetUserId)
+				.orElseThrow(() -> new BusinessException(UserErrorCode.NOT_BLOCKED_USER));
+		User user = userService.findById(userId);
+		user.unblockUser(blockUser);
+	}
+
+
+
+
+	@Override
+	@Transactional
+	public void unblockUser(Long userId) {
+		User user = userService.findById(userId);
+		List<BlockUser> BlockUserListResponseDto =  blockUserRepository.findAllBlockUsersByUserId(userId);
+		for(BlockUser blockUser : BlockUserListResponseDto) {
+			user.unblockUser(blockUser);
+		}
+	}
+
+
+
+
 
 	@Override
 	public boolean isBlockUser(Long userId, Long targetUserId) {
