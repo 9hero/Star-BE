@@ -13,4 +13,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     Optional<ChatMessage> findFirstByChatRoomIdOrderByCreatedAtDesc(Long chatRoomId);
     //두사람 간의 채팅 기록 count
     int countByChatSenderIdAndChatReceiverId(Long senderId, Long receiverId);
+    //한 채팅방 채팅메시지 갯수 확인
+    int countByChatRoomId(Long chatRoomId);
 }

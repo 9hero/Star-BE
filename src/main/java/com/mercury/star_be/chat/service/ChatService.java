@@ -31,6 +31,7 @@ public interface ChatService {
     ChatRoomDto fromChatRoomEntity(ChatRoom chatRoom, Long userId);
     //1:1채팅에서 두 사용자 간의 이전 채팅 기록 count 확인
     ChatMessageCountCkResponse findChatMessageRecord(Long senderId, Long receiverId);
+    ChatMessageCountCkResponse findChatMessageRecordForGroup(Long groupId);
     //그룹채팅 가입
     ChatRoomJoinResponse joinChatRoom(Long groupId);
     //사용자 채팅방 조회(사용자 아이디, 채팅방 아이디)

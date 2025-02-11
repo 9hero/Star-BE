@@ -175,6 +175,15 @@ public class ChatController {
         return ApiResponse.success(chatMessageCountCkResponse);
     }
 
+    @GetMapping("/api/chat/{groupId}/chatMessageCountCk")
+    public ApiResponse<ChatMessageCountCkResponse> chatMessageCountCk(
+            @PathVariable Long groupId
+    ){
+        ChatMessageCountCkResponse chatMessageCountCkResponse
+                = chatService.findChatMessageRecordForGroup(groupId);
+        return ApiResponse.success(chatMessageCountCkResponse);
+    }
+
     /**1:1 채팅방 개설 컨트롤러*/
     @PostMapping("/api/chat/createDMChatRoom")
     public ApiResponse<CreateDmChatRoomResponse> createDMChatRoom(

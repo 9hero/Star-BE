@@ -421,17 +421,17 @@ public class ChatServiceImpl implements ChatService {
      * 최신메시지 가져오기 서비스
      */
     public ChatRecentMessageDto findRecentMessage(Long chatRoomId, Long userId) {
-        ChatMessage chatMessage =
-                chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId).orElseThrow(
-                        () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
-                );
+        Optional<ChatMessage> optionalChatMessage =
+                chatMessageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoomId);
+        if (optionalChatMessage.isPresent()) {
+            ChatMessage chatMessage = optionalChatMessage.get();
         //채팅메시지에서 송신자 조회
         User chatSender = userRepository.findById(chatMessage.getChatSender().getId()).orElseThrow(
                 () ->new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
         //송신자가 누구던간에, 채팅목록을 띄우고 있는 인원이 이 메시지를 읽었는지 확인이 필요
         boolean isRead = chatReadRepository.existsByChatMessageIdAndChatUserId(chatMessage.getId(), userId);
-        
+
         return ChatRecentMessageDto.builder()
                 .id(chatMessage.getId())
                 .nickName(chatSender.getNickname())
@@ -440,6 +440,19 @@ public class ChatServiceImpl implements ChatService {
                 .isRead(isRead)
                 .createdAt(chatMessage.getCreatedAt())
                 .build();
+        } else {
+            User user = userRepository.findById(userId).orElseThrow(
+                    () -> new BusinessException(UserErrorCode.USER_NOT_EXIST)
+            );
+            return ChatRecentMessageDto.builder()
+                    .nickName(user.getNickname())
+                    .profileImgUrl(user.getImage())
+                    .content("아직 채팅메시지가 없습니다!")
+                    .userId(userId)
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+        }
     }
 
     /**
@@ -493,6 +506,17 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         return response;
     }
+
+    @Override
+    public ChatMessageCountCkResponse findChatMessageRecordForGroup(Long groupId) {
+        ChatRoom chatRoom = findByGroupId(groupId);
+        int count = chatMessageRepository.countByChatRoomId(chatRoom.getId());
+        ChatMessageCountCkResponse response = ChatMessageCountCkResponse.builder()
+                .count(Long.parseLong(String.valueOf(count)))
+                .build();
+        return response;
+    }
+
     /**
      * 그룹채팅 가입 서비스
      * 사용자 아이디와 그룹아이디로
