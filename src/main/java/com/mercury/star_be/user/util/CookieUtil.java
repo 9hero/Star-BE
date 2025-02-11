@@ -13,7 +13,7 @@ public class CookieUtil {
         
         ResponseCookie cookie = ResponseCookie.from(key, value)
             // .httpOnly(true)
-            //     .domain(".duckdns.org")
+                .domain(".mercurystudy.store")
                 .secure(true)  // HTTPS 연결에서만 전송
                 .path("/")
                 .maxAge(expiredS) 
