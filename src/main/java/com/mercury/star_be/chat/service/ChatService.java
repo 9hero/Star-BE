@@ -48,8 +48,10 @@ public interface ChatService {
     void insertChatReads(ChatUpdateReadMessagesRequest chatUpdateReadMessagesRequest, Long userId);
     //읽지 않은 메시지들의 아이디 리스트를 받아 메시지 테이블의 unreadCount 한번에 update
     void updateChatReads(ChatUpdateReadMessagesRequest request);
-    //그룹아이디를 받아 해당 사용자의 해당 그룹 읽지 않은 메시지들 전부 읽음 처리
+    //유저아이디, 채팅방아이디, 그룹아이디를 받아 해당 사용자의 해당 그룹 읽지 않은 메시지들 전부 읽음 처리
     void updateGroupUnreadMessages(Long userId, Long chatRoomId, Long groupId);
+    //유저아이디와 채팅방 아이디를 받아 해당 사용자의 해당 그룹 읽지 않은 메시지들 전부 읽음 처리
+    void updateGroupUnreadMessagesForDM(Long userId, Long chatRoomId);
     //두 사용자의 아이디를 받아 1:1채팅방 아이디를 return(채팅기록이 없을 때)
     Long findChatRoomIdByUserIds(Long senderId, Long receiverId);
     //두 사용자의 아이디를 받아 1:1채팅방 아이디를 return(채팅기록이 존재할 때)
