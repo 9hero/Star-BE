@@ -11,5 +11,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ChatMessageCountCkResponse {
-    private int count;
+    private Long count;
 }
