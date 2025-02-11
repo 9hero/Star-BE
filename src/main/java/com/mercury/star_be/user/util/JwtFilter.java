@@ -29,9 +29,9 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestPath = request.getServletPath();
         if (requestPath.matches("/api/groups$") && request.getMethod().equalsIgnoreCase("get") ||
-            requestPath.startsWith("/fileupload") ||
-            requestPath.startsWith("/timer")  ||
-            requestPath.startsWith("/chat")) return true;
+        requestPath.startsWith("/fileupload") ||
+        requestPath.startsWith("/timer")  ||
+                requestPath.startsWith("/chat")) return true;
         return excludeUrls.contains(requestPath);
     }
 
@@ -47,7 +47,6 @@ public class JwtFilter extends OncePerRequestFilter { //각 요청에 대해 딱
         String accessToken = jwtUtil.getJwt(req);
         if (accessToken == null) {
             sendUnauthorized(res, "Access token is missing");
-            // filterChain.doFilter(req,res); // 오픈 api
             return;
         }
 

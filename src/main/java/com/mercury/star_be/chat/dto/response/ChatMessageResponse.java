@@ -19,5 +19,6 @@ public class ChatMessageResponse {
     private int unreadCount;
     private String messageContent;
     private String profileImgUrl;
+    private Long senderId;
     List<ChatMessageFileDto> messageFiles;
 }
