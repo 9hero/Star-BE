@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 public class TimerRankingResponseDto {
 
     private Long userId;
+    private String image;
     private String nickname;
     private BigDecimal totalTime;
     private Long ranking;
