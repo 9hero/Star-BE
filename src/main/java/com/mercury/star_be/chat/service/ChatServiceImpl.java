@@ -769,18 +769,21 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public ChatRoomConnectedUserResponse insertChatRoomConnectedUsers(ChatRoomConnectedUserRequest request,  Long chatRoomId) {
         String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
-        //sse 상태설정
-        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
-            Long groupId = chatRoom.getStudyGroup().getId();
-            Long userId = Long.parseLong(request.getConnectedMemberId());
-            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.CHATTING);
-        }
-
         // 리스트에 멤버 추가
         addConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
         // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
         Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+
+        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
+            Long groupId = chatRoom.getStudyGroup().getId();
+            Long userId = Long.parseLong(request.getConnectedMemberId());
+            // SSE 상태 전송
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.CHATTING);
+            // SSE 채팅방 인원 수 전송
+            studyGroupSseService.sendChatRoomMemberCountToGroup(groupId, connectedMembers.size());
+        }
+
         // return
         return ChatRoomConnectedUserResponse.builder()
                 .connectedMemberIds(connectedMembers)
@@ -792,17 +795,21 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public ChatRoomConnectedUserResponse removeChatRoomConnectedUsers(ChatRoomConnectedUserRequest request, Long chatRoomId) {
         String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
-        //sse 상태설정
-        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
-            Long groupId = chatRoom.getStudyGroup().getId();
-            Long userId = Long.parseLong(request.getConnectedMemberId());
-            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
-        }
         // 리스트에서 멤버 삭제
         removeConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
         // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
         Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+
+        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
+            Long groupId = chatRoom.getStudyGroup().getId();
+            Long userId = Long.parseLong(request.getConnectedMemberId());
+            // SSE 상태 전송
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
+            // SSE 채팅방 인원 수 전송
+            studyGroupSseService.sendChatRoomMemberCountToGroup(groupId, connectedMembers.size());
+        }
+
         // return
         return ChatRoomConnectedUserResponse.builder()
                 .connectedMemberIds(connectedMembers)
