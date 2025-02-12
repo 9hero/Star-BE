@@ -49,6 +49,7 @@ public class TimerServiceImpl implements TimerService {
      * @return Set<TimerDto> 집중방에 접속한 사용자들의 타이머 정보, Redis에서 중복인 경우 제외 (set)
      */
     // 집중방에 실시간으로 연결 된 사용자 정보를 가져옴 - Redis로 id 조회, db로 데이터를 가져옴
+    @Transactional
     public Set<TimerDto> getFocusRoomTimerDataByGroupIdAndMyUID(Long groupId) {
         System.out.println("연결된 사용자들 불러옴");
         UserResponse userResponse = getLoginUserInfo();
