@@ -66,7 +66,7 @@ public class SecurityConfig{
                     // "https://34.22.98.26:8080",
                     "http://localhost:5173",
                     "https://mercurystudy.store"));
-                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "https://mercurystudy.store"));
                 configuration.setAllowedHeaders(List.of("*"));
                 configuration.setAllowCredentials(true);
