@@ -35,6 +35,7 @@ import static com.mercury.star_be.global.config.RabbitMQConfig.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ChatServiceImpl implements ChatService {
 
     private final ChatMessageRepository chatMessageRepository;
