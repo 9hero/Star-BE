@@ -10,7 +10,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.mercury.star_be.chat.entity.ChatRoom;
 import com.mercury.star_be.chat.repository.ChatRoomRepository;
-import com.mercury.star_be.chat.service.ChatService;
 import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.studygroup.dto.GroupMemberDto;
@@ -135,6 +134,12 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.status(status)
 			.build();
 		sendToGroup(groupId, STATUS_UPDATE_EVENT, memberStatusSseResponse);
+	}
+
+	@Override
+	public void sendGroupMemberInfoToGroup(Long groupId) {
+		List<GroupMemberSseResponse> groupMemberInfoList = getGroupMemberInfoList(groupId);
+		sendToGroup(groupId, MEMBER_DATA_EVENT, groupMemberInfoList);
 	}
 
 	private void sendToGroup(Long groupId, String eventName, Object data) {
