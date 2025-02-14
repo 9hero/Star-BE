@@ -12,6 +12,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +31,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RefreshRepository refreshRepository;
     private final EntityManager entityManager;
 
+    @Value("${front-url}")
+    String frontUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -88,7 +92,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         if (redirectUrl == null) {
 
             // 기본 리다이렉트 URL (로그인 후 이동할 URL)
-            redirectUrl = "https://mercurystudy.store/oauth2/callback";
+            redirectUrl = frontUrl + "/oauth2/callback";
         }
 
         response.sendRedirect(redirectUrl); // 리다이렉트 URL로 이동
