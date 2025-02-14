@@ -45,6 +45,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	private final UserRepository userRepository;
 	private final ChatService chatService;
 	private final JwtUtil jwtUtil;
+	private final StudyGroupSseService studyGroupSseService;
 
 	@Override
 	@Transactional
@@ -237,11 +238,13 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.nickname(user.getNickname())
 			.joinedAt(LocalDateTime.now())
 			.build();
+		studyGroup.addMember(groupMember);
 
 		// 그룹채팅방 가입
 		chatService.joinChatRoom(groupId);
 
-		studyGroup.addMember(groupMember);
+		// SSE: 전체 그룹원 정보 send
+		studyGroupSseService.sendGroupMemberInfoToGroup(groupId);
 	}
 
 	@Override
@@ -273,6 +276,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		groupMemberRepository.deleteByGroupIdAndMemberId(studyGroup.getId(), userId);
 		// 그룹의 멤버 카운트 감소
 		studyGroup.decrementMemberCount();
+
+		// 사용자 채팅방 삭제
+		chatService.deleteUSerChatRoom(groupId, userId);
+
+		// SSE: 전체 그룹원 정보 send
+		studyGroupSseService.sendGroupMemberInfoToGroup(groupId);
 	}
 
 	@Override
@@ -287,6 +296,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			// 그룹 멤버 관계 삭제
 			groupMemberRepository.deleteByGroupIdAndMemberId(groupId, userId);
 			studyGroup.decrementMemberCount();
+
+			// 사용자 채팅방 삭제
+			chatService.deleteUSerChatRoom(groupId, userId);
+
+			// SSE: 전체 그룹원 정보 send
+			studyGroupSseService.sendGroupMemberInfoToGroup(groupId);
 		}
 	}
 

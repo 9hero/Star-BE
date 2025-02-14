@@ -74,12 +74,12 @@ public class ChatServiceImpl implements ChatService {
         }
 
         ChatRoomResponse chatRoomResponse = ChatRoomResponse.builder()
-        //채팅방 멤버 (DM은 발신자 수신자 / 그룹은 그룹멤버들)
-            .chatMembers(getChatRoomMembers(chatRoom))
-            .messages(getChatRoomMessageDtos(chatRoomId))
-            .chatRoomType(chatRoom.getChatRoomType())
-            .studyGroupId(studyGroupId)
-            .build();
+                //채팅방 멤버 (DM은 발신자 수신자 / 그룹은 그룹멤버들)
+                .chatMembers(getChatRoomMembers(chatRoom))
+                .messages(getChatRoomMessageDtos(chatRoom))
+                .chatRoomType(chatRoom.getChatRoomType())
+                .studyGroupId(studyGroupId)
+                .build();
         return chatRoomResponse;
     }
 
@@ -102,27 +102,65 @@ public class ChatServiceImpl implements ChatService {
      * 채팅방 id를 받아
      * List<ChatRoomMessageDto>로 return
      */
-    public List<ChatRoomMessageDto> getChatRoomMessageDtos(Long chatRoomId) {
-        List<ChatMessage> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId).orElse(List.of());
+    public List<ChatRoomMessageDto> getChatRoomMessageDtos(ChatRoom chatRoom) {
+        List<ChatMessage> chatMessages = chatMessageRepository.findByChatRoomId(chatRoom.getId()).orElse(List.of());
 
-        return chatMessages.stream()
-                .map(chatMessage -> ChatRoomMessageDto.builder()
-                        .id(chatMessage.getId())
-                        .senderId(chatMessage.getChatSender().getId())
-                        .nickName(chatMessage.getChatSender().getNickname())
-                        .content(chatMessage.getContent())
-                        .unreadCount(chatMessage.getUnreadCount())
-                        .createdAt(chatMessage.getCreatedAt())
-                        .profileImgUrl(chatMessage.getChatSender().getImage())
-                        .messageFiles(chatMessage.getContent() == null ?
-                                (!chatMessage.getChatMessageFiles().isEmpty() ?
-                                        chatMessage.getChatMessageFiles().stream()
-                                                .map(this::convertToFileDto)
-                                                .collect(Collectors.toList())
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.DM)) {
+            return chatMessages.stream()
+                    .map(chatMessage -> ChatRoomMessageDto.builder()
+                            .id(chatMessage.getId())
+                            .senderId(chatMessage.getChatSender().getId())
+                            .nickName(chatMessage.getChatSender().getNickname())
+                            .content(chatMessage.getContent())
+                            .unreadCount(chatMessage.getUnreadCount())
+                            .createdAt(chatMessage.getCreatedAt())
+                            .profileImgUrl(chatMessage.getChatSender().getImage())
+                            .messageFiles(chatMessage.getContent() == null ?
+                                    (!chatMessage.getChatMessageFiles().isEmpty() ?
+                                            chatMessage.getChatMessageFiles().stream()
+                                                    .map(this::convertToFileDto)
+                                                    .collect(Collectors.toList())
+                                            : null)
+                                    : null)
+                            .build())
+                    .collect(Collectors.toList());
+        } else {
+            List<GroupMember> groupMembers = chatMessages.get(0).getChatRoom().getStudyGroup().getMembers();
+
+            return chatMessages.stream()
+                    .map(chatMessage -> {
+                        Long senderId = chatMessage.getChatSender().getId();
+
+                        // 그룹 멤버 목록에서 일치하는 멤버를 찾습니다.
+                        Optional<GroupMember> matchingMember = groupMembers.stream()
+                                .filter(groupMember -> groupMember.getMember().getId().equals(senderId))
+                                .findFirst();
+
+                        // 일치하는 멤버가 있을 경우 해당 멤버의 닉네임을 사용, 그렇지 않을 경우 유저 닉네임 사용
+                        String nickName = matchingMember.isPresent()
+                                ? matchingMember.get().getNickname()
+                                : chatMessage.getChatSender().getNickname();
+
+                        return ChatRoomMessageDto.builder()
+                                .id(chatMessage.getId())
+                                .senderId(senderId)
+                                .nickName(nickName)
+                                .content(chatMessage.getContent())
+                                .unreadCount(chatMessage.getUnreadCount())
+                                .createdAt(chatMessage.getCreatedAt())
+                                .profileImgUrl(chatMessage.getChatSender().getImage())
+                                .messageFiles(chatMessage.getContent() == null ?
+                                        (!chatMessage.getChatMessageFiles().isEmpty() ?
+                                                chatMessage.getChatMessageFiles().stream()
+                                                        .map(this::convertToFileDto)
+                                                        .collect(Collectors.toList())
+                                                : null)
                                         : null)
-                                : null)
-                        .build())
-                .collect(Collectors.toList());
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        }
+
     }
 
     private ChatMessageFileDto convertToFileDto(ChatMessageFile chatMessageFile) {
@@ -594,7 +632,7 @@ public class ChatServiceImpl implements ChatService {
             for (GroupMember groupMember : chatRoom.getStudyGroup().getMembers()) {
                 ChatRoomMemberDto chatRoomMemberDto = ChatRoomMemberDto.builder()
                         .id(groupMember.getMember().getId())
-                        .nickName(groupMember.getMember().getNickname())
+                        .nickName(groupMember.getNickname())
                         .profileImg(groupMember.getMember().getImage())
                         .build();
                 chatRoomMembers.add(chatRoomMemberDto);
@@ -769,18 +807,21 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public ChatRoomConnectedUserResponse insertChatRoomConnectedUsers(ChatRoomConnectedUserRequest request,  Long chatRoomId) {
         String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
-        //sse 상태설정
-        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
-            Long groupId = chatRoom.getStudyGroup().getId();
-            Long userId = Long.parseLong(request.getConnectedMemberId());
-            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.CHATTING);
-        }
-
         // 리스트에 멤버 추가
         addConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
         // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
         Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+
+        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
+            Long groupId = chatRoom.getStudyGroup().getId();
+            Long userId = Long.parseLong(request.getConnectedMemberId());
+            // SSE 상태 전송
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.CHATTING);
+            // SSE 채팅방 인원 수 전송
+            studyGroupSseService.sendChatRoomMemberCountToGroup(groupId, connectedMembers.size());
+        }
+
         // return
         return ChatRoomConnectedUserResponse.builder()
                 .connectedMemberIds(connectedMembers)
@@ -792,17 +833,21 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public ChatRoomConnectedUserResponse removeChatRoomConnectedUsers(ChatRoomConnectedUserRequest request, Long chatRoomId) {
         String CHAT_ROOM_KEY = "chatRoom_"+chatRoomId+":connectedUsers";
-        //sse 상태설정
-        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
-        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
-            Long groupId = chatRoom.getStudyGroup().getId();
-            Long userId = Long.parseLong(request.getConnectedMemberId());
-            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
-        }
         // 리스트에서 멤버 삭제
         removeConnectedMember(request.getConnectedMemberId(), CHAT_ROOM_KEY);
         // redis에서 접속 멤버 리스트를 ChatRoomConnectedUserResponse로 받아옴
         Set<String> connectedMembers = getConnectedMembers(CHAT_ROOM_KEY);
+
+        ChatRoom chatRoom = findByChatRoomId(chatRoomId);
+        if (chatRoom.getChatRoomType().equals(ChatRoomType.GROUP)) {
+            Long groupId = chatRoom.getStudyGroup().getId();
+            Long userId = Long.parseLong(request.getConnectedMemberId());
+            // SSE 상태 전송
+            studyGroupSseService.sendMemberStatusToGroup(groupId, userId, ConnectionStatus.ONLINE);
+            // SSE 채팅방 인원 수 전송
+            studyGroupSseService.sendChatRoomMemberCountToGroup(groupId, connectedMembers.size());
+        }
+
         // return
         return ChatRoomConnectedUserResponse.builder()
                 .connectedMemberIds(connectedMembers)
@@ -843,6 +888,19 @@ public class ChatServiceImpl implements ChatService {
                 .createdAt(LocalDateTime.now())
                 .build();
         return response;
+    }
+
+    /**
+     * 사용자 채팅방 삭제
+     * 그룹 탈퇴 시 사용자가 해당 그룹의 채팅방에서도 탈퇴
+     * */
+    @Override
+    @Transactional
+    public void deleteUSerChatRoom(Long groupId, Long userId) {
+
+        ChatRoom chatRoom = findByGroupId(groupId);
+        UserChatRoom userChatRoom = userChatRoomRepository.findByChatRoomIdAndChatUserId(chatRoom.getId(), userId);
+        userChatRoomRepository.delete(userChatRoom);
     }
 
     @Override

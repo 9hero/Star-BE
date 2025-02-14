@@ -10,5 +10,9 @@ public interface StudyGroupSseService {
 
 	void sendFocusRoomMemberCountToGroup(Long groupId, int memberCount);
 
+	void sendChatRoomMemberCountToGroup(Long groupId, int memberCount);
+
 	void sendMemberStatusToGroup(Long groupId, Long userId, ConnectionStatus status);
+
+	void sendGroupMemberInfoToGroup(Long groupId);
 }

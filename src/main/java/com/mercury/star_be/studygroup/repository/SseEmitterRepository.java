@@ -60,6 +60,10 @@ public class SseEmitterRepository {
 		return redisTemplate.opsForSet().members("focus:" + groupId).size();
 	}
 
+	public int getChatRoomMemberCount(Long chatRoomId) {
+		return redisTemplate.opsForSet().members("chatRoom" + chatRoomId + ":connectedUsers").size();
+	}
+
 	@Scheduled(fixedRate = 30 * 1000)	// 30초
 	public void sendHeartbeat() {
 		for (Map.Entry<Long, Map<Long, SseEmitter>> groupEntry : sseEmittersMap.entrySet()) {

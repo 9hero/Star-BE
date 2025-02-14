@@ -3,6 +3,8 @@ package com.mercury.star_be.user.Handler;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,11 @@ import java.net.URLEncoder;
 @Component
 public class CustomFailedHandler implements AuthenticationFailureHandler {
 
+    private final String frontUrl;
+
+    public CustomFailedHandler(@Value("${front-domain}") String frontUrl) {
+        this.frontUrl = frontUrl;
+    }
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,
@@ -37,7 +44,6 @@ public class CustomFailedHandler implements AuthenticationFailureHandler {
 //        response.sendRedirect(loginUrl);
 
         String errorMessage = exception.getMessage(); // 실패 메시지
-        response.sendRedirect("http://localhost:5173/oauth2/LoginFailcallback?error=" + URLEncoder.encode(errorMessage, "UTF-8"));
-
+        response.sendRedirect(frontUrl + "/oauth2/LoginFailcallback?error=" + URLEncoder.encode(errorMessage, "UTF-8"));
     }
 }

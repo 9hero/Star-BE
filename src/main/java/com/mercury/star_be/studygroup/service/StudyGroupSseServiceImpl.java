@@ -8,6 +8,10 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.mercury.star_be.chat.entity.ChatRoom;
+import com.mercury.star_be.chat.repository.ChatRoomRepository;
+import com.mercury.star_be.global.error.BusinessException;
+import com.mercury.star_be.global.error.code.ChatErrorCode;
 import com.mercury.star_be.studygroup.dto.GroupMemberDto;
 import com.mercury.star_be.studygroup.dto.response.GroupMemberSseResponse;
 import com.mercury.star_be.studygroup.dto.response.MemberStatusSseResponse;
@@ -23,12 +27,14 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 	private final SseEmitterRepository sseEmitterRepository;
 	private final GroupMemberRepository groupMemberRepository;
+	private final ChatRoomRepository chatRoomRepository;
 
 	private static final Long SSE_TIMEOUT = 60 * 60 * 1000L;	// 1시간
 	private static final String CONNECT_EVENT = "connect";
 	private static final String STATUS_UPDATE_EVENT = "statusUpdate";
 	private static final String MEMBER_DATA_EVENT = "memberData";
 	private static final String FOCUS_ROOM_MEMBER_COUNT_EVENT = "focusRoomMemberCount";
+	private static final String CHAT_ROOM_MEMBER_COUNT_EVENT = "chatRoomMemberCount";
 
 	@Override
 	public SseEmitter subscribe(Long groupId, Long userId) {
@@ -42,6 +48,8 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 
 		// 집중방 인원 수 send
 		sendFocusRoomMemberCount(groupId, sseEmitter);
+		// 채팅방 인원 수 send
+		sendChatRoomMemberCount(groupId, sseEmitter);
 		return sseEmitter;
 	}
 
@@ -107,6 +115,18 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 	}
 
 	@Override
+	public void sendChatRoomMemberCountToGroup(Long groupId, int memberCount) {
+		sendToGroup(groupId, CHAT_ROOM_MEMBER_COUNT_EVENT, memberCount);
+	}
+
+	public void sendChatRoomMemberCount(Long groupId, SseEmitter sseEmitter) {
+		ChatRoom chatRoom = chatRoomRepository.findByStudyGroupId(groupId)
+			.orElseThrow(() -> new BusinessException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+		int chatRoomMemberCount = sseEmitterRepository.getChatRoomMemberCount(chatRoom.getId());
+		sendData(sseEmitter, CHAT_ROOM_MEMBER_COUNT_EVENT, chatRoomMemberCount);
+	}
+
+	@Override
 	public void sendMemberStatusToGroup(Long groupId, Long userId, ConnectionStatus status) {
 		sseEmitterRepository.updateStatus(groupId, userId, status);
 		MemberStatusSseResponse memberStatusSseResponse = MemberStatusSseResponse.builder()
@@ -114,6 +134,12 @@ public class StudyGroupSseServiceImpl implements StudyGroupSseService {
 			.status(status)
 			.build();
 		sendToGroup(groupId, STATUS_UPDATE_EVENT, memberStatusSseResponse);
+	}
+
+	@Override
+	public void sendGroupMemberInfoToGroup(Long groupId) {
+		List<GroupMemberSseResponse> groupMemberInfoList = getGroupMemberInfoList(groupId);
+		sendToGroup(groupId, MEMBER_DATA_EVENT, groupMemberInfoList);
 	}
 
 	private void sendToGroup(Long groupId, String eventName, Object data) {

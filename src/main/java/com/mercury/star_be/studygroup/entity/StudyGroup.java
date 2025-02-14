@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mercury.star_be.chat.entity.ChatRoom;
+import com.mercury.star_be.timer.entity.Timer;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,6 +48,9 @@ public class StudyGroup {
 
 	@OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ChatRoom> chatRooms = new ArrayList<>();
+
+	@OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Timer> timers = new ArrayList<>();
 
 	@Builder
 	public StudyGroup(String name, String description, String image, int maxCapacity, int memberCount, boolean isPublic,

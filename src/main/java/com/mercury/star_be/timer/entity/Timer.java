@@ -156,9 +156,9 @@ public class Timer {
      * 자정 이후의 초과한 공부 시간을 새로운 타이머에 저장
      */
     public void setExceedTimeSoFarAfterMidnight() {
-        LocalDateTime endOfDay = studyDate.atTime(23, 59, 59);
+
         // 자정 ~ 현재 시각까지의 차이 계산 (초 단위) - front에서 최대 24시간 이내로 처리. 그 이상 시간이라면, 하루(24시간) 씩 짤라서 timer 생성
-        long fromMidnightToRequestTime = Duration.between(endOfDay, LocalDateTime.now()).getSeconds();
+        long fromMidnightToRequestTime = Duration.between(this.studyDate.atStartOfDay(), LocalDateTime.now()).getSeconds();
         this.timeSoFar = fromMidnightToRequestTime;
         this.totalTime = fromMidnightToRequestTime;
     }
