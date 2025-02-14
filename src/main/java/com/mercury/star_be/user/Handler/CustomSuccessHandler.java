@@ -24,15 +24,24 @@ import java.io.IOException;
 import java.util.Date;
 
 @Component
-@RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final RefreshRepository refreshRepository;
     private final EntityManager entityManager;
+    private final String frontUrl;
 
-    @Value("${front-url}")
-    String frontUrl;
+    public CustomSuccessHandler(
+        JwtUtil jwtUtil,
+        RefreshRepository refreshRepository,
+        EntityManager entityManager,
+        @Value("${front-url}") String frontUrl
+    ) {
+        this.jwtUtil = jwtUtil;
+        this.refreshRepository = refreshRepository;
+        this.entityManager = entityManager;
+        this.frontUrl = frontUrl;
+    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {

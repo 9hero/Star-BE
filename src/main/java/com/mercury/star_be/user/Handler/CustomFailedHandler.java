@@ -15,8 +15,11 @@ import java.net.URLEncoder;
 @Component
 public class CustomFailedHandler implements AuthenticationFailureHandler {
 
-    @Value("${front-url}")
-    String frontUrl;
+    private final String frontUrl;
+
+    public CustomFailedHandler(@Value("${front-url}") String frontUrl) {
+        this.frontUrl = frontUrl;
+    }
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,
