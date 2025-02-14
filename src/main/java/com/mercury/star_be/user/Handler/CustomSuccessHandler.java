@@ -77,7 +77,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
          System.out.println("토큰생성");
 
         // 응답 설정
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("access", accessToken, CookieUtil.ACCESS_COOKIE_EXPIRATION).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("access", accessToken, CookieUtil.ACCESS_COOKIE_EXPIRATION, request).toString());
         // response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.createCookie("refresh", refreshToken, CookieUtil.REFRESH_COOKIE_EXPIRATION).toString());
         response.addHeader("userid", id.toString());
           System.out.println("set cookie");
