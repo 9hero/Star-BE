@@ -17,7 +17,7 @@ public class CustomFailedHandler implements AuthenticationFailureHandler {
 
     private final String frontUrl;
 
-    public CustomFailedHandler(@Value("${front-url}") String frontUrl) {
+    public CustomFailedHandler(@Value("${front-domain}") String frontUrl) {
         this.frontUrl = frontUrl;
     }
 

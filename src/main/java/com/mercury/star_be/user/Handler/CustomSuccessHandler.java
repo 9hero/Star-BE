@@ -35,7 +35,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         JwtUtil jwtUtil,
         RefreshRepository refreshRepository,
         EntityManager entityManager,
-        @Value("${front-url}") String frontUrl
+        @Value("${front-domain}") String frontUrl
     ) {
         this.jwtUtil = jwtUtil;
         this.refreshRepository = refreshRepository;
