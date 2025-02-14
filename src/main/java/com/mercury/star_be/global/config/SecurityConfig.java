@@ -60,12 +60,7 @@ public class SecurityConfig{
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(Arrays.asList(
-                    // "http://34.22.66.212:3001",
-                    // "http://34.22.98.26:8080",
-                    // "https://34.22.66.212:3001",
-                    // "https://34.22.98.26:8080",
-                    "http://localhost:5173",
-                    "https://mercurystudy.store"));
+                    "http://localhost:5173", "https://mercurystudy.store"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "https://mercurystudy.store"));
                 configuration.setAllowedHeaders(List.of("*"));
