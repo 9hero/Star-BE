@@ -15,22 +15,14 @@ public class CookieUtil {
 
     public static ResponseCookie createCookie(String key, String value, Integer expiredS) {
 
-        ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(key, value)
+        ResponseCookie cookie = ResponseCookie.from(key, value)
+                .domain(".mercurystudy.store")  // local인 경우 제거
                 .secure(true)  // HTTPS 연결에서만 전송
                 .path("/")
                 .maxAge(expiredS) 
-                .sameSite("None"); // 반드시 "None" 설정 필요
+                .sameSite("None") // 반드시 "None" 설정 필요
+            .build();
 
-        if (host.endsWith(".store")) {
-            cookieBuilder.domain(".mercurystudy.store");
-        }
-
-        return  cookieBuilder.build();
-
-//        Cookie cookie = new Cookie(key, value);
-//        cookie.setMaxAge(expiredS);
-//        cookie.setPath("/"); // 쿠키가 유효한 경로 설정
-//        // cookie.setDomain("http://localhost:5173");
-//        return cookie;
+        return cookie;
     }
 }
