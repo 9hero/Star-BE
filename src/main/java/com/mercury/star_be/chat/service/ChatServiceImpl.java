@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -641,26 +643,46 @@ public class ChatServiceImpl implements ChatService {
 
         return chatRoomMembers;
     }
-    
+
     /**
      * 채팅메시지 읽음 update 서비스
-     * RabbitMQListener
      * */
     @Override
     @Transactional
-    public void updateReadCount(ChatReadRequest chatReadRequest, Long chatRoomId) {
-        // 메시지 읽음 처리 요청을 큐에 추가
-        try {
-            String messageJson = objectMapper.writeValueAsString(chatReadRequest);
-            messagingTemplate
-                    .convertAndSend("readCheck.exchange", "readCheck.request." + chatRoomId, messageJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_CONVERT_ERROR);
-        } catch (AmqpException e) {
-            e.printStackTrace();
-            throw new BusinessException(ChatErrorCode.MESSAGE_SENDING_ERROR);
+    public ChatReadResponse updateReadCount(ChatReadRequest chatReadRequest, Long chatRoomId) {
+
+        //특정 유저가 채팅메시지를 읽었는지 확인
+        boolean isRead = chatReadRepository.
+                existsByChatMessageIdAndChatUserId(chatReadRequest.getChatMessageId(), chatReadRequest.getChatUserId());
+        //이미 읽었었다면 end
+        if (isRead) {
+            throw new BusinessException(ChatErrorCode.CHAT_ALREADY_READ);
         }
+
+        ChatMessage chatMessage = chatMessageRepository.findByIdWithLock(chatReadRequest.getChatMessageId()).orElseThrow(
+                () -> new BusinessException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND)
+        );
+
+        if (chatMessage.getUnreadCount() > 0) {
+            chatMessage.updateUnreadCount(chatMessage.getUnreadCount() - 1);
+        }
+
+        User chatUser = userRepository.findById(chatReadRequest.getChatUserId()).orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
+        ChatRead chatRead = ChatRead.builder()
+                .chatUser(chatUser)
+                .chatMessage(chatMessage)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        chatReadRepository.save(chatRead);
+
+        System.out.println("읽음 업데이트 되었습니다. 메시지 ID " + chatReadRequest.getChatMessageId() + "읽음 카운트 :"+chatMessage.getUnreadCount());
+
+        ChatReadResponse response = ChatReadResponse.builder()
+                .chatMessageId(chatMessage.getId())
+                .unreadCount(chatMessage.getUnreadCount())
+                .build();
+        return response;
     }
 
     @Override
