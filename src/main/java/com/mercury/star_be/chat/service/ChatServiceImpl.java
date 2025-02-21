@@ -506,6 +506,7 @@ public class ChatServiceImpl implements ChatService {
         //1:1 채팅은 그룹아이디가 null
         Long groupId = null;
         String chatRoomName = "";
+        String chatRoomImage = "";
         //group일 경우
         if (chatRoom.getStudyGroup() != null) {
             groupId = chatRoom.getStudyGroup().getId();
@@ -513,6 +514,7 @@ public class ChatServiceImpl implements ChatService {
                     () -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND)
             );
             chatRoomName = studyGroup.getName();
+            chatRoomImage = studyGroup.getImage();
         } else {//dm일 경우
             //채팅방 아이디로 모든 사용자 채팅방 검색
             List<UserChatRoom> userChatRooms =
@@ -522,6 +524,7 @@ public class ChatServiceImpl implements ChatService {
             for (UserChatRoom userChatRoom : userChatRooms) {
                 if (!userChatRoom.getChatUser().getId().equals(userId)) {
                     chatRoomName = userChatRoom.getChatUser().getNickname();
+                    chatRoomImage = userChatRoom.getChatUser().getImage();
                 }
             }
             //둘 중에서, 받아온 userId가 아닌 entity의 사용자명
@@ -534,6 +537,7 @@ public class ChatServiceImpl implements ChatService {
                 .unreadMessages(findUnreadMessageIds(chatRoom.getId(), userId))
                 .recentMessage(findRecentMessage(chatRoom.getId(), userId))
                 .chatRoomName(chatRoomName)
+                .chatRoomImage(chatRoomImage)
                 .build();
     }
 
