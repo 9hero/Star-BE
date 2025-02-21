@@ -127,7 +127,7 @@ public class ChatServiceImpl implements ChatService {
                             .build())
                     .collect(Collectors.toList());
         } else {
-            List<GroupMember> groupMembers = chatMessages.get(0).getChatRoom().getStudyGroup().getMembers();
+            List<GroupMember> groupMembers = chatRoom.getStudyGroup().getMembers();
 
             return chatMessages.stream()
                     .map(chatMessage -> {
