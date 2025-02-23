@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.mercury.star_be.global.error.BusinessException;
+import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.entity.ConnectionStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -75,7 +77,7 @@ public class SseEmitterRepository {
 						.name("heartbeat")
 						.data("ping"));
 				} catch (IOException e) {
-					emitter.complete();
+					throw new BusinessException(StudyGroupErrorCode.SSE_EMITTER_IO_EXCEPTION);
 				}
 			}
 		}
