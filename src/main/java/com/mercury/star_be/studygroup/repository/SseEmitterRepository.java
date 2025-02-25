@@ -45,9 +45,8 @@ public class SseEmitterRepository {
 		if (existingSseEmitter.equals(sseEmitter)) {
 			groupSseEmitters.remove(userId);
 			if (groupSseEmitters.isEmpty()) sseEmittersMap.remove(groupId);
-
-			redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
 		}
+		redisTemplate.opsForHash().delete(GROUP_PREFIX + groupId, userId.toString());
 	}
 
 	public Map<Object, Object> getConnectedUsers(Long groupId) {
