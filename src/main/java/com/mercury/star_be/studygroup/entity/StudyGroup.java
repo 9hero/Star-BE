@@ -94,4 +94,11 @@ public class StudyGroup {
 	public void decrementMemberCount() {
 		this.memberCount = Math.max(this.memberCount - 1, 0);
 	}
+
+	public boolean isPasswordCorrect(String password) {
+		if (hasPassword) {
+			return this.password.equals(password);
+		}
+		return true;
+	}
 }

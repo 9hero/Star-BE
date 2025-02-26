@@ -203,7 +203,6 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	@Override
 	@Transactional
 	public void joinStudyGroup(Long groupId, Long userId, String password) throws BusinessException {
-
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_EXIST));
 
@@ -216,12 +215,9 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			throw new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_FULL);
 		}
 
-		// 그룹이 비밀번호로 보호되어 있는지 체크하고,
-		// 보호되어 있다면, 전달된 password와 일치하는지 검증
-		if (studyGroup.hasPassword()) {
-			if (password == null || !studyGroup.getPassword().equals(password)) {
-				throw new BusinessException(StudyGroupErrorCode.INVALID_GROUP_PASSWORD);
-			}
+		// 그룹이 비밀번호로 보호되어 있다면 전달된 password와 일치하는지 검증
+		if (!studyGroup.isPasswordCorrect(password)) {
+			throw new BusinessException(StudyGroupErrorCode.INVALID_GROUP_PASSWORD);
 		}
 
 		// 가입하려는 그룹에 이미 유저가 가입한 상태일때
