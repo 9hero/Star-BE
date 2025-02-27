@@ -571,13 +571,9 @@ public class ChatServiceImpl implements ChatService {
      * */
     @Override
     @Transactional
-    public ChatRoomJoinResponse joinChatRoom(Long groupId) {
-
-        UserResponse userResponse =
-                (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
+    public ChatRoomJoinResponse joinChatRoom(Long groupId, Long userId) {
         User joinUser =
-                userRepository.findById(userResponse.getId()).orElseThrow(
+                userRepository.findById(userId).orElseThrow(
                         () -> new RuntimeException(String.valueOf(UserErrorCode.USER_NOT_EXIST))
                 );
 

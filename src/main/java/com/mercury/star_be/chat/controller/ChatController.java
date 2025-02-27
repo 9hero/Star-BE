@@ -234,7 +234,9 @@ public class ChatController {
     public ApiResponse<ChatRoomJoinResponse> joinChatRoom(
             @PathVariable Long groupId
     ){
-        ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(groupId);
+        UserResponse userResponse =
+            (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ChatRoomJoinResponse chatRoomJoinResponse = chatService.joinChatRoom(groupId, userResponse.getId());
         return ApiResponse.success(chatRoomJoinResponse);
     }
 

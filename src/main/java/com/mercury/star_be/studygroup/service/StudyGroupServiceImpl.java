@@ -237,7 +237,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 		studyGroup.addMember(groupMember);
 
 		// 그룹채팅방 가입
-		chatService.joinChatRoom(groupId);
+		chatService.joinChatRoom(groupId, userId);
 
 		// SSE: 전체 그룹원 정보 send
 		studyGroupSseService.sendGroupMemberInfoToGroup(groupId);
