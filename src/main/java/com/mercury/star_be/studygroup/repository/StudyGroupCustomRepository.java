@@ -10,4 +10,5 @@ import java.util.List;
 public interface StudyGroupCustomRepository {
     Page<StudyGroup> findAllPublicByCreationDate(String keyword, String sort, String direction, Pageable pageable);
     List<MyStudyGroupListResponse> findMyStudyGroupList(Long memberId);
+    int incrementMemberCount(Long groupId);
 }
