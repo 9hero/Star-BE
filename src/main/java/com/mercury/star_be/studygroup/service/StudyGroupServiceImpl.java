@@ -234,7 +234,12 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			.nickname(user.getNickname())
 			.joinedAt(LocalDateTime.now())
 			.build();
-		studyGroup.addMember(groupMember);
+		
+		// 그룹 인원 +1 증가
+		int updateResult = studyGroupRepository.incrementMemberCount(groupId);
+		if (updateResult == 0) {
+			throw new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_FULL);
+		}
 
 		// 그룹채팅방 가입
 		chatService.joinChatRoom(groupId, userId);
