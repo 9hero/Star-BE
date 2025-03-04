@@ -292,7 +292,11 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 			StudyGroup studyGroup = studyGroupRepository.findById(groupId)
 					.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_NOT_FOUND));
 			// 그룹의 멤버가 1명만 남아 있는 경우 (호스트 == 마지막 유저)
-			if (studyGroup.getMemberCount() == 1) studyGroupRepository.delete(studyGroup);
+			if (studyGroup.getMemberCount() == 1) {
+				studyGroupRepository.delete(studyGroup);
+				return;
+			}
+
 			// 그룹 멤버 관계 삭제
 			groupMemberRepository.deleteByGroupIdAndMemberId(groupId, userId);
 			studyGroup.decrementMemberCount();
