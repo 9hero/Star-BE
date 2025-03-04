@@ -18,6 +18,7 @@ public class TimerDto{
     private TimerEvent event;
     private Long timerId;
     private Long userId;
+    private Long groupMemberId;
     private String nickname;
     private long timeSoFar;
     private long todayTotalTime;
@@ -29,8 +30,9 @@ public class TimerDto{
 
     public TimerDto(Timer timer) {
         this.timerId = timer.getId();
-        this.userId = timer.getUserId();
-        this.nickname = timer.getUser().getNickname();
+        this.userId = timer.getGroupMemberIdAAAAAA();
+        this.groupMemberId = timer.getGroupMemberIdAAAAAA();
+        this.nickname = timer.getNickname();
         this.timeSoFar = timer.getTimeSoFar();
         this.todayTotalTime = timer.getTotalTime();
         this.status = timer.getStatus().toString();
