@@ -81,12 +81,11 @@ public class StudyGroup {
 		return hasPassword;
 	}
 
-	@Transactional
-	public void addMember (GroupMember member){
+	public void addMember(GroupMember member) {
 		members.add(member);
 		this.memberCount++;
 	}
-	@Transactional
+
 	public void addNotice (Notice notice) {
 		notices.add(notice);
 	}
