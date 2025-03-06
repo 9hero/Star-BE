@@ -30,8 +30,8 @@ public class TimerDto{
 
     public TimerDto(Timer timer) {
         this.timerId = timer.getId();
-        this.userId = timer.getGroupMemberIdAAAAAA();
-        this.groupMemberId = timer.getGroupMemberIdAAAAAA();
+        this.userId = timer.getUserId();
+        this.groupMemberId = timer.getGroupMemberId();
         this.nickname = timer.getNickname();
         this.timeSoFar = timer.getTimeSoFar();
         this.todayTotalTime = timer.getTotalTime();

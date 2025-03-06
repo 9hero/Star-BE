@@ -145,7 +145,7 @@ public class Timer {
         timeSoFar = 0L;
     }
 
-    public Long getGroupMemberIdAAAAAA() {
+    public Long getGroupMemberId() {
         return groupMember.getId();
     }
     public Long getUserId() {
@@ -184,7 +184,6 @@ public class Timer {
             case ENTRY:
                 timerEventDto.setEvent(TimerEvent.ENTRY);
                 timerEventDto.setStatus(TimerStatus.REST.toString());
-                System.out.println("입장 시, time 확인 timer.java"+this.getTimeSoFar());
                 break;
         }
         return timerEventDto;

@@ -4,7 +4,6 @@ import com.mercury.star_be.global.error.BusinessException;
 import com.mercury.star_be.global.error.code.StudyGroupErrorCode;
 import com.mercury.star_be.studygroup.entity.ConnectionStatus;
 import com.mercury.star_be.studygroup.entity.GroupMember;
-import com.mercury.star_be.studygroup.entity.StudyGroup;
 import com.mercury.star_be.studygroup.repository.GroupMemberRepository;
 import com.mercury.star_be.studygroup.repository.StudyGroupRepository;
 import com.mercury.star_be.studygroup.service.StudyGroupSseService;
@@ -14,7 +13,6 @@ import com.mercury.star_be.timer.entity.Timer;
 import com.mercury.star_be.timer.enums.TimerStatus;
 import com.mercury.star_be.timer.repository.TimerRepository;
 import com.mercury.star_be.user.dto.response.UserResponse;
-import com.mercury.star_be.user.entity.User;
 import com.mercury.star_be.user.repository.UserRepository;
 
 import java.time.Duration;
@@ -26,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +69,7 @@ public class TimerServiceImpl implements TimerService {
 
         // 타이머가 있는 접속 유저들
         Map<Long, Timer> currentMembersTimers = memberTimers.stream()
-                .collect(Collectors.toMap(Timer::getGroupMemberIdAAAAAA, timer -> timer));
+                .collect(Collectors.toMap(Timer::getGroupMemberId, timer -> timer));
 
         // 없는 유저들 분리
         for (Map.Entry<Long,String> entry : focusRoomMemberInfo.entrySet()) {
@@ -330,9 +330,19 @@ public class TimerServiceImpl implements TimerService {
      * @return Long userId
      */
     private UserResponse getLoginUserInfo() {
-        System.out.println("로그인 정보 가져옴");
-        UserResponse principal = (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        log.info("Principal2: {}", principal);
-        return (UserResponse) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // SecurityContext 가져와서 null 체크
+        SecurityContext context = SecurityContextHolder.getContext();
+        if (context == null) return null;
+
+        // Authentication 객체 null 체크
+        Authentication authentication = context.getAuthentication();
+        if (authentication == null) return null;
+
+        // Principal 객체 null 및 타입 체크
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserResponse)) return null;
+
+        return (UserResponse) principal;
     }
+
 }

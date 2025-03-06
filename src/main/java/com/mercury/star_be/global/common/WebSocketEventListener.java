@@ -77,20 +77,17 @@ public class WebSocketEventListener {
             long groupMemberId = Long.parseLong(split[2]);
             String nickname = split[3];
 
-            log.info("disconnect groupId: {} groupMemberId: {} nickname : {}", groupId, groupMemberId,nickname);
-
             // 타이머 정지 처리
-            System.out.println("sessionId: " + event.getSessionId());
             timerService.stopTimerByGroupMemberId(groupMemberId);
 
             // Redis에서 삭제
-            Long delete = redisTemplate.opsForSet().remove("focus:"+sessionId,groupId+":"+groupMemberId+":"+nickname);// 세션id 제거
-            Long removeCUser = redisTemplate.opsForSet().remove("focus:" + groupId, groupMemberId + ":" + nickname);
-            log.info("Remove session(T/F) and user : {} and {}",delete,removeCUser);
+            redisTemplate.opsForSet().remove("focus:"+sessionId,groupId+":"+userId+":"+groupMemberId+":"+nickname);// 세션id 제거
+            redisTemplate.opsForSet().remove("focus:" + groupId, groupMemberId + ":" + nickname);
+
 
             // Disconnection 브로드캐스트
             TimerDto disconnectEvent = new TimerDto();
-            disconnectEvent.setUserId(groupMemberId);
+            disconnectEvent.setUserId(userId);
             disconnectEvent.setEvent(TimerEvent.DISCONNECT);
             messagingTemplate.convertAndSend(
                     "/topic/groups."+groupId+".timers",
@@ -124,7 +121,7 @@ public class WebSocketEventListener {
 
         // focus 방일 경우만 처리 - focus 방은 참여 인원 Redis에 저장
         // disconnect 용 세션id 필요. 하지만 sid로 접속 유저 체크 불가.
-        if (groupMemberId != null) {
+        if (userId != null && groupMemberId != null) {
             String redisKey = "focus:" + groupId;
             SetOperations<String, String> setOps = redisTemplate.opsForSet();
 
@@ -153,7 +150,8 @@ public class WebSocketEventListener {
             if (entryEvent == null) {
                 entryEvent = new TimerDto();
                 entryEvent.setEvent(TimerEvent.ENTRY);
-                entryEvent.setUserId(Long.parseLong(groupMemberId));
+                entryEvent.setUserId(Long.parseLong(userId));
+                entryEvent.setGroupMemberId(Long.parseLong(groupMemberId));
                 entryEvent.setNickname(nickname);
                 entryEvent.setTimeSoFar(0);
                 entryEvent.setStatus("REST");
