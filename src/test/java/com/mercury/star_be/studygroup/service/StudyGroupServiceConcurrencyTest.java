@@ -53,8 +53,8 @@ class StudyGroupServiceConcurrencyTest {
 	}
 
 	@Test
-	@DisplayName("100명의 사용자가 동시에 가입해도 최대 인원까지만 가입된다.")
-	void joinStudyGroup() throws InterruptedException {
+	@DisplayName("최대 인원이 20명인 그룹에 100명의 사용자가 동시에 가입해도 최대 인원 까지만 가입된다.")
+	void joinStudyGroupConcurrencyTest() throws InterruptedException {
 		// given
 		createUserAndGroup();
 

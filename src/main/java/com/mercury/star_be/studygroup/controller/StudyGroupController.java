@@ -116,6 +116,7 @@ public class StudyGroupController {
 	) {
 		Long userId = JwtUtil.getAuthenticatedUser(auth).getId();
 		String password = studyGroupJoinRequest != null ? studyGroupJoinRequest.getPassword() : null;
+
 		studyGroupService.joinStudyGroup(groupId, userId, password);
 		return ApiResponse.success();
 	}

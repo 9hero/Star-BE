@@ -17,7 +17,6 @@ import jakarta.persistence.OneToMany;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 @Getter
 @NoArgsConstructor
@@ -83,7 +82,6 @@ public class StudyGroup {
 
 	public void addMember(GroupMember member) {
 		members.add(member);
-		this.memberCount++;
 	}
 
 	public void addNotice (Notice notice) {

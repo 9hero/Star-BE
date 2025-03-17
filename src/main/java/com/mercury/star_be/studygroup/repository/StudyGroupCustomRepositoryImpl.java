@@ -80,13 +80,4 @@ public class StudyGroupCustomRepositoryImpl implements StudyGroupCustomRepositor
                 .orderBy(groupMember.joinedAt.desc()) // joinedAt 내림차순 정렬 추가
                 .fetch();
     }
-
-    @Override
-    public int incrementMemberCount(Long groupId) {
-        return (int) jpaQueryFactory.update(studyGroup)
-            .set(studyGroup.memberCount, studyGroup.memberCount.add(1))
-            .where(studyGroup.id.eq(groupId)
-                .and(studyGroup.memberCount.lt(studyGroup.maxCapacity)))
-            .execute();
-    }
 }

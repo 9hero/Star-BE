@@ -29,7 +29,7 @@ public interface StudyGroupService {
 	PaginationResponse<StudyGroupListResponse> getStudyGroupList(String keyword, String sort, String direction,
 		int page);
 
-	void joinStudyGroup(Long groupId, Long userId, String password) throws BusinessException;
+	void joinStudyGroup(Long groupId, Long userId, String password);
 
 	void simpleExitStudyGroup(String token) throws BusinessException;
 
