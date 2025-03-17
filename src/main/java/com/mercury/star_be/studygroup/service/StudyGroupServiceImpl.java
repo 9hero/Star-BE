@@ -246,7 +246,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public void exitStudyGroup(Long groupId, Long userId) throws BusinessException {
+	public void exitStudyGroup(Long groupId, Long userId) {
 		StudyGroup studyGroup = findById(groupId);
 		// 탈퇴하려는 사람이 그룹에 존재하는지
 		GroupMember groupMember = groupMemberRepository.findByGroupIdAndMemberId(groupId, userId)
@@ -281,7 +281,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 	}
 
 	@Override
-	public void simpleExitStudyGroup(String token) throws BusinessException {
+	public void simpleExitStudyGroup(String token) {
 		Long userId = jwtUtil.getId(token);
 		List<Long> groupIdList = groupMemberRepository.findGroupIdsByMemberId(userId);
 		for (Long groupId : groupIdList) {
@@ -306,7 +306,7 @@ public class StudyGroupServiceImpl implements StudyGroupService {
 
 	@Override
 	@Transactional
-	public void selectHost(Long groupId, Long MemberId) throws BusinessException {
+	public void selectHost(Long groupId, Long MemberId) {
 
 		GroupMember newHost = groupMemberRepository.findByGroupIdAndMemberId(groupId, MemberId)
 						.orElseThrow(() -> new BusinessException(StudyGroupErrorCode.STUDY_GROUP_IS_EMPTY));
