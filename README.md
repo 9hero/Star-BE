@@ -41,6 +41,8 @@
 <img src="https://img.shields.io/badge/DISCORD-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="25"> 
 <img src="https://img.shields.io/badge/GIT FLOW-F05032?style=for-the-badge&logo=git&logoColor=white" height="25">  
 
+## 📄프로젝트 발표 자료-기여 부분 편집본
+[스타 프로젝트 타이머 기능.pdf](https://github.com/user-attachments/files/19791107/default.pdf)  
 
 ## 🕒 프로젝트 기간
 1차 프로젝트: 2025년 1월 14일 ~ 2025년 2월 13일 (발표일: 2월 13일), 24일
@@ -48,6 +50,7 @@
 ## 🎯 프로젝트 목적
 실시간 메시징 처리 서비스를 통해 그룹 내 타이머 공유 및 랭킹 시스템을 제공하여 사용자의 학습 효율성을 극대화하고,  
 실시간 정보 공유를 통해 사용자 만족도를 향상시키는 것이 목표입니다.
+
 
 ### 기대효과
 #### 사용자 편의성 증대
