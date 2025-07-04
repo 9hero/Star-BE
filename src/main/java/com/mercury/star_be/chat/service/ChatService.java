@@ -33,7 +33,7 @@ public interface ChatService {
     ChatMessageCountCkResponse findChatMessageRecord(Long senderId, Long receiverId);
     ChatMessageCountCkResponse findChatMessageRecordForGroup(Long groupId);
     //그룹채팅 가입
-    ChatRoomJoinResponse joinChatRoom(Long groupId);
+    ChatRoomJoinResponse joinChatRoom(Long groupId, Long userId);
     //사용자 채팅방 조회(사용자 아이디, 채팅방 아이디)
     boolean isJoinedChatRoom(Long chatUserId, Long chatRoomId);
     //채팅방 id를 받아 List<ChatRoomMemberDto>로 return
