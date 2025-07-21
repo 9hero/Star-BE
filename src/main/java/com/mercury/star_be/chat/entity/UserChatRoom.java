@@ -21,7 +21,6 @@ public class UserChatRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime joinedAt;
-    @Column(columnDefinition = "TINYINT(1)")
     private Boolean isBlock;
 
     @ManyToOne(fetch = FetchType.LAZY)
