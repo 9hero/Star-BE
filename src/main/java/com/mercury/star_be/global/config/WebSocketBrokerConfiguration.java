@@ -44,7 +44,7 @@ public class WebSocketBrokerConfiguration implements WebSocketMessageBrokerConfi
         //enableStompBrokerRelay : 외부 메시지 브로커와 통합하기 위해 사용되는 옵션
         registry.enableStompBrokerRelay("/topic") // sub
                 .setRelayHost(rabbitmqHost)
-                .setRelayPort(rabbitmqPort)
+                .setRelayPort(61613)
                 .setClientLogin(rabbitmqUsername)
                 .setClientPasscode(rabbitmqPassword);
 
