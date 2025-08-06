@@ -53,6 +53,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TimerIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(TimerIntegrationTest.class);
+
+    // GCS 외부 의존성 대체.
     @MockBean
     private GcsFileServiceImpl gcsFileService;
 

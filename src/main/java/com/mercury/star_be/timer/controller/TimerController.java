@@ -28,7 +28,6 @@ public class TimerController {
 
     private final TimerService timerService;
     private final StudyGroupSseService studyGroupSseService;
-    private final RedisTemplate<String, Object> redisTemplate;
 
     // 집중방 입장 했음을 Redis에 저장하고 타이머 정보를 가져오고 GroupMemberId를 Front에 저장.
     // 닉네임 그룹방에 해당하는 거로 조회해서 저장하기.

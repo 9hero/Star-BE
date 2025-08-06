@@ -6,10 +6,10 @@ import java.util.Set;
 
 public interface TimerService {
     Set<TimerDto> getFocusRoomTimerDataByGroupIdAndMyUID(Long groupId);
+    TimerDto startMyTimer(long groupId, long UserId);
 
     TimerDto stopTimerByGroupMemberId(Long groupMemberId);
 
-    TimerDto startMyTimer(long groupId, long UserId);
 
     TimerDto endTimerByGroupIdAndUserId(Long groupId, Long userId);
 
