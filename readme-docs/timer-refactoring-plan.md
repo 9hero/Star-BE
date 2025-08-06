@@ -33,27 +33,32 @@ sequenceDiagram
     participant TimerEventListener as 타이머 이벤트 리스너
     participant StudyGroupEventListener as 스터디그룹 이벤트 리스너
 
+    %% 외부 의존성을 명시적으로 선언하여 다이어그램의 명확성 향상
+    participant TimerService
+    participant SimpMessagingTemplate
+    participant RedisTemplate
+    participant StudyGroupSseService
+
     Note over Client, StudyGroupEventListener: 사용자가 웹소켓 연결을 해제하면...
 
     Client->>WebSocketEventListener: disconnect()
     activate WebSocketEventListener
-    Note right of WebSocketEventListener: 이제 직접 처리하지 않고,<br/>"연결 해제 이벤트"만 발행합니다.
+    Note right of WebSocketEventListener: "연결 해제 이벤트"만 발행합니다.
     WebSocketEventListener->>ApplicationEventPublisher: publishEvent(WebSocketDisconnectedEvent)
     deactivate WebSocketEventListener
 
-    subgraph "이벤트 수신 및 병렬 처리"
-        ApplicationEventPublisher-->>TimerEventListener: "연결이 끊어졌어!"
+    Note over TimerEventListener, StudyGroupEventListener: 이벤트 수신 및 병렬 처리 시작
+    par "타이머 관련 처리"
+        ApplicationEventPublisher-->>TimerEventListener: "연결 해제 이벤트 발생!"
         activate TimerEventListener
-        Note right of TimerEventListener: 타이머 관련 처리만 수행
-        TimerEventListener-->>TimerService: stopTimer()
-        TimerEventListener-->>SimpMessagingTemplate: sendDisconnectMessage()
+        TimerEventListener->>TimerService: stopTimer()
+        TimerEventListener-->>SimpMessagingTemplate: sendDisconnectMessage()        
         deactivate TimerEventListener
-
-        ApplicationEventPublisher-->>StudyGroupEventListener: "연결이 끊어졌어!"
+    and "스터디그룹 관련 처리"
+        ApplicationEventPublisher-->>StudyGroupEventListener: "연결 해제 이벤트 발생!"
         activate StudyGroupEventListener
-        Note right of StudyGroupEventListener: 스터디그룹 관련 처리만 수행
-        StudyGroupEventListener-->>RedisTemplate: removeUser()
-        StudyGroupEventListener-->>StudyGroupSseService: sendSseEvent()
+        StudyGroupEventListener->>RedisTemplate: removeUser()
+        StudyGroupEventListener->>StudyGroupSseService: sendSseEvent()
         deactivate StudyGroupEventListener
     end
 ```
